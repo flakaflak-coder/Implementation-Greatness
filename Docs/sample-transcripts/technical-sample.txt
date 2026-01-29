@@ -1,0 +1,58 @@
+SAMPLE TECHNICAL SESSION TRANSCRIPT - Use this to test AI extraction
+
+---
+
+[00:00] Sophie (Freeday): Welcome to the Technical Deep-dive session. Tom, thanks for joining. Let's talk about how the Digital Employee will integrate with your systems.
+
+[00:15] Tom (Client IT): Happy to help. Let me give you the lay of the land. Our core system is ClaimsPro 8.2, hosted on-premise in our data center.
+
+[00:30] Sophie: What's the best way to connect to ClaimsPro?
+
+[00:40] Tom: ClaimsPro has a REST API for claim creation and lookup. The base URL is api.claimspro.acme-internal.com. We'll set up a service account for Freeday.
+
+[01:00] Tom: For authentication, we use OAuth 2.0 with client credentials flow. I'll generate the client ID and secret - they rotate every 90 days, so we'll need a process for that.
+
+[01:20] Sophie: What data fields can we read and write?
+
+[01:30] Tom: For claim creation, the API accepts: policy_number (required), claimant_name, incident_date, incident_description, claim_type (enum: AUTO, HOME, HEALTH, LIFE), estimated_amount, and a documents array for attachments.
+
+[02:00] Tom: For lookup, you can query by policy_number or claim_id. Returns the full claim record including status, assigned_adjuster, and audit_history.
+
+[02:20] Sophie: Where do the incoming claims come from?
+
+[02:30] Tom: Three sources. Email comes through Microsoft 365 - we can set up a shared mailbox claims-intake@acme.com and give you IMAP access or use the Graph API.
+
+[02:50] Tom: Phone calls are transcribed by our IVR system (Genesys Cloud) and dropped as JSON files in an S3 bucket: s3://acme-claims-ivr/transcripts/
+
+[03:10] Tom: Web portal submissions hit our existing API at portal.acme.com/api/claims/submit - we can add a webhook to forward new submissions to Freeday.
+
+[03:30] Sophie: What about document storage?
+
+[03:40] Tom: All documents go to S3. Bucket is acme-claims-documents. We use the claim_id as the prefix. You'll need to upload extracted documents there with appropriate metadata tags.
+
+[04:00] Sophie: Security requirements?
+
+[04:10] Tom: Big ones. All API calls must use TLS 1.3. PII data must be encrypted at rest - we use AES-256. IP whitelisting is required - give us your egress IPs.
+
+[04:30] Tom: For HIPAA compliance, we need audit logs for every data access. The ClaimsPro API automatically logs, but you'll need to pass a correlation_id header on every request.
+
+[04:50] Tom: Data retention: We can only store PII for 90 days in transit systems. After that, it must be in ClaimsPro or deleted.
+
+[05:10] Sophie: What happens if the API is down?
+
+[05:20] Tom: Good question. We have 99.9% SLA but outages happen. You should implement retry logic with exponential backoff. If ClaimsPro is down for more than 15 minutes, queue the claims and alert our team at claims-ops@acme.com.
+
+[05:45] Tom: Also, we have a maintenance window every Sunday 2-4 AM EST. No API calls should be made during that window.
+
+[06:00] Sophie: Any rate limits?
+
+[06:05] Tom: Yes, 100 requests per minute per client. For batch operations, use our bulk endpoint: /api/v2/claims/batch which accepts up to 50 claims per request.
+
+[06:25] Sophie: Who do we contact for technical issues?
+
+[06:30] Tom: I'm the primary contact. Email tom.wilson@acme.com or Slack me in #claims-tech. For after-hours emergencies, page the on-call via PagerDuty - I'll add Freeday to our escalation policy.
+
+[06:50] Sophie: Perfect. Let me recap the integration architecture...
+
+---
+END OF TRANSCRIPT

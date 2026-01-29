@@ -1,0 +1,56 @@
+SAMPLE PROCESS DESIGN SESSION TRANSCRIPT - Use this to test AI extraction
+
+---
+
+[00:00] Sophie (Freeday): Welcome to our first Process Design session. Today we'll map out the claims intake workflow. Lisa, can you walk me through a typical claim from start to finish?
+
+[00:15] Lisa (Client): Sure! A claim typically starts when a customer submits through one of three channels: email, phone, or our web portal. Let me walk you through the happy path first.
+
+[00:30] Lisa: Step 1: The claim comes in with the customer's policy number, date of incident, description of what happened, and any supporting documents like photos or receipts.
+
+[00:45] Lisa: Step 2: We verify the policy is active and check the coverage type. If it's a valid policy, we move forward.
+
+[01:00] Lisa: Step 3: We categorize the claim - is it auto, home, health, or life insurance? Each has slightly different fields.
+
+[01:15] Lisa: Step 4: We extract the key data - claimant name, incident date, location, estimated damage amount, and any third parties involved.
+
+[01:30] Lisa: Step 5: We run a duplicate check to make sure this isn't already in the system. About 5% of claims are duplicates.
+
+[01:45] Lisa: Step 6: We create the claim record in ClaimsPro with all the extracted data and assign it to an adjuster based on claim type and amount.
+
+[02:00] Sophie: That's great. Now what happens when things don't go smoothly?
+
+[02:10] Lisa: Good question. Exception 1: If the policy number is invalid or expired, we can't process it. We send it back to the customer with a request to verify.
+
+[02:25] Lisa: Exception 2: Missing required information. For auto claims, we must have the VIN. For health claims, we need the provider's NPI number. If these are missing, we flag for follow-up.
+
+[02:45] Lisa: Exception 3: Fraud indicators. If the claim amount is unusually high for the incident type, or if the customer has multiple recent claims, we route it to our Special Investigations Unit instead of regular processing.
+
+[03:05] Lisa: Exception 4: Multi-party claims. If there are other insurance companies involved - like a car accident with two drivers - we need additional coordination steps.
+
+[03:25] Sophie: What about the $50K threshold Marcus mentioned?
+
+[03:30] Lisa: Right! Business Rule: Any claim with estimated value over $50,000 automatically gets flagged for manager review before adjuster assignment. The Digital Employee should NOT auto-assign these.
+
+[03:50] Sophie: What types of claims should the Digital Employee handle versus NOT handle?
+
+[04:00] Lisa: IN SCOPE: Standard auto claims under $50K, home claims for damage (not liability), and simple health claims with single providers. These are about 80% of our volume.
+
+[04:20] Lisa: OUT OF SCOPE: Life insurance claims - too sensitive. Liability claims - need legal review. Workers comp - different system. And anything involving litigation.
+
+[04:40] Sophie: When should the Digital Employee escalate to a human?
+
+[04:50] Lisa: Escalation triggers: First, any fraud flag. Second, customer is upset or threatening (we can usually tell from the email tone). Third, claim involves a VIP customer - we have a list. Fourth, any regulatory or compliance questions. Fifth, the customer explicitly asks to speak with a person.
+
+[05:15] Sophie: How do you handle data that's hard to read or incomplete?
+
+[05:25] Lisa: If confidence is low on extracted data - like a blurry receipt - we mark that field as "needs verification" and include it in the adjuster assignment notes. We don't guess.
+
+[05:45] Sophie: Perfect. This is incredibly detailed. Let me summarize the scope items we've identified...
+
+[06:00] Sophie: In scope: Standard auto, home damage, simple health claims under $50K. Out of scope: Life, liability, workers comp, litigation. Escalation for fraud, upset customers, VIPs, compliance questions, or human request.
+
+[06:20] Lisa: That's exactly right!
+
+---
+END OF TRANSCRIPT

@@ -1,0 +1,44 @@
+SAMPLE KICKOFF SESSION TRANSCRIPT - Use this to test AI extraction
+
+---
+
+[00:00] Sophie (Freeday): Welcome everyone to the kickoff session for the Claims Intake Digital Employee. I'm Sophie, your implementation lead. Let's go around and introduce ourselves.
+
+[00:15] Marcus (Client): Hi, I'm Marcus Chen, Director of Claims Operations at Acme Insurance. I'll be the main stakeholder and decision-maker for this project.
+
+[00:30] Lisa (Client): I'm Lisa Park, Claims Team Lead. I manage the team that handles intake today, so I'll be your subject matter expert.
+
+[00:45] Sophie: Great! Let's start with the problem we're solving. Marcus, can you walk us through what's happening today?
+
+[01:00] Marcus: Sure. We process about 2,000 claims per day. Right now, our team manually enters data from emails, phone calls, and our web portal into our claims system. It takes an average of 8 minutes per claim, and we have a 15% error rate due to manual entry mistakes.
+
+[01:30] Lisa: The biggest pain point is that our team spends 70% of their time on data entry instead of actually helping customers with complex cases. We want to flip that ratio.
+
+[02:00] Sophie: What does success look like for this Digital Employee?
+
+[02:10] Marcus: Our primary goal is to reduce claim processing time from 8 minutes to under 2 minutes - that's a 75% reduction. We also want to cut the error rate from 15% to below 3%.
+
+[02:30] Lisa: And for my team, success means they spend less than 30% of their time on routine intake, freeing them up for escalations and customer service.
+
+[03:00] Sophie: What's the expected volume and any timeline constraints?
+
+[03:10] Marcus: We need to handle 2,000 claims daily now, but we're expecting 20% growth next year, so let's plan for 2,500. As for timeline, we're aiming to go live by end of Q2, so about 4 months from now.
+
+[03:30] Sophie: Any hard constraints or non-negotiables we should know about?
+
+[03:40] Marcus: Absolutely. First, HIPAA compliance is mandatory - we're dealing with health insurance claims. Second, all automated decisions must have an audit trail. Third, anything over $50,000 must be reviewed by a human before processing.
+
+[04:00] Lisa: Also, we can't change our existing claims system - the Digital Employee needs to work with ClaimsPro, our current platform.
+
+[04:15] Sophie: That's very helpful. Who else should we involve in the design sessions?
+
+[04:25] Marcus: You'll need Tom from IT for the technical sessions - he manages our ClaimsPro integration. And probably Sarah from Compliance to review the audit requirements.
+
+[04:45] Sophie: Perfect. Let me summarize what I've captured: We're building a Claims Intake Digital Employee for Acme Insurance, targeting 2,000-2,500 daily claims, with goals of 75% time reduction and 3% error rate, must be HIPAA compliant, integrates with ClaimsPro, and anything over $50K needs human review. Go-live target is end of Q2.
+
+[05:15] Marcus: That's exactly right. Looking forward to the process design sessions next week.
+
+[05:20] Sophie: Great! We'll send the calendar invites. Thanks everyone!
+
+---
+END OF TRANSCRIPT

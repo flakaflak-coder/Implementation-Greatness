@@ -1,0 +1,1002 @@
+// Onboarding Command Center - Prisma Schema
+// Database schema for Digital Employee onboarding management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ORGANIZATION MODELS
+// ============================================
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  logoUrl     String?
+  industry    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Primary contact
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+
+  // Relations
+  digitalEmployees DigitalEmployee[]
+
+  @@map("companies")
+}
+
+model DigitalEmployee {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  description String?
+  status      DigitalEmployeeStatus @default(DESIGN)
+  channels    Channel[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  goLiveDate  DateTime?
+
+  // Current phase in the onboarding journey
+  currentJourneyPhase JourneyPhaseType @default(SALES_HANDOVER)
+
+  // Relations
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  designWeek    DesignWeek?
+  journeyPhases JourneyPhase[]
+
+  @@map("digital_employees")
+}
+
+enum DigitalEmployeeStatus {
+  DESIGN
+  ONBOARDING
+  LIVE
+  PAUSED
+}
+
+enum Channel {
+  EMAIL
+  WEBCHAT
+  VOICE
+  WHATSAPP
+  TEAMS
+  SLACK
+}
+
+// ============================================
+// ONBOARDING JOURNEY MODELS
+// ============================================
+
+enum JourneyPhaseType {
+  SALES_HANDOVER
+  KICKOFF
+  DESIGN_WEEK
+  ONBOARDING
+  UAT
+  GO_LIVE
+  HYPERCARE
+  HANDOVER_TO_SUPPORT
+}
+
+enum JourneyPhaseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETE
+  SKIPPED
+}
+
+model JourneyPhase {
+  id                String             @id @default(cuid())
+  digitalEmployeeId String
+  phaseType         JourneyPhaseType
+  status            JourneyPhaseStatus @default(NOT_STARTED)
+  order             Int
+  startedAt         DateTime?
+  completedAt       DateTime?
+  blockedReason     String?
+  notes             String?
+  assignedTo        String?
+  dueDate           DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Checklist items for this phase
+  checklistItems JourneyChecklistItem[]
+
+  // Relations
+  digitalEmployee DigitalEmployee @relation(fields: [digitalEmployeeId], references: [id], onDelete: Cascade)
+
+  @@unique([digitalEmployeeId, phaseType])
+  @@map("journey_phases")
+}
+
+model JourneyChecklistItem {
+  id             String   @id @default(cuid())
+  journeyPhaseId String
+  label          String
+  description    String?
+  isRequired     Boolean  @default(true)
+  isCompleted    Boolean  @default(false)
+  completedAt    DateTime?
+  completedBy    String?
+  order          Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  journeyPhase JourneyPhase @relation(fields: [journeyPhaseId], references: [id], onDelete: Cascade)
+
+  @@map("journey_checklist_items")
+}
+
+// ============================================
+// DESIGN WEEK MODELS
+// ============================================
+
+model DesignWeek {
+  id                String          @id @default(cuid())
+  digitalEmployeeId String          @unique
+  status            DesignWeekStatus @default(NOT_STARTED)
+  currentPhase      Int             @default(1)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Business Profile - stores the fixed-field profile structure
+  // Auto-populated from extractions, manually editable
+  businessProfile   Json?           @db.JsonB
+
+  // Technical Profile - stores integrations, data fields, security requirements
+  technicalProfile  Json?           @db.JsonB
+
+  // Test Plan - stores test cases and coverage tracking
+  testPlan          Json?           @db.JsonB
+
+  // Relations
+  digitalEmployee    DigitalEmployee     @relation(fields: [digitalEmployeeId], references: [id], onDelete: Cascade)
+  sessions           Session[]
+  scopeItems         ScopeItem[]
+  scenarios          Scenario[]
+  kpis               KPI[]
+  integrations       Integration[]
+  escalationRules    EscalationRule[]
+  artifacts          Artifact[]
+  signOffs           SignOff[]
+  generatedDocuments GeneratedDocument[]
+  rawExtractions     RawExtraction[]
+  uploadJobs         UploadJob[]
+
+  @@map("design_weeks")
+}
+
+enum DesignWeekStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_SIGNOFF
+  COMPLETE
+}
+
+model Session {
+  id              String           @id @default(cuid())
+  designWeekId    String
+  phase           Int
+  sessionNumber   Int
+  date            DateTime
+  recordingUrl    String?
+  recordingDuration Int?           // in seconds
+  processingStatus ProcessingStatus @default(PENDING)
+  processedAt     DateTime?
+  topicsCovered   String[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Auto-generated next session agenda
+  suggestedAgenda Json?
+
+  // Relations
+  designWeek      DesignWeek          @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  materials       Material[]
+  extractions     Extraction[]
+  extractedItems  ExtractedItem[]
+  transcript      TranscriptSegment[]
+  rawExtractions  RawExtraction[]
+
+  @@map("sessions")
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+model Material {
+  id        String       @id @default(cuid())
+  sessionId String
+  type      MaterialType
+  filename  String
+  url       String
+  mimeType  String
+  processed Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  // Relations
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("materials")
+}
+
+enum MaterialType {
+  RECORDING
+  SLIDES
+  DOCUMENT
+  NOTES
+}
+
+model TranscriptSegment {
+  id        String   @id @default(cuid())
+  sessionId String
+  startTime Float    // seconds
+  endTime   Float    // seconds
+  speaker   String?
+  text      String
+  category  String?  // topic category
+  createdAt DateTime @default(now())
+
+  // Relations
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("transcript_segments")
+}
+
+// ============================================
+// EXTRACTION MODELS
+// ============================================
+
+model Extraction {
+  id              String           @id @default(cuid())
+  sessionId       String
+  type            ExtractionType
+  confidence      Float            @default(0.5)
+  status          ExtractionStatus @default(CONFIRMED)
+  ambiguityReason String?
+  resolvedInSessionId String?
+  resolutionNotes String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  session  Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  evidence Evidence[]
+
+  @@map("extractions")
+}
+
+enum ExtractionType {
+  SCOPE
+  SCENARIO
+  KPI
+  INTEGRATION
+  ESCALATION
+  DECISION
+}
+
+enum ExtractionStatus {
+  CONFIRMED
+  AMBIGUOUS
+  NEEDS_DISCUSSION
+}
+
+model Evidence {
+  id           String      @id @default(cuid())
+  extractionId String?
+  sourceType   SourceType
+  sourceId     String      // Material ID or Session ID
+  timestampStart Float?    // for recordings (seconds)
+  timestampEnd   Float?
+  page         Int?        // for documents
+  paragraph    Int?
+  quote        String
+
+  // Relations
+  extraction Extraction? @relation(fields: [extractionId], references: [id], onDelete: Cascade)
+
+  // Can also be linked to specific entities
+  scopeItemId      String?
+  scenarioId       String?
+  kpiId            String?
+  integrationId    String?
+  escalationRuleId String?
+
+  scopeItem      ScopeItem?      @relation(fields: [scopeItemId], references: [id])
+  scenario       Scenario?       @relation(fields: [scenarioId], references: [id])
+  kpi            KPI?            @relation(fields: [kpiId], references: [id])
+  integration    Integration?    @relation(fields: [integrationId], references: [id])
+  escalationRule EscalationRule? @relation(fields: [escalationRuleId], references: [id])
+
+  @@map("evidence")
+}
+
+enum SourceType {
+  RECORDING
+  DOCUMENT
+}
+
+// ============================================
+// SCOPE ITEMS
+// ============================================
+
+model ScopeItem {
+  id             String              @id @default(cuid())
+  designWeekId   String
+  statement      String
+  classification ScopeClassification
+  skill          String?             // Which skill this belongs to
+  conditions     String?
+  notes          String?
+  status         ExtractionStatus    @default(CONFIRMED)
+  excludeFromDocument Boolean        @default(false) // Exclude from generated documents
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  evidence   Evidence[]
+
+  @@map("scope_items")
+}
+
+enum ScopeClassification {
+  IN_SCOPE
+  OUT_OF_SCOPE
+  AMBIGUOUS
+}
+
+// ============================================
+// SCENARIOS
+// ============================================
+
+model Scenario {
+  id              String   @id @default(cuid())
+  designWeekId    String
+  name            String
+  trigger         String
+  actor           String
+  expectedOutcome String?
+  successCriteria String[]
+  skill           String?
+  excludeFromDocument Boolean @default(false) // Exclude from generated documents
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  designWeek DesignWeek     @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  steps      ScenarioStep[]
+  edgeCases  EdgeCase[]
+  evidence   Evidence[]
+
+  @@map("scenarios")
+}
+
+model ScenarioStep {
+  id            String   @id @default(cuid())
+  scenarioId    String
+  order         Int
+  actor         StepActor
+  action        String
+  systemAction  String?
+  decisionPoint Boolean  @default(false)
+
+  // Relations
+  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("scenario_steps")
+}
+
+enum StepActor {
+  DIGITAL_EMPLOYEE
+  CUSTOMER
+  SYSTEM
+  HUMAN_AGENT
+}
+
+model EdgeCase {
+  id         String  @id @default(cuid())
+  scenarioId String
+  condition  String
+  handling   String
+  escalate   Boolean @default(false)
+
+  // Relations
+  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@map("edge_cases")
+}
+
+// ============================================
+// KPIs
+// ============================================
+
+model KPI {
+  id              String   @id @default(cuid())
+  designWeekId    String
+  name            String
+  description     String?
+  measurementMethod String?
+  dataSource      String?
+  frequency       String?
+  targetValue     String?
+  baselineValue   String?
+  pilotTarget     String?
+  scaleTarget     String?
+  owner           String?
+  status          ExtractionStatus @default(CONFIRMED)
+  excludeFromDocument Boolean @default(false) // Exclude from generated documents
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  evidence   Evidence[]
+
+  @@map("kpis")
+}
+
+// ============================================
+// INTEGRATIONS
+// ============================================
+
+model Integration {
+  id           String            @id @default(cuid())
+  designWeekId String
+  systemName   String
+  purpose      String?
+  type         IntegrationType?
+  endpoint     String?
+  authMethod   AuthMethod?
+  authOwner    String?
+  fieldsRead   String[]
+  fieldsWrite  String[]
+  rateLimits   String?
+  onTimeout    String?
+  onAuthFailure String?
+  onNotFound   String?
+  status       IntegrationStatus @default(IDENTIFIED)
+  excludeFromDocument Boolean   @default(false) // Exclude from generated documents
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  evidence   Evidence[]
+
+  @@map("integrations")
+}
+
+enum IntegrationType {
+  API
+  DATABASE
+  WEBHOOK
+  FILE
+  OTHER
+}
+
+enum AuthMethod {
+  OAUTH
+  API_KEY
+  BASIC
+  CERTIFICATE
+}
+
+enum IntegrationStatus {
+  IDENTIFIED
+  SPEC_COMPLETE
+  CREDENTIALS_RECEIVED
+  TESTED
+  READY
+}
+
+// ============================================
+// ESCALATION RULES
+// ============================================
+
+model EscalationRule {
+  id             String              @id @default(cuid())
+  designWeekId   String
+  trigger        String
+  conditionType  ConditionType
+  threshold      Float?              // for confidence-based
+  keywords       String[]            // for keyword-based
+  action         EscalationAction
+  handoverContext String[]
+  priority       Priority            @default(MEDIUM)
+  excludeFromDocument Boolean        @default(false) // Exclude from generated documents
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  evidence   Evidence[]
+
+  @@map("escalation_rules")
+}
+
+enum ConditionType {
+  KEYWORD
+  CONFIDENCE
+  SCENARIO
+  POLICY
+  TIME
+}
+
+enum EscalationAction {
+  ESCALATE_IMMEDIATE
+  ESCALATE_WITH_SUMMARY
+  SAFE_ANSWER
+  END_CONVERSATION
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+// ============================================
+// ARTIFACTS
+// ============================================
+
+model Artifact {
+  id               String         @id @default(cuid())
+  designWeekId     String
+  type             ArtifactType
+  version          Int            @default(1)
+  status           ArtifactStatus @default(DRAFT)
+  content          Json           // Structured content per schema
+  completenessScore Float         @default(0)
+  missingFields    String[]
+  generatedAt      DateTime       @default(now())
+  approvedAt       DateTime?
+  approvedBy       String?
+
+  // Relations
+  designWeek DesignWeek       @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  sections   ArtifactSection[]
+
+  @@map("artifacts")
+}
+
+enum ArtifactType {
+  INTAKE_DOC
+  ONBOARDING_PLAN
+  JOB_DESIGN
+  SUPPORT_RUNBOOK
+  UAT_SCRIPTS
+  CUSTOMER_FAQ
+}
+
+enum ArtifactStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+}
+
+model ArtifactSection {
+  id           String   @id @default(cuid())
+  artifactId   String
+  name         String
+  order        Int
+  content      Json
+  fieldStatus  Json     // Record<field, 'complete'|'partial'|'missing'>
+  signedOff    Boolean  @default(false)
+  signedOffBy  String?
+  signedOffAt  DateTime?
+
+  // Relations
+  artifact Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@map("artifact_sections")
+}
+
+// ============================================
+// SIGN-OFFS
+// ============================================
+
+model SignOff {
+  id           String       @id @default(cuid())
+  designWeekId String
+  stakeholder  String
+  role         String
+  status       SignOffStatus @default(PENDING)
+  comments     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+
+  @@map("sign_offs")
+}
+
+enum SignOffStatus {
+  PENDING
+  APPROVED
+  NEEDS_CHANGES
+}
+
+// ============================================
+// OBSERVATORY MODELS
+// ============================================
+
+model ObservatoryEvent {
+  id        String   @id @default(cuid())
+  type      EventType
+  featureId String?
+  userId    String?
+  sessionId String?  // browser session
+  metadata  Json?
+  duration  Int?     // in milliseconds
+  success   Boolean  @default(true)
+  timestamp DateTime @default(now())
+
+  @@index([type, timestamp])
+  @@index([featureId, timestamp])
+  @@map("observatory_events")
+}
+
+enum EventType {
+  FEATURE_USAGE
+  PAGE_VIEW
+  API_CALL
+  ERROR
+  LLM_OPERATION
+}
+
+model ObservatoryError {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  featureId String?
+  userId    String?
+  endpoint  String?
+  metadata  Json?
+  count     Int      @default(1)
+  status    ErrorStatus @default(NEW)
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @default(now())
+
+  @@index([status, lastSeen])
+  @@map("observatory_errors")
+}
+
+enum ErrorStatus {
+  NEW
+  INVESTIGATING
+  RESOLVED
+  IGNORED
+}
+
+model ObservatoryFeedback {
+  id        String       @id @default(cuid())
+  type      FeedbackType
+  content   String
+  featureId String?
+  userId    String?
+  npsScore  Int?
+  status    FeedbackStatus @default(NEW)
+  createdAt DateTime     @default(now())
+
+  @@index([status, createdAt])
+  @@map("observatory_feedback")
+}
+
+enum FeedbackType {
+  BUG
+  FEATURE_REQUEST
+  PRAISE
+  COMPLAINT
+  GENERAL
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+  CLOSED
+}
+
+model ObservatoryLLMOperation {
+  id           String   @id @default(cuid())
+  pipelineName String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  latencyMs    Int
+  cost         Float?
+  success      Boolean  @default(true)
+  errorMessage String?
+  metadata     Json?
+  timestamp    DateTime @default(now())
+
+  @@index([pipelineName, timestamp])
+  @@map("observatory_llm_operations")
+}
+
+// ============================================
+// LLM PIPELINE MODELS
+// ============================================
+
+// Configurable prompts for extraction and document generation
+model PromptTemplate {
+  id          String             @id @default(cuid())
+  name        String             @unique // e.g., "extract_kickoff", "generate_de_design"
+  type        PromptType
+  description String?
+  prompt      String             @db.Text
+  model       String             @default("claude-sonnet-4-20250514")
+  temperature Float              @default(0.3)
+  maxTokens   Int                @default(4096)
+  version     Int                @default(1)
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relations
+  extractedItems    ExtractedItem[]
+  generatedDocuments GeneratedDocument[]
+
+  @@map("prompt_templates")
+}
+
+enum PromptType {
+  EXTRACT_KICKOFF
+  EXTRACT_PROCESS
+  EXTRACT_TECHNICAL
+  EXTRACT_SIGNOFF
+  GENERATE_DE_DESIGN
+  GENERATE_SOLUTION
+  GENERATE_TEST_PLAN
+}
+
+// Extracted items from sessions with detailed typing
+model ExtractedItem {
+  id               String            @id @default(cuid())
+  sessionId        String
+  promptTemplateId String?
+  type             ExtractedItemType
+  category         String?           // Sub-category within type
+  content          String            @db.Text
+  structuredData   Json?             // Additional structured fields
+  confidence       Float             @default(0.8)
+  status           ReviewStatus      @default(PENDING)
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Evidence linking
+  sourceTimestamp  Float?            // seconds into recording
+  sourceSpeaker    String?
+  sourceQuote      String?           @db.Text
+
+  // Relations
+  session        Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  promptTemplate PromptTemplate? @relation(fields: [promptTemplateId], references: [id])
+
+  @@index([sessionId, type])
+  @@index([status])
+  @@map("extracted_items")
+}
+
+enum ExtractedItemType {
+  // Business Context extractions (Kickoff)
+  STAKEHOLDER
+  GOAL
+  KPI_TARGET
+  VOLUME_EXPECTATION
+  TIMELINE_CONSTRAINT
+  BUSINESS_CASE
+  COST_PER_CASE
+  PEAK_PERIODS
+
+  // Process extractions (Process Design 1)
+  HAPPY_PATH_STEP
+  EXCEPTION_CASE
+  BUSINESS_RULE
+  SCOPE_IN
+  SCOPE_OUT
+  ESCALATION_TRIGGER
+  CASE_TYPE
+  DOCUMENT_TYPE
+
+  // Channel extractions (Process Design 1)
+  CHANNEL
+  CHANNEL_VOLUME
+  CHANNEL_SLA
+  CHANNEL_RULE
+
+  // Skills extractions (Process Design 2)
+  SKILL_ANSWER
+  SKILL_ROUTE
+  SKILL_APPROVE_REJECT
+  SKILL_REQUEST_INFO
+  SKILL_NOTIFY
+  SKILL_OTHER
+  KNOWLEDGE_SOURCE
+  BRAND_TONE
+  COMMUNICATION_STYLE
+  RESPONSE_TEMPLATE
+
+  // Guardrails extractions (Process Design 2)
+  GUARDRAIL_NEVER
+  GUARDRAIL_ALWAYS
+  FINANCIAL_LIMIT
+  LEGAL_RESTRICTION
+  COMPLIANCE_REQUIREMENT
+
+  // Integration extractions (Technical 1 & 2)
+  SYSTEM_INTEGRATION
+  DATA_FIELD
+  API_ENDPOINT
+  SECURITY_REQUIREMENT
+  ERROR_HANDLING
+  TECHNICAL_CONTACT
+
+  // Sign-off extractions
+  OPEN_ITEM
+  DECISION
+  APPROVAL
+  RISK
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_CLARIFICATION
+}
+
+// Generated documents from templates
+model GeneratedDocument {
+  id               String             @id @default(cuid())
+  designWeekId     String
+  promptTemplateId String?
+  type             GeneratedDocType
+  version          Int                @default(1)
+  status           DocumentStatus     @default(DRAFT)
+  content          String             @db.Text
+  structuredContent Json?             // Parsed sections
+  completenessScore Float?
+  missingFields    String[]
+  generatedAt      DateTime           @default(now())
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  approvedBy       String?
+  approvedAt       DateTime?
+
+  // LLM metadata
+  inputTokens      Int?
+  outputTokens     Int?
+  latencyMs        Int?
+
+  // Relations
+  designWeek     DesignWeek      @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  promptTemplate PromptTemplate? @relation(fields: [promptTemplateId], references: [id])
+
+  @@index([designWeekId, type])
+  @@map("generated_documents")
+}
+
+enum GeneratedDocType {
+  DE_DESIGN        // Digital Employee Design (client-facing)
+  SOLUTION_DESIGN  // Technical Solution Design (internal)
+  TEST_PLAN        // Test Plan (client-facing)
+}
+
+enum DocumentStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+}
+
+// ============================================
+// UNIFIED UPLOAD PIPELINE MODELS
+// ============================================
+
+// Stores complete extraction JSON for chat agent
+model RawExtraction {
+  id              String                @id @default(cuid())
+  designWeekId    String
+  sessionId       String?
+  contentType     ContentClassification
+  sourceFileName  String?
+  sourceMimeType  String?
+  rawJson         Json                  @db.JsonB
+  extractionVersion Int                 @default(1)
+  metadata        Json?                 // Processing metadata (tokens, latency, etc.)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  // Relations
+  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  session    Session?   @relation(fields: [sessionId], references: [id])
+  uploadJobs UploadJob[]
+
+  @@index([designWeekId])
+  @@index([contentType])
+  @@map("raw_extractions")
+}
+
+// Tracks upload job progress through the pipeline
+model UploadJob {
+  id              String          @id @default(cuid())
+  designWeekId    String
+  filename        String
+  mimeType        String
+  fileUrl         String
+  fileSize        Int
+  status          UploadJobStatus @default(QUEUED)
+  currentStage    PipelineStage   @default(CLASSIFICATION)
+
+  // Stage results
+  classificationResult Json?       // { type, confidence, missingQuestions }
+  rawExtractionId      String?     // Link to RawExtraction after Stage 2
+  populationResult     Json?       // { extractedItems, integrations, businessRules, testCases }
+
+  // Progress tracking
+  stageProgress Json?              // { stage, percent, message }
+  error         String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  designWeek    DesignWeek     @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  rawExtraction RawExtraction? @relation(fields: [rawExtractionId], references: [id])
+
+  @@index([designWeekId, status])
+  @@map("upload_jobs")
+}
+
+enum ContentClassification {
+  KICKOFF_SESSION
+  PROCESS_DESIGN_SESSION
+  SKILLS_GUARDRAILS_SESSION
+  TECHNICAL_SESSION
+  SIGNOFF_SESSION
+  REQUIREMENTS_DOCUMENT
+  TECHNICAL_SPEC
+  PROCESS_DOCUMENT
+  UNKNOWN
+}
+
+enum UploadJobStatus {
+  QUEUED
+  CLASSIFYING
+  EXTRACTING_GENERAL
+  EXTRACTING_SPECIALIZED
+  POPULATING_TABS
+  COMPLETE
+  FAILED
+}
+
+enum PipelineStage {
+  CLASSIFICATION
+  GENERAL_EXTRACTION
+  SPECIALIZED_EXTRACTION
+  TAB_POPULATION
+  COMPLETE
+}
