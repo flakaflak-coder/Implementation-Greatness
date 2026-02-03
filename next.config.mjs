@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Output standalone for Docker deployment
+  output: 'standalone',
+
   // Security headers
   async headers() {
     return [
