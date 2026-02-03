@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ReviewStatus } from '@prisma/client'
+import { validateBody, validateId, UpdateExtractedItemSchema } from '@/lib/validation'
 
 // Update extracted item (review)
 export async function PATCH(
@@ -9,16 +9,23 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
-    const { status, content, reviewNotes, reviewedBy } = body as {
-      status?: ReviewStatus
-      content?: string
-      reviewNotes?: string
-      reviewedBy?: string
+
+    // Validate ID format
+    const idValidation = validateId(id)
+    if (!idValidation.success) {
+      return idValidation.response
     }
 
+    // Validate request body
+    const bodyValidation = await validateBody(request, UpdateExtractedItemSchema)
+    if (!bodyValidation.success) {
+      return bodyValidation.response
+    }
+
+    const { status, content, reviewNotes, reviewedBy } = bodyValidation.data
+
     const item = await prisma.extractedItem.update({
-      where: { id },
+      where: { id: idValidation.id },
       data: {
         ...(status && { status }),
         ...(content && { content }),
@@ -46,8 +53,14 @@ export async function DELETE(
   try {
     const { id } = await params
 
+    // Validate ID format
+    const idValidation = validateId(id)
+    if (!idValidation.success) {
+      return idValidation.response
+    }
+
     await prisma.extractedItem.delete({
-      where: { id },
+      where: { id: idValidation.id },
     })
 
     return NextResponse.json({ success: true })

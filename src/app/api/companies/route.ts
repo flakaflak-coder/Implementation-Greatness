@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateBody, CreateCompanySchema } from '@/lib/validation'
 
 // GET /api/companies - List all companies with their digital employees
 export async function GET() {
@@ -39,15 +40,13 @@ export async function GET() {
 // POST /api/companies - Create a new company
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, industry } = body
-
-    if (!name) {
-      return NextResponse.json(
-        { success: false, error: 'Company name is required' },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = await validateBody(request, CreateCompanySchema)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { name, industry } = validation.data
 
     const company = await prisma.company.create({
       data: {

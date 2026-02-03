@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -95,13 +96,24 @@ function getStatusBadge(status: string) {
 
 function formatConfidence(confidence: number) {
   const percentage = Math.round(confidence * 100)
-  let color = 'text-green-600'
-  if (percentage < 60) color = 'text-red-600'
-  else if (percentage < 80) color = 'text-amber-600'
-  return <span className={`text-sm font-medium ${color}`}>{percentage}%</span>
+  let bgColor = 'bg-green-100 text-green-700 border-green-200'
+  let label = 'High'
+  if (percentage < 60) {
+    bgColor = 'bg-red-100 text-red-700 border-red-200'
+    label = 'Low'
+  } else if (percentage < 80) {
+    bgColor = 'bg-amber-100 text-amber-700 border-amber-200'
+    label = 'Med'
+  }
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${bgColor}`} title={`${percentage}% confidence`}>
+      {percentage}% {label}
+    </span>
+  )
 }
 
 export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
+  const { data: session } = useSession()
   const [items, setItems] = useState<ExtractedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -138,7 +150,7 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
         body: JSON.stringify({
           status,
           reviewNotes: reviewNotes[itemId] || null,
-          reviewedBy: 'Sophie', // TODO: Get from auth
+          reviewedBy: session?.user?.name || session?.user?.email || 'Unknown',
         }),
       })
 
@@ -175,6 +187,13 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
     const pendingItems = items.filter((item) => item.status === 'PENDING')
     for (const item of pendingItems) {
       await handleReview(item.id, 'APPROVED')
+    }
+  }
+
+  const rejectAll = async () => {
+    const pendingItems = items.filter((item) => item.status === 'PENDING')
+    for (const item of pendingItems) {
+      await handleReview(item.id, 'REJECTED')
     }
   }
 
@@ -235,10 +254,16 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
           </div>
         </div>
         {pendingCount > 0 && (
-          <Button variant="outline" size="sm" onClick={approveAll}>
-            <Check className="w-4 h-4 mr-2" />
-            Approve All ({pendingCount})
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={approveAll} className="text-green-600 hover:bg-green-50">
+              <Check className="w-4 h-4 mr-2" />
+              Approve All ({pendingCount})
+            </Button>
+            <Button variant="outline" size="sm" onClick={rejectAll} className="text-red-600 hover:bg-red-50">
+              <X className="w-4 h-4 mr-2" />
+              Reject All
+            </Button>
+          </div>
         )}
       </div>
 

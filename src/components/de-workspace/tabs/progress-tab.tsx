@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   AlertCircle,
   ArrowRight,
@@ -14,6 +14,8 @@ import {
   MessageSquare,
   Cpu,
   Signature,
+  Key,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -24,7 +26,8 @@ import { DesignWeekTimeline, PhaseData, SessionCard, ProcessingStatus } from '@/
 import { CircularProgress } from '../shared/completeness-badge'
 import { GenerateDocButton } from '../shared/generate-doc-button'
 import { ExportPDFButton } from '../shared/export-pdf-button'
-import { UnifiedUpload, UploadHistory } from '@/components/upload'
+import { MissingQuestionsCard } from '../shared/missing-questions-card'
+import type { ExtractedItemType } from '@prisma/client'
 import type {
   ProfileCompleteness,
   ExtractedItemWithSession,
@@ -40,9 +43,10 @@ interface ProgressTabProps {
   profileCompleteness: ProfileCompleteness
   pendingItems: ExtractedItemWithSession[]
   ambiguousItems: DEWorkspaceScopeItem[]
+  extractedItems: ExtractedItemWithSession[]  // All extracted items for auto-coverage
   onTabChange: (tab: WorkspaceTab) => void
   onUploadSession: (phase: number) => void
-  onExtractSession: (sessionId: string) => void
+  onExtractSession?: (sessionId: string) => void
   onRefresh: () => void
   className?: string
 }
@@ -134,14 +138,66 @@ const PHASES = [
   { number: 4, name: 'Sign-off', expectedSessions: 1, description: 'Final confirmations, go/no-go' },
 ]
 
+// Maps each question to ExtractedItemTypes that indicate it's been covered
+// Array index matches standardQuestions index in PHASE_CONFIG
+const QUESTION_COVERAGE_MAPPING: Record<number, ExtractedItemType[][]> = {
+  // Phase 1 (Kickoff) - 6 questions
+  1: [
+    ['GOAL', 'BUSINESS_CASE'],           // "What problem are we solving?"
+    ['STAKEHOLDER'],                      // "Who are the key stakeholders?"
+    ['KPI_TARGET', 'GOAL'],              // "What does success look like?"
+    ['VOLUME_EXPECTATION'],              // "What's the expected volume?"
+    ['TIMELINE_CONSTRAINT'],             // "What's the timeline expectation?"
+    ['BUSINESS_CASE'],                   // "Any hard constraints or non-negotiables?"
+  ],
+  // Phase 2 (Process Design) - 8 questions
+  2: [
+    ['CASE_TYPE', 'CHANNEL'],            // "What triggers this process?"
+    ['HAPPY_PATH_STEP'],                 // "Walk me through a typical case"
+    ['DATA_FIELD', 'DOCUMENT_TYPE'],     // "What information is collected?"
+    ['HAPPY_PATH_STEP'],                 // "How does the process end?"
+    ['EXCEPTION_CASE'],                  // "What happens if data is missing?"
+    ['SCOPE_OUT'],                       // "What types do you NOT handle?"
+    ['ESCALATION_TRIGGER'],              // "When do you escalate?"
+    ['EXCEPTION_CASE'],                  // "Most common exceptions?"
+  ],
+  // Phase 3 (Technical) - 6 questions
+  3: [
+    ['SYSTEM_INTEGRATION'],              // "What systems does this touch?"
+    ['DATA_FIELD'],                      // "Where does data come from?"
+    ['SYSTEM_INTEGRATION', 'API_ENDPOINT'], // "Where does data need to go?"
+    ['SECURITY_REQUIREMENT'],            // "What credentials/access needed?"
+    ['COMPLIANCE_REQUIREMENT', 'SECURITY_REQUIREMENT'], // "Security/compliance?"
+    ['TECHNICAL_CONTACT', 'STAKEHOLDER'], // "Who owns technical relationship?"
+  ],
+  // Phase 4 (Sign-off) - 4 questions
+  4: [
+    ['SCOPE_IN', 'SCOPE_OUT'],           // "Is scope complete?"
+    ['OPEN_ITEM', 'RISK'],               // "Outstanding concerns?"
+    ['APPROVAL', 'STAKEHOLDER'],         // "Who is signing off?"
+    ['DECISION', 'OPEN_ITEM'],           // "Immediate next steps?"
+  ],
+}
+
 // Type for question tracking state
 type QuestionTracker = Record<number, Set<number>> // phase -> set of answered question indices
+
+// Prerequisites summary type
+interface PrerequisiteSummary {
+  total: number
+  received: number
+  pending: number
+  requested: number
+  blocked: number
+  inProgress: number
+}
 
 export function ProgressTab({
   designWeek,
   profileCompleteness,
   pendingItems,
   ambiguousItems,
+  extractedItems,
   onTabChange,
   onUploadSession,
   onExtractSession,
@@ -152,6 +208,37 @@ export function ProgressTab({
 
   // Track answered questions (persisted in localStorage)
   const [answeredQuestions, setAnsweredQuestions] = useState<QuestionTracker>({})
+
+  // Prerequisites summary state
+  const [prereqSummary, setPrereqSummary] = useState<PrerequisiteSummary | null>(null)
+
+  // Fetch prerequisites summary
+  useEffect(() => {
+    async function fetchPrerequisites() {
+      try {
+        const response = await fetch(`/api/design-weeks/${designWeek.id}/prerequisites`)
+        if (response.ok) {
+          const data = await response.json()
+          const prerequisites = data.prerequisites || []
+
+          // Calculate summary
+          const summary: PrerequisiteSummary = {
+            total: prerequisites.length,
+            received: prerequisites.filter((p: { status: string }) => p.status === 'RECEIVED').length,
+            pending: prerequisites.filter((p: { status: string }) => p.status === 'PENDING').length,
+            requested: prerequisites.filter((p: { status: string }) => p.status === 'REQUESTED').length,
+            blocked: prerequisites.filter((p: { status: string }) => p.status === 'BLOCKED').length,
+            inProgress: prerequisites.filter((p: { status: string }) => p.status === 'IN_PROGRESS').length,
+          }
+          setPrereqSummary(summary)
+        }
+      } catch (error) {
+        console.error('Failed to fetch prerequisites:', error)
+      }
+    }
+
+    fetchPrerequisites()
+  }, [designWeek.id])
 
   // Load answered questions from localStorage on mount
   useEffect(() => {
@@ -211,6 +298,39 @@ export function ProgressTab({
     return { answered, total: totalQuestions }
   }
 
+  // Compute auto-covered questions based on APPROVED extracted items only
+  const autoCoveredQuestions = useMemo(() => {
+    const result: QuestionTracker = {}
+
+    // Only count APPROVED items for auto-coverage (pending items aren't confirmed yet)
+    const approvedItems = extractedItems.filter(i => i.status === 'APPROVED')
+    const approvedItemTypes = new Set(approvedItems.map(i => i.type))
+
+    // For each phase, check which questions are covered by approved items
+    Object.entries(QUESTION_COVERAGE_MAPPING).forEach(([phaseStr, questionTypes]) => {
+      const phase = parseInt(phaseStr)
+      result[phase] = new Set()
+
+      questionTypes.forEach((requiredTypes, questionIndex) => {
+        // Question is covered if ANY of the required types exist in approved items
+        const isCovered = requiredTypes.some(type => approvedItemTypes.has(type))
+        if (isCovered) {
+          result[phase].add(questionIndex)
+        }
+      })
+    })
+
+    return result
+  }, [extractedItems])
+
+  // Get combined coverage count (manual + auto) for a phase
+  const getCombinedCoveredCount = (phase: number, totalQuestions: number) => {
+    const manual = answeredQuestions[phase] || new Set()
+    const auto = autoCoveredQuestions[phase] || new Set()
+    const combined = new Set([...manual, ...auto])
+    return { covered: combined.size, total: totalQuestions }
+  }
+
   // Calculate phase data for timeline
   const phases: PhaseData[] = PHASE_CONFIG.map((phase) => {
     const phaseSessions = designWeek.sessions.filter((s) => s.phase === phase.number)
@@ -243,17 +363,18 @@ export function ProgressTab({
     }
   })
 
-  // Calculate overall progress
-  const totalExpectedSessions = PHASE_CONFIG.reduce((sum, p) => sum + p.expectedSessions, 0)
+  // Calculate session stats (informational, not progress-driving)
   const totalCompletedSessions = designWeek.sessions.filter(
     (s) => s.processingStatus === 'COMPLETE'
   ).length
-  const sessionProgress = (totalCompletedSessions / totalExpectedSessions) * 100
 
-  // Weighted progress: 60% sessions, 40% profile completeness
-  const avgProfileCompleteness =
-    (profileCompleteness.business.overall + profileCompleteness.technical.overall) / 2
-  const overallProgress = Math.round(sessionProgress * 0.6 + avgProfileCompleteness * 0.4)
+  // Data-centric progress: Based purely on profile completeness
+  // Sessions are a means to gather data, not the goal themselves
+  // Progress = weighted average of Business (60%) + Technical (40%) profiles
+  const overallProgress = Math.round(
+    profileCompleteness.business.overall * 0.60 +
+    profileCompleteness.technical.overall * 0.40
+  )
 
   // Profile section cards data
   const businessSections = Object.entries(profileCompleteness.business.sections) as [
@@ -291,8 +412,8 @@ export function ProgressTab({
       {/* Overall Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Design Week Progress</CardTitle>
-          <CardDescription>Track your progress toward sign-off and go-live</CardDescription>
+          <CardTitle>DE Profile Completeness</CardTitle>
+          <CardDescription>How complete is the Digital Employee definition? Fill in all required data to be ready for sign-off.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Rocket progress bar */}
@@ -303,17 +424,17 @@ export function ProgressTab({
             animate
           />
 
-          {/* Timeline */}
+          {/* Session Topic Selector */}
           <DesignWeekTimeline
             phases={phases}
             selectedPhase={selectedPhase}
             onPhaseSelect={setSelectedPhase}
           />
 
-          {/* Session stats */}
+          {/* Data stats */}
           <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">
             <span>
-              {totalCompletedSessions} of {totalExpectedSessions} sessions completed
+              {extractedItems.filter(i => i.status === 'APPROVED').length} approved items from {totalCompletedSessions} sessions
             </span>
             <span>
               {designWeek.scopeItems.filter((s) => s.classification !== 'AMBIGUOUS').length} scope
@@ -323,7 +444,7 @@ export function ProgressTab({
         </CardContent>
       </Card>
 
-      {/* Phase Details with Sessions and Questions */}
+      {/* Session Planning Guide - Helps Sophie know what to ask when */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -338,32 +459,15 @@ export function ProgressTab({
               </div>
               <div>
                 <CardTitle className="text-lg">
-                  Phase {selectedPhase}: {selectedPhaseConfig.name}
+                  {selectedPhaseConfig.name} Session Guide
                 </CardTitle>
-                <CardDescription>{selectedPhaseConfig.description}</CardDescription>
+                <CardDescription>Suggested topics and questions for {selectedPhaseConfig.name.toLowerCase()} sessions</CardDescription>
               </div>
             </div>
 {/* Upload button moved to unified upload below */}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Unified Upload - Single drop zone for all content */}
-          <UnifiedUpload
-            designWeekId={designWeek.id}
-            onComplete={onRefresh}
-          />
-
-          {/* Upload History - Shows all uploaded files */}
-          {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
-            <UploadHistory
-              uploads={designWeek.uploadJobs}
-              onRetry={async (jobId) => {
-                await fetch(`/api/upload/${jobId}/retry`, { method: 'POST' })
-                onRefresh()
-              }}
-            />
-          )}
-
           {/* Sessions for this phase */}
           {phaseSessions.length > 0 && (
             <div>
@@ -380,7 +484,7 @@ export function ProgressTab({
                     extractedCount={session.extractedCount}
                     unresolvedCount={session.unresolvedCount}
                     topicsCovered={session.topicsCovered}
-                    onExtract={() => onExtractSession(session.id)}
+                    onExtract={onExtractSession ? () => onExtractSession(session.id) : undefined}
                   />
                 ))}
               </div>
@@ -395,52 +499,60 @@ export function ProgressTab({
                 <h4 className="font-semibold text-gray-900">Questions to Cover</h4>
               </div>
               {(() => {
-                const { answered, total } = getAnsweredCount(selectedPhase, selectedPhaseConfig.standardQuestions.length)
+                const { covered, total } = getCombinedCoveredCount(selectedPhase, selectedPhaseConfig.standardQuestions.length)
                 return (
                   <Badge
-                    variant={answered === total ? 'default' : 'secondary'}
+                    variant={covered === total ? 'default' : 'secondary'}
                     className={cn(
-                      answered === total && 'bg-emerald-500 hover:bg-emerald-600'
+                      covered === total && 'bg-emerald-500 hover:bg-emerald-600'
                     )}
                   >
-                    {answered}/{total} covered
+                    {covered}/{total} covered
                   </Badge>
                 )
               })()}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {selectedPhaseConfig.standardQuestions.map((question, i) => {
-                const isAnswered = answeredQuestions[selectedPhase]?.has(i)
+                const isManuallyAnswered = answeredQuestions[selectedPhase]?.has(i)
+                const isAutoCovered = autoCoveredQuestions[selectedPhase]?.has(i)
+                const isCovered = isManuallyAnswered || isAutoCovered
                 return (
                   <button
                     key={i}
-                    onClick={() => toggleQuestion(selectedPhase, i)}
+                    onClick={() => !isAutoCovered && toggleQuestion(selectedPhase, i)}
+                    disabled={isAutoCovered}
                     className={cn(
                       'flex items-start gap-2 p-2 rounded-lg border text-left transition-all',
-                      isAnswered
-                        ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                      isCovered
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-white border-gray-200 hover:bg-gray-50',
+                      !isAutoCovered && isCovered && 'hover:bg-emerald-100',
+                      isAutoCovered && 'cursor-default'
                     )}
                   >
-                    {isAnswered ? (
-                      <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-500" />
+                    {isCovered ? (
+                      <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
                     ) : (
-                      <Circle className={cn('w-4 h-4 mt-0.5 flex-shrink-0', selectedPhaseConfig.text)} />
+                      <Circle className={cn('w-4 h-4 mt-0.5 shrink-0', selectedPhaseConfig.text)} />
                     )}
                     <span
                       className={cn(
                         'text-sm',
-                        isAnswered ? 'text-emerald-700' : 'text-gray-700'
+                        isCovered ? 'text-emerald-700' : 'text-gray-700'
                       )}
                     >
                       {question}
+                      {isAutoCovered && (
+                        <span className="text-xs text-emerald-500 ml-2">(auto)</span>
+                      )}
                     </span>
                   </button>
                 )
               })}
             </div>
             <p className="text-xs text-gray-500 mt-3">
-              Click questions to mark them as covered during sessions
+              Use these as a guide during sessions. Questions auto-mark when relevant data is extracted and approved.
             </p>
           </div>
         </CardContent>
@@ -465,24 +577,41 @@ export function ProgressTab({
           <CardContent>
             <div className="space-y-2">
               {businessSections.map(([section, data]) => (
-                <div key={section} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all',
-                          data.percentage >= 80
-                            ? 'bg-emerald-500'
-                            : data.percentage >= 50
-                            ? 'bg-amber-500'
-                            : 'bg-red-500'
-                        )}
-                        style={{ width: `${data.percentage}%` }}
-                      />
+                <div key={section} className="group relative">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      {data.missingTypes.length > 0 && (
+                        <AlertCircle className="h-3 w-3 text-amber-500" />
+                      )}
                     </div>
-                    <span className="text-xs text-gray-400 w-8">{data.percentage}%</span>
+                    <div className="flex items-center gap-2">
+                      {data.pendingCount > 0 && (
+                        <span className="text-xs text-amber-500">{data.pendingCount}⏳</span>
+                      )}
+                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all',
+                            data.percentage >= 80
+                              ? 'bg-emerald-500'
+                              : data.percentage >= 50
+                              ? 'bg-amber-500'
+                              : 'bg-red-500'
+                          )}
+                          style={{ width: `${data.percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400 w-8">{data.percentage}%</span>
+                    </div>
                   </div>
+                  {/* Tooltip on hover showing details */}
+                  {data.missingTypes.length > 0 && (
+                    <div className="hidden group-hover:block absolute left-0 top-full z-10 mt-1 p-2 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs">
+                      <p className="font-medium mb-1">Missing types:</p>
+                      <p>{data.missingTypes.slice(0, 3).map(t => t.replace(/_/g, ' ').toLowerCase()).join(', ')}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -510,12 +639,21 @@ export function ProgressTab({
           <CardContent>
             <div className="space-y-2">
               {technicalSections.map(([section, data]) => (
-                <div key={section} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
+                <div key={section} className="group relative">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      {data.missingTypes.length > 0 && (
+                        <AlertCircle className="h-3 w-3 text-amber-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {data.pendingCount > 0 && (
+                        <span className="text-xs text-amber-500">{data.pendingCount}⏳</span>
+                      )}
+                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
                           'h-full rounded-full transition-all',
                           data.percentage >= 80
                             ? 'bg-emerald-500'
@@ -527,7 +665,15 @@ export function ProgressTab({
                       />
                     </div>
                     <span className="text-xs text-gray-400 w-8">{data.percentage}%</span>
+                    </div>
                   </div>
+                  {/* Tooltip on hover showing details */}
+                  {data.missingTypes.length > 0 && (
+                    <div className="hidden group-hover:block absolute left-0 top-full z-10 mt-1 p-2 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs">
+                      <p className="font-medium mb-1">Missing types:</p>
+                      <p>{data.missingTypes.slice(0, 3).map(t => t.replace(/_/g, ' ').toLowerCase()).join(', ')}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -539,16 +685,132 @@ export function ProgressTab({
         </Card>
       </div>
 
-      {/* Blockers & Attention Needed */}
+      {/* Prerequisites Summary Card */}
+      {prereqSummary && prereqSummary.total > 0 && (
+        <Card
+          className={cn(
+            'cursor-pointer hover:shadow-md transition-all',
+            prereqSummary.blocked > 0
+              ? 'border-red-200 hover:border-red-300 bg-red-50/30'
+              : prereqSummary.received === prereqSummary.total
+              ? 'border-emerald-200 hover:border-emerald-300 bg-emerald-50/30'
+              : 'border-amber-200 hover:border-amber-300 bg-amber-50/30'
+          )}
+          onClick={() => onTabChange('technical')}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Key className="h-4 w-4 text-orange-500" />
+                Prerequisites for Configuration
+              </CardTitle>
+              {prereqSummary.blocked > 0 ? (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {prereqSummary.blocked} blocked
+                </Badge>
+              ) : prereqSummary.received === prereqSummary.total ? (
+                <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  All ready
+                </Badge>
+              ) : (
+                <Badge variant="warning" className="gap-1">
+                  <Clock className="h-3 w-3" />
+                  {prereqSummary.total - prereqSummary.received} pending
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Progress bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">
+                  {prereqSummary.received} of {prereqSummary.total} received
+                </span>
+                <span className="text-gray-500">
+                  {prereqSummary.total > 0
+                    ? Math.round((prereqSummary.received / prereqSummary.total) * 100)
+                    : 0}%
+                </span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all',
+                    prereqSummary.blocked > 0
+                      ? 'bg-red-500'
+                      : prereqSummary.received === prereqSummary.total
+                      ? 'bg-emerald-500'
+                      : 'bg-amber-500'
+                  )}
+                  style={{
+                    width: `${prereqSummary.total > 0 ? (prereqSummary.received / prereqSummary.total) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Status breakdown */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              {prereqSummary.received > 0 && (
+                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                  ✓ {prereqSummary.received} received
+                </span>
+              )}
+              {prereqSummary.requested > 0 && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                  📨 {prereqSummary.requested} requested
+                </span>
+              )}
+              {prereqSummary.inProgress > 0 && (
+                <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full">
+                  ⏳ {prereqSummary.inProgress} in progress
+                </span>
+              )}
+              {prereqSummary.pending > 0 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+                  ⏸ {prereqSummary.pending} pending
+                </span>
+              )}
+              {prereqSummary.blocked > 0 && (
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                  🚫 {prereqSummary.blocked} blocked
+                </span>
+              )}
+            </div>
+
+            <Button variant="ghost" size="sm" className="w-full mt-2 gap-2">
+              View Prerequisites in Technical Tab
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Missing Questions from AI Analysis */}
+      {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
+        <MissingQuestionsCard
+          uploads={designWeek.uploadJobs.map(job => ({
+            id: job.id,
+            filename: job.filename,
+            classificationResult: job.classificationResult,
+            status: job.status,
+          }))}
+        />
+      )}
+
+      {/* Data Review Needed */}
       {(pendingItems.length > 0 || ambiguousItems.length > 0) && (
         <Card className="border-amber-200 bg-amber-50/30">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-amber-600" />
-              Attention Needed
+              Data Review Needed
             </CardTitle>
             <CardDescription>
-              Items that need review before sign-off
+              Confirm or clarify extracted information to complete the DE profile
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -584,7 +846,7 @@ export function ProgressTab({
                       {ambiguousItems.length} scope items need clarification
                     </p>
                     <p className="text-sm text-gray-500">
-                      Resolve ambiguous items before proceeding to sign-off
+                      Clarify whether these items are in or out of scope
                     </p>
                   </div>
                 </div>
@@ -604,10 +866,10 @@ export function ProgressTab({
             <CardContent className="py-6">
               <div className="flex items-center justify-center gap-3 text-emerald-700">
                 <CheckCircle2 className="h-6 w-6" />
-                <span className="font-medium">Ready for Sign-off!</span>
+                <span className="font-medium">DE Profile Complete!</span>
               </div>
               <p className="text-center text-sm text-emerald-600 mt-2">
-                All profiles are complete and scope items are resolved
+                All required data has been captured and reviewed - ready for sign-off
               </p>
             </CardContent>
           </Card>
@@ -627,12 +889,14 @@ export function ProgressTab({
             <ExportPDFButton
               designWeekId={designWeek.id}
               disabled={
-                profileCompleteness.business.overall < 30 &&
-                profileCompleteness.technical.overall < 30
+                profileCompleteness.business.overall < 50 &&
+                profileCompleteness.technical.overall < 50
               }
             />
             <p className="text-xs text-gray-500 mt-2">
-              Professional PDF with all extracted information
+              {profileCompleteness.business.overall < 50 && profileCompleteness.technical.overall < 50
+                ? 'Requires at least 50% profile completeness to export'
+                : 'Professional PDF with all extracted information'}
             </p>
           </div>
 

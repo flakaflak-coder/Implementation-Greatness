@@ -17,6 +17,9 @@ describe('GET /api/dashboard', () => {
 
     mockedPrisma.designWeek.count.mockResolvedValue(5) // activeDesignWeeks
 
+    // Mock allDigitalEmployees
+    mockedPrisma.digitalEmployee.findMany.mockResolvedValue([])
+
     // Mock companies
     mockedPrisma.company.findMany.mockResolvedValue([
       {
@@ -106,6 +109,7 @@ describe('GET /api/dashboard', () => {
       .mockResolvedValueOnce(0)
     mockedPrisma.designWeek.count.mockResolvedValue(1)
     mockedPrisma.company.findMany.mockResolvedValue([])
+    mockedPrisma.digitalEmployee.findMany.mockResolvedValue([])
 
     // Design week at phase 2 with insufficient data
     mockedPrisma.designWeek.findMany.mockResolvedValue([
@@ -146,6 +150,7 @@ describe('GET /api/dashboard', () => {
       .mockResolvedValueOnce(0)
     mockedPrisma.designWeek.count.mockResolvedValue(1)
     mockedPrisma.company.findMany.mockResolvedValue([])
+    mockedPrisma.digitalEmployee.findMany.mockResolvedValue([])
 
     mockedPrisma.designWeek.findMany.mockResolvedValue([
       {
@@ -183,6 +188,7 @@ describe('GET /api/dashboard', () => {
       .mockResolvedValueOnce(0)
     mockedPrisma.designWeek.count.mockResolvedValue(0)
     mockedPrisma.company.findMany.mockResolvedValue([])
+    mockedPrisma.digitalEmployee.findMany.mockResolvedValue([])
     mockedPrisma.designWeek.findMany.mockResolvedValue([])
 
     const response = await GET()
@@ -203,6 +209,7 @@ describe('GET /api/dashboard', () => {
       .mockResolvedValueOnce(0)
     mockedPrisma.designWeek.count.mockResolvedValue(1)
     mockedPrisma.company.findMany.mockResolvedValue([])
+    mockedPrisma.digitalEmployee.findMany.mockResolvedValue([])
 
     mockedPrisma.designWeek.findMany.mockResolvedValue([
       {

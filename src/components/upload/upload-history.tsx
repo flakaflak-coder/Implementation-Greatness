@@ -174,12 +174,36 @@ export function UploadHistory({ uploads, onRetry, className }: UploadHistoryProp
 
                 {/* Classification result */}
                 {upload.classificationResult && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    Classified as: <span className="font-medium">{formatClassificationType(upload.classificationResult.type)}</span>
-                    {upload.classificationResult.confidence && (
-                      <span className="text-gray-400"> ({Math.round(upload.classificationResult.confidence * 100)}% confidence)</span>
+                  <div className="mt-1">
+                    <p className="text-xs text-gray-600">
+                      Classified as: <span className="font-medium">{formatClassificationType(upload.classificationResult.type)}</span>
+                      {upload.classificationResult.confidence && (
+                        <span className="text-gray-400"> ({Math.round(upload.classificationResult.confidence * 100)}% confidence)</span>
+                      )}
+                    </p>
+                    {/* Missing questions warning */}
+                    {upload.classificationResult.missingQuestions &&
+                     upload.classificationResult.missingQuestions.length > 0 && (
+                      <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                        <p className="text-xs font-medium text-amber-700 mb-1">
+                          Questions not covered in this session:
+                        </p>
+                        <ul className="text-xs text-amber-600 space-y-0.5">
+                          {upload.classificationResult.missingQuestions.slice(0, 3).map((q: string, i: number) => (
+                            <li key={i} className="flex items-start gap-1">
+                              <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                              {q}
+                            </li>
+                          ))}
+                          {upload.classificationResult.missingQuestions.length > 3 && (
+                            <li className="text-amber-500 italic">
+                              +{upload.classificationResult.missingQuestions.length - 3} more questions
+                            </li>
+                          )}
+                        </ul>
+                      </div>
                     )}
-                  </p>
+                  </div>
                 )}
 
                 {/* Population result */}

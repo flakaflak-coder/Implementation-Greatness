@@ -3,6 +3,9 @@ import localFont from 'next/font/local'
 import './globals.css'
 import { SidebarProvider } from '@/providers/sidebar-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { CommandPaletteProvider } from '@/providers/command-palette-provider'
+import { AuthProvider } from '@/providers/auth-provider'
+import { Toaster } from 'sonner'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -30,11 +33,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
-        <SidebarProvider>
-          <TooltipProvider delayDuration={0}>
-            {children}
-          </TooltipProvider>
-        </SidebarProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            <CommandPaletteProvider>
+              <TooltipProvider delayDuration={0}>
+                {children}
+              </TooltipProvider>
+            </CommandPaletteProvider>
+          </SidebarProvider>
+        </AuthProvider>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   )

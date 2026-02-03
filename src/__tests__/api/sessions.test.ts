@@ -1,10 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { GET, POST } from '@/app/api/sessions/route'
+import { GET as getSession, PATCH as updateSession, DELETE as deleteSession } from '@/app/api/sessions/[id]/route'
+import { GET as getExtractedItems, POST as extractItems } from '@/app/api/sessions/[id]/extract/route'
 import { mockPrisma } from '../setup'
 
 // Use the exported mock from setup
 const mockedPrisma = mockPrisma
+
+// Mock claude module
+vi.mock('@/lib/claude', () => ({
+  extractFromTranscript: vi.fn().mockResolvedValue({
+    items: [{ type: 'GOAL', content: 'Test goal', confidence: 0.9 }],
+    inputTokens: 100,
+    outputTokens: 50,
+    latencyMs: 500,
+  }),
+  saveExtractedItems: vi.fn().mockResolvedValue(undefined),
+}))
 
 // Mock storage module
 vi.mock('@/lib/storage', () => ({
@@ -254,5 +267,283 @@ describe('POST /api/sessions', () => {
 
     expect(response.status).toBe(500)
     expect(data.error).toBe('Failed to create session')
+  })
+})
+
+describe('GET /api/sessions/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns session details', async () => {
+    const mockSession = {
+      id: 'session-1',
+      phase: 1,
+      sessionNumber: 1,
+      designWeek: { digitalEmployee: { company: { name: 'Acme' } } },
+      materials: [],
+      extractions: [],
+      transcript: [],
+    }
+    mockedPrisma.session.findUnique.mockResolvedValue(mockSession as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1')
+    const response = await getSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.id).toBe('session-1')
+  })
+
+  it('returns 404 when session not found', async () => {
+    mockedPrisma.session.findUnique.mockResolvedValue(null)
+
+    const request = new NextRequest('http://localhost/api/sessions/nonexistent')
+    const response = await getSession(request, { params: Promise.resolve({ id: 'nonexistent' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(data.error).toBe('Session not found')
+  })
+
+  it('handles errors gracefully', async () => {
+    mockedPrisma.session.findUnique.mockRejectedValue(new Error('DB Error'))
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1')
+    const response = await getSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('Failed to fetch session')
+  })
+})
+
+describe('PATCH /api/sessions/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('updates session successfully', async () => {
+    mockedPrisma.session.update.mockResolvedValue({
+      id: 'session-1',
+      processingStatus: 'COMPLETE',
+    } as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ processingStatus: 'COMPLETE' }),
+    })
+
+    const response = await updateSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.processingStatus).toBe('COMPLETE')
+    expect(mockedPrisma.session.update).toHaveBeenCalledWith({
+      where: { id: 'session-1' },
+      data: { processingStatus: 'COMPLETE' },
+    })
+  })
+
+  it('handles errors gracefully', async () => {
+    mockedPrisma.session.update.mockRejectedValue(new Error('DB Error'))
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ processingStatus: 'COMPLETE' }),
+    })
+
+    const response = await updateSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('Failed to update session')
+  })
+})
+
+describe('DELETE /api/sessions/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes session successfully', async () => {
+    mockedPrisma.session.delete.mockResolvedValue({} as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1', {
+      method: 'DELETE',
+    })
+
+    const response = await deleteSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+
+    expect(response.status).toBe(204)
+    expect(mockedPrisma.session.delete).toHaveBeenCalledWith({
+      where: { id: 'session-1' },
+    })
+  })
+
+  it('handles errors gracefully', async () => {
+    mockedPrisma.session.delete.mockRejectedValue(new Error('DB Error'))
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1', {
+      method: 'DELETE',
+    })
+
+    const response = await deleteSession(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('Failed to delete session')
+  })
+})
+
+describe('GET /api/sessions/[id]/extract', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns extracted items for a session', async () => {
+    const mockItems = [
+      { id: 'item-1', type: 'GOAL', content: 'Goal 1' },
+      { id: 'item-2', type: 'STAKEHOLDER', content: 'John Doe' },
+    ]
+    mockedPrisma.extractedItem.findMany.mockResolvedValue(mockItems as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract')
+    const response = await getExtractedItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.items).toHaveLength(2)
+    expect(mockedPrisma.extractedItem.findMany).toHaveBeenCalledWith({
+      where: { sessionId: 'session-1' },
+      orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+    })
+  })
+
+  it('handles errors gracefully', async () => {
+    mockedPrisma.extractedItem.findMany.mockRejectedValue(new Error('DB Error'))
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract')
+    const response = await getExtractedItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('Failed to fetch extracted items')
+  })
+})
+
+describe('POST /api/sessions/[id]/extract', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns 400 when transcript is missing', async () => {
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract', {
+      method: 'POST',
+      body: JSON.stringify({ sessionType: 'kickoff' }),
+    })
+
+    const response = await extractItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('transcript and sessionType are required')
+  })
+
+  it('returns 400 when sessionType is missing', async () => {
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract', {
+      method: 'POST',
+      body: JSON.stringify({ transcript: 'Some transcript' }),
+    })
+
+    const response = await extractItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('transcript and sessionType are required')
+  })
+
+  it('returns 404 when session not found', async () => {
+    mockedPrisma.session.findUnique.mockResolvedValue(null)
+
+    const request = new NextRequest('http://localhost/api/sessions/nonexistent/extract', {
+      method: 'POST',
+      body: JSON.stringify({ transcript: 'Some transcript', sessionType: 'kickoff' }),
+    })
+
+    const response = await extractItems(request, { params: Promise.resolve({ id: 'nonexistent' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(data.error).toBe('Session not found')
+  })
+
+  it('extracts items successfully', async () => {
+    mockedPrisma.session.findUnique.mockResolvedValue({ id: 'session-1' } as never)
+    mockedPrisma.session.update.mockResolvedValue({} as never)
+    mockedPrisma.extractedItem.count.mockResolvedValue(0)
+    mockedPrisma.observatoryLLMOperation.create.mockResolvedValue({} as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract', {
+      method: 'POST',
+      body: JSON.stringify({
+        transcript: 'Meeting transcript content',
+        sessionType: 'kickoff',
+      }),
+    })
+
+    const response = await extractItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(data.itemCount).toBe(1)
+  })
+
+  it('deletes existing items before re-extracting', async () => {
+    mockedPrisma.session.findUnique.mockResolvedValue({ id: 'session-1' } as never)
+    mockedPrisma.session.update.mockResolvedValue({} as never)
+    mockedPrisma.extractedItem.count.mockResolvedValue(5)
+    mockedPrisma.extractedItem.deleteMany.mockResolvedValue({ count: 5 } as never)
+    mockedPrisma.observatoryLLMOperation.create.mockResolvedValue({} as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract', {
+      method: 'POST',
+      body: JSON.stringify({
+        transcript: 'Re-process this transcript',
+        sessionType: 'process',
+      }),
+    })
+
+    await extractItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+
+    expect(mockedPrisma.extractedItem.deleteMany).toHaveBeenCalledWith({
+      where: { sessionId: 'session-1' },
+    })
+  })
+
+  it('logs operation to observatory', async () => {
+    mockedPrisma.session.findUnique.mockResolvedValue({ id: 'session-1' } as never)
+    mockedPrisma.session.update.mockResolvedValue({} as never)
+    mockedPrisma.extractedItem.count.mockResolvedValue(0)
+    mockedPrisma.observatoryLLMOperation.create.mockResolvedValue({} as never)
+
+    const request = new NextRequest('http://localhost/api/sessions/session-1/extract', {
+      method: 'POST',
+      body: JSON.stringify({
+        transcript: 'Transcript',
+        sessionType: 'technical',
+      }),
+    })
+
+    await extractItems(request, { params: Promise.resolve({ id: 'session-1' }) })
+
+    expect(mockedPrisma.observatoryLLMOperation.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        pipelineName: 'extract_technical',
+        model: 'claude-sonnet-4-20250514',
+        success: true,
+      }),
+    })
   })
 })

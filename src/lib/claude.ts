@@ -1,6 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from './db'
 import { PromptType, ExtractedItemType, ReviewStatus } from '@prisma/client'
+import {
+  buildSafePrompt,
+  extractAndValidateJson,
+  ExtractionResponseSchema,
+  CONFIDENCE_SCORING_GUIDE,
+  PII_HANDLING_GUIDE,
+  ERROR_RECOVERY_GUIDE,
+  type ValidatedExtractionResponse,
+} from './prompt-utils'
+import { trackLLMOperationServer } from './observatory/tracking'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -64,6 +74,12 @@ function getDefaultPrompt(type: PromptType): {
     EXTRACT_KICKOFF: {
       prompt: `You are an AI assistant helping to extract structured information from a Design Week Kickoff session.
 
+${CONFIDENCE_SCORING_GUIDE}
+
+${PII_HANDLING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
+
 Analyze the provided transcript and extract the following:
 
 1. **Stakeholders** - People mentioned with roles (STAKEHOLDER type)
@@ -76,7 +92,7 @@ For each extracted item, provide:
 - type: The ExtractedItemType
 - category: A sub-category (e.g., for STAKEHOLDER: "decision_maker", "technical", "end_user")
 - content: Clear description of the item
-- confidence: Your confidence in this extraction (0.0 to 1.0)
+- confidence: Your confidence in this extraction (use the scoring guide above)
 - sourceQuote: The exact quote from the transcript
 - sourceSpeaker: Who said it (if identifiable)
 
@@ -91,15 +107,20 @@ Respond in JSON format:
       "sourceQuote": "John Smith, our VP of Ops, will need to approve this",
       "sourceSpeaker": "Client PM"
     }
-  ]
+  ],
+  "warnings": ["optional array of warnings if some expected data couldn't be found"]
 }
 
-Be thorough but only include items clearly mentioned. High confidence (>0.8) for explicit statements, medium (0.5-0.8) for implied items.`,
+Only include items with confidence >= 0.50.`,
       temperature: 0.2,
       maxTokens: 4096,
     },
     EXTRACT_PROCESS: {
       prompt: `You are an AI assistant helping to extract process design information from a Design Week session.
+
+${CONFIDENCE_SCORING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
 
 Analyze the provided transcript and extract:
 
@@ -114,22 +135,40 @@ For each item:
 - type: The ExtractedItemType
 - category: A sub-category (e.g., for HAPPY_PATH_STEP: "verification", "processing", "response")
 - content: Clear description
-- structuredData: Additional structured info (e.g., step_number, conditions)
-- confidence: 0.0 to 1.0
+- structuredData: Additional structured info (e.g., {"step_number": 1, "conditions": "when X"})
+- confidence: Use the scoring guide above
 - sourceQuote: Exact quote
 - sourceSpeaker: Who said it
 
 Respond in JSON format:
 {
-  "items": [...]
+  "items": [
+    {
+      "type": "HAPPY_PATH_STEP",
+      "category": "processing",
+      "content": "Validate customer identity using email verification",
+      "structuredData": {"step_number": 2, "requires": ["customer_email"]},
+      "confidence": 0.92,
+      "sourceQuote": "...",
+      "sourceSpeaker": "Process Owner"
+    }
+  ],
+  "warnings": ["optional warnings"]
 }
 
-Focus on actionable process details. Mark items as SCOPE_IN only if explicitly confirmed by the client.`,
+Focus on actionable process details. Mark items as SCOPE_IN only if explicitly confirmed by the client.
+Only include items with confidence >= 0.50.`,
       temperature: 0.2,
       maxTokens: 8192,
     },
     EXTRACT_TECHNICAL: {
       prompt: `You are an AI assistant helping to extract technical design information from a Design Week session.
+
+${CONFIDENCE_SCORING_GUIDE}
+
+${PII_HANDLING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
 
 Analyze the provided transcript and extract:
 
@@ -143,22 +182,42 @@ For each item:
 - type: The ExtractedItemType
 - category: Sub-category (e.g., for SYSTEM_INTEGRATION: "crm", "erp", "email", "database")
 - content: Clear description
-- structuredData: Technical details (e.g., { "system": "Salesforce", "method": "REST API", "auth": "OAuth2" })
-- confidence: 0.0 to 1.0
+- structuredData: Technical details (e.g., {"system": "Salesforce", "method": "REST API", "auth": "OAuth2"})
+- confidence: Use the scoring guide above
 - sourceQuote: Exact quote
 - sourceSpeaker: Who said it
 
+⚠️ SECURITY: Do NOT extract actual API keys, passwords, or credentials. Only extract:
+- System NAMES (e.g., "ServiceNow", "Salesforce")
+- Authentication METHODS (e.g., "OAuth2", "API Key") - not actual keys
+- Endpoint PATTERNS (e.g., "/api/v1/users") - not full URLs with credentials
+
 Respond in JSON format:
 {
-  "items": [...]
+  "items": [
+    {
+      "type": "SYSTEM_INTEGRATION",
+      "category": "crm",
+      "content": "Salesforce integration for customer data lookup",
+      "structuredData": {"system": "Salesforce", "method": "REST API", "auth": "OAuth2"},
+      "confidence": 0.88,
+      "sourceQuote": "...",
+      "sourceSpeaker": "IT Lead"
+    }
+  ],
+  "warnings": ["optional warnings"]
 }
 
-Be precise with technical details. Include authentication methods, data formats, and error scenarios.`,
+Be precise with technical details. Only include items with confidence >= 0.50.`,
       temperature: 0.2,
       maxTokens: 8192,
     },
     EXTRACT_SIGNOFF: {
       prompt: `You are an AI assistant helping to extract sign-off information from a Design Week session.
+
+${CONFIDENCE_SCORING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
 
 Analyze the provided transcript and extract:
 
@@ -171,17 +230,29 @@ For each item:
 - type: The ExtractedItemType
 - category: Sub-category (e.g., for OPEN_ITEM: "technical", "business", "timeline")
 - content: Clear description
-- structuredData: Additional info (e.g., { "owner": "John", "dueDate": "2024-02-15" })
-- confidence: 0.0 to 1.0
+- structuredData: Additional info (e.g., {"owner": "John Smith", "dueDate": "2024-02-15"})
+- confidence: Use the scoring guide above
 - sourceQuote: Exact quote
 - sourceSpeaker: Who said it
 
 Respond in JSON format:
 {
-  "items": [...]
+  "items": [
+    {
+      "type": "DECISION",
+      "category": "scope",
+      "content": "Phase 1 will include password resets only, access provisioning moves to Phase 2",
+      "structuredData": {"decidedBy": "Sarah", "rationale": "Time constraints"},
+      "confidence": 0.95,
+      "sourceQuote": "...",
+      "sourceSpeaker": "Project Sponsor"
+    }
+  ],
+  "warnings": ["optional warnings"]
 }
 
-Clearly distinguish between confirmed decisions and open items. Note who is responsible for each open item.`,
+Clearly distinguish between confirmed decisions and open items. Note who is responsible for each open item.
+Only include items with confidence >= 0.50.`,
       temperature: 0.2,
       maxTokens: 4096,
     },
@@ -231,6 +302,9 @@ export async function extractFromTranscript(
 
   const startTime = Date.now()
 
+  // Build safe prompt with sanitized user content
+  const safePrompt = buildSafePrompt(template.prompt, transcript, 'TRANSCRIPT')
+
   const response = await anthropic.messages.create({
     model: template.model,
     max_tokens: template.maxTokens,
@@ -238,7 +312,7 @@ export async function extractFromTranscript(
     messages: [
       {
         role: 'user',
-        content: `${template.prompt}\n\n---\n\nTRANSCRIPT:\n${transcript}`,
+        content: safePrompt,
       },
     ],
   })
@@ -253,21 +327,68 @@ export async function extractFromTranscript(
 
   const text = textContent.text
 
-  // Parse JSON from response (handle markdown code blocks)
-  const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    throw new Error('Failed to parse extraction result')
+  // Parse and validate JSON from response
+  const validationResult = extractAndValidateJson(text, ExtractionResponseSchema)
+
+  if (!validationResult.success) {
+    console.error('[Claude Extraction] Validation failed:', validationResult.error)
+    // Attempt fallback parsing without validation for backwards compatibility
+    const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error(`Failed to parse extraction result: ${validationResult.error}`)
+    }
+    const jsonStr = jsonMatch[1] || jsonMatch[0]
+    console.warn('[Claude Extraction] Using unvalidated fallback parsing')
+    const parsed = JSON.parse(jsonStr) as { items: ExtractedItemResult[] }
+    const fallbackResult = {
+      items: parsed.items,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      latencyMs,
+    }
+
+    // Track LLM operation even for fallback parsing
+    await trackLLMOperationServer({
+      pipelineName: `claude-extract-${sessionType}`,
+      model: template.model,
+      inputTokens: fallbackResult.inputTokens,
+      outputTokens: fallbackResult.outputTokens,
+      latencyMs: fallbackResult.latencyMs,
+      success: true,
+      metadata: { sessionType, itemCount: fallbackResult.items.length, fallbackParsing: true },
+    })
+
+    return fallbackResult
   }
 
-  const jsonStr = jsonMatch[1] || jsonMatch[0]
-  const parsed = JSON.parse(jsonStr) as { items: ExtractedItemResult[] }
+  // Log any warnings from the LLM
+  const validated = validationResult.data as ValidatedExtractionResponse
+  if (validated.error) {
+    console.warn('[Claude Extraction] LLM reported error:', validated.error)
+  }
+  if (validated.warnings?.length) {
+    console.warn('[Claude Extraction] LLM warnings:', validated.warnings)
+  }
 
-  return {
-    items: parsed.items,
+  const result = {
+    items: validated.items as ExtractedItemResult[],
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
     latencyMs,
   }
+
+  // Track LLM operation for observatory
+  await trackLLMOperationServer({
+    pipelineName: `claude-extract-${sessionType}`,
+    model: template.model,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    latencyMs: result.latencyMs,
+    success: true,
+    metadata: { sessionType, itemCount: result.items.length },
+  })
+
+  return result
 }
 
 // Save extracted items to database
@@ -363,10 +484,23 @@ Generate the complete document in markdown format.`,
     throw new Error('No text response from Claude')
   }
 
-  return {
+  const result = {
     content: textContent.text,
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
     latencyMs,
   }
+
+  // Track document generation for observatory
+  await trackLLMOperationServer({
+    pipelineName: `claude-generate-${documentType.toLowerCase()}`,
+    model: template.model,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    latencyMs: result.latencyMs,
+    success: true,
+    metadata: { documentType, designWeekId },
+  })
+
+  return result
 }

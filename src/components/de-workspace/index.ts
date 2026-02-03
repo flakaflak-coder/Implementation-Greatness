@@ -22,6 +22,7 @@ export {
   calculateProfileCompleteness,
   calculateSectionCompleteness,
   generateTestCases,
+  getProfileCoveredTypes,
   BUSINESS_PROFILE_MAPPING,
   TECHNICAL_PROFILE_MAPPING,
   BUSINESS_SECTION_METADATA,
@@ -40,9 +41,9 @@ export { ProfileField, ProfileFieldCompact } from './profile-sections/profile-fi
 
 // Tab components
 export { ProgressTab } from './tabs/progress-tab'
-export { BusinessProfileTab } from './tabs/business-profile-tab'
-export { TechnicalProfileTab } from './tabs/technical-profile-tab'
-export { TestPlanTab } from './tabs/test-plan-tab'
+export { BusinessProfileTabV2 as BusinessProfileTab } from './tabs/business-profile-tab-v2'
+export { TechnicalProfileTabV2 as TechnicalProfileTab } from './tabs/technical-profile-tab-v2'
+export { TestPlanTabV2 as TestPlanTab } from './tabs/test-plan-tab-v2'
 
 // Test plan components
 export { TestCaseCard } from './test-plan/test-case-card'

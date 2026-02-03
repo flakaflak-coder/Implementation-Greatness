@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Rocket, Briefcase, Wrench, ClipboardCheck } from 'lucide-react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Rocket, Briefcase, Wrench, ClipboardCheck, Upload } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ProgressTab } from './tabs/progress-tab'
 import { BusinessProfileTabV2 } from './tabs/business-profile-tab-v2'
 import { TechnicalProfileTabV2 } from './tabs/technical-profile-tab-v2'
 import { TestPlanTabV2 } from './tabs/test-plan-tab-v2'
+import { UnifiedUpload, UploadHistory } from '@/components/upload'
 import {
   type DEWorkspaceProps,
   type WorkspaceTab,
@@ -15,6 +17,7 @@ import {
   groupItemsByProfile,
   calculateProfileCompleteness,
 } from './types'
+import type { BusinessProfile, TechnicalProfile } from './profile-types'
 
 export function DEWorkspace({
   digitalEmployee,
@@ -22,8 +25,21 @@ export function DEWorkspace({
   onUploadSession,
   onExtractSession,
   onRefresh,
+  activeTab: externalActiveTab,
+  onTabChange,
 }: DEWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('progress')
+  // Use external tab if provided, otherwise manage internally
+  const [internalActiveTab, setInternalActiveTab] = useState<WorkspaceTab>('progress')
+  const activeTab = externalActiveTab ?? internalActiveTab
+
+  // Profile state for completeness calculation
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null)
+  const [technicalProfile, setTechnicalProfile] = useState<TechnicalProfile | null>(null)
+
+  const setActiveTab = (tab: WorkspaceTab) => {
+    setInternalActiveTab(tab)
+    onTabChange?.(tab)
+  }
 
   // Create a refresh key that changes when extracted items change
   // This forces V2 tabs to remount and reload their data
@@ -34,6 +50,33 @@ export function DEWorkspace({
     )
     return `${designWeek.id}-${totalItems}-${designWeek.sessions.length}`
   }, [designWeek.id, designWeek.sessions])
+
+  // Fetch profile data for completeness calculation
+  const fetchProfiles = useCallback(async () => {
+    try {
+      const [businessRes, technicalRes] = await Promise.all([
+        fetch(`/api/design-weeks/${designWeek.id}/profile`),
+        fetch(`/api/design-weeks/${designWeek.id}/technical-profile`),
+      ])
+
+      if (businessRes.ok) {
+        const data = await businessRes.json()
+        setBusinessProfile(data.profile || null)
+      }
+
+      if (technicalRes.ok) {
+        const data = await technicalRes.json()
+        setTechnicalProfile(data.profile || null)
+      }
+    } catch (error) {
+      console.error('Error fetching profiles for completeness:', error)
+    }
+  }, [designWeek.id])
+
+  // Load profiles on mount and when design week changes
+  useEffect(() => {
+    fetchProfiles()
+  }, [fetchProfiles, refreshKey])
 
   // Flatten all extracted items from sessions with session info
   const extractedItemsWithSession: ExtractedItemWithSession[] = useMemo(() => {
@@ -63,10 +106,10 @@ export function DEWorkspace({
     return groupItemsByProfile(extractedItemsWithSession)
   }, [extractedItemsWithSession])
 
-  // Calculate completeness
+  // Calculate completeness (now includes manual profile entries)
   const profileCompleteness = useMemo(() => {
-    return calculateProfileCompleteness(groupedItems)
-  }, [groupedItems])
+    return calculateProfileCompleteness(groupedItems, businessProfile, technicalProfile)
+  }, [groupedItems, businessProfile, technicalProfile])
 
   // Get pending items (not yet approved)
   const pendingItems = useMemo(() => {
@@ -80,18 +123,58 @@ export function DEWorkspace({
     return designWeek.scopeItems.filter((item) => item.classification === 'AMBIGUOUS')
   }, [designWeek.scopeItems])
 
-  // Tab change handler
+  // Tab change handler - refresh profiles when switching to progress tab
+  // This ensures completeness reflects any manual edits made in Business/Technical tabs
   const handleTabChange = (tab: WorkspaceTab) => {
     setActiveTab(tab)
+    if (tab === 'progress') {
+      fetchProfiles()
+    }
   }
 
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={(value) => setActiveTab(value as WorkspaceTab)}
-      className="w-full"
-    >
-      <TabsList className="grid w-full grid-cols-4 mb-6">
+    <div className="space-y-6">
+      {/* Centralized Upload Section - Always visible */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+              <Upload className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Upload Sessions & Documents</CardTitle>
+              <CardDescription>
+                Drop any recording, transcript, or document. AI will automatically extract and categorize the information.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <UnifiedUpload
+            designWeekId={designWeek.id}
+            onComplete={onRefresh}
+          />
+
+          {/* Upload History */}
+          {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
+            <UploadHistory
+              uploads={designWeek.uploadJobs}
+              onRetry={async (jobId) => {
+                await fetch(`/api/upload/${jobId}/retry`, { method: 'POST' })
+                onRefresh?.()
+              }}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tabs Section */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as WorkspaceTab)}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-4 mb-6">
         <TabsTrigger value="progress" className="gap-2">
           <Rocket className="h-4 w-4" />
           <span className="hidden sm:inline">Progress</span>
@@ -126,6 +209,7 @@ export function DEWorkspace({
           profileCompleteness={profileCompleteness}
           pendingItems={pendingItems}
           ambiguousItems={ambiguousItems}
+          extractedItems={extractedItemsWithSession}
           onTabChange={handleTabChange}
           onUploadSession={onUploadSession}
           onExtractSession={onExtractSession}
@@ -144,6 +228,7 @@ export function DEWorkspace({
       <TabsContent value="testplan">
         <TestPlanTabV2 key={`testplan-${refreshKey}`} designWeekId={designWeek.id} />
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   )
 }

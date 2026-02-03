@@ -10,6 +10,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { CommandPalette } from '@/components/command-palette/command-palette'
+import { FeedbackWidget } from '@/components/observatory/feedback-widget'
 
 export default function GlobalLayout({
   children,
@@ -20,6 +22,9 @@ export default function GlobalLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Command Palette - Global search */}
+      <CommandPalette />
+
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar variant="global" />
@@ -54,6 +59,9 @@ export default function GlobalLayout({
           {children}
         </div>
       </main>
+
+      {/* Feedback Widget - Available on all pages */}
+      <FeedbackWidget />
     </div>
   )
 }

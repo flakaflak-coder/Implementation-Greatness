@@ -1,14 +1,37 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { RefreshCw, Filter, CircleAlert, CircleCheck, Circle, Check, Users } from 'lucide-react'
+import {
+  RefreshCw,
+  Filter,
+  CircleCheck,
+  Check,
+  Users,
+  LayoutGrid,
+  GanttChart,
+  Building2,
+  Key,
+  FileText,
+  Settings,
+  TestTube,
+  Rocket,
+  CalendarDays,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   DesignWeekOverviewCard,
   type DesignWeekOverview,
 } from '@/components/portfolio/design-week-overview-card'
+import {
+  GanttTimeline,
+  type TimelineCompany,
+  type TimelineDE,
+} from '@/components/portfolio/gantt-timeline'
+import { WeekTimeline } from '@/components/portfolio/week-timeline'
+import { PortfolioFreddy } from '@/components/de-workspace/assistant'
 
 interface ConsultantWorkload {
   name: string
@@ -29,24 +52,212 @@ interface PortfolioData {
   designWeeks: DesignWeekOverview[]
 }
 
+interface TimelineData {
+  summary: {
+    total: number
+    byStage: {
+      designWeek: number
+      configuration: number
+      uat: number
+      live: number
+    }
+    byTrafficLight: {
+      green: number
+      yellow: number
+      red: number
+    }
+    byTrackerStatus: {
+      onTrack: number
+      attention: number
+      blocked: number
+      toPlan: number
+    }
+    byRiskLevel: {
+      low: number
+      medium: number
+      high: number
+    }
+    prerequisitesBlocked: number
+    companiesCount: number
+    currentWeek: number
+  }
+  companies: TimelineCompany[]
+  digitalEmployees: TimelineDE[]
+  leads: string[]
+  currentWeek: number
+}
+
+type ViewMode = 'cards' | 'gantt' | 'weeks'
+type FilterType = 'all' | 'issues' | 'prereq-blocked' | 'design_week' | 'configuration' | 'uat'
+
+// Mesh gradient styles - organic multi-color blends
+const MESH_GRADIENTS = {
+  gray: `
+    radial-gradient(at 0% 0%, hsla(220, 15%, 55%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(240, 10%, 45%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(200, 15%, 50%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(220, 20%, 60%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(220, 15%, 50%), hsl(240, 10%, 55%))
+  `,
+  blue: `
+    radial-gradient(at 0% 0%, hsla(280, 85%, 65%, 1) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(250, 90%, 70%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 50%, hsla(220, 90%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(260, 85%, 55%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(250, 80%, 65%), hsl(220, 85%, 60%))
+  `,
+  purple: `
+    radial-gradient(at 0% 0%, hsla(320, 85%, 65%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(280, 90%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(260, 85%, 55%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 80%, hsla(300, 90%, 65%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(300, 80%, 60%), hsl(270, 85%, 55%))
+  `,
+  amber: `
+    radial-gradient(at 0% 0%, hsla(35, 95%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(15, 90%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(350, 85%, 65%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(25, 95%, 55%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(30, 90%, 55%), hsl(10, 85%, 60%))
+  `,
+  rose: `
+    radial-gradient(at 0% 0%, hsla(350, 90%, 65%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(320, 85%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsla(0, 90%, 60%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 80%, hsla(340, 90%, 55%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(345, 85%, 60%), hsl(0, 80%, 55%))
+  `,
+  teal: `
+    radial-gradient(at 0% 0%, hsla(160, 85%, 45%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(180, 80%, 50%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(200, 85%, 55%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(170, 90%, 40%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(165, 80%, 45%), hsl(190, 75%, 50%))
+  `,
+}
+
+// Stat card with vibrant mesh gradient header
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  meshGradient,
+  onClick,
+  active,
+}: {
+  label: string
+  value: number
+  icon: React.ElementType
+  meshGradient: keyof typeof MESH_GRADIENTS
+  onClick?: () => void
+  active?: boolean
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100/50 transition-all duration-300',
+        onClick && 'cursor-pointer hover:scale-[1.02] hover:shadow-md',
+        active && 'ring-2 ring-offset-2 ring-purple-400'
+      )}
+    >
+      {/* Vibrant mesh gradient header */}
+      <div className="relative h-24 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{ background: MESH_GRADIENTS[meshGradient] }}
+        />
+        {/* Grainy noise texture */}
+        <div
+          className="absolute inset-0 opacity-50 mix-blend-overlay"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
+        {/* Icon in header */}
+        <div className="absolute bottom-3 right-3 w-9 h-9 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center">
+          <Icon className="w-5 h-5 text-white drop-shadow-md" />
+        </div>
+      </div>
+      {/* White content area */}
+      <div className="p-4">
+        <p className="text-3xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-medium text-gray-500 mt-0.5">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+// Health status card with mesh gradient header
+function HealthCard({ green, yellow, red }: { green: number; yellow: number; red: number }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100/50 shadow-sm">
+      {/* Mesh gradient header */}
+      <div className="relative h-24 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{ background: MESH_GRADIENTS.teal }}
+        />
+        <div
+          className="absolute inset-0 opacity-50 mix-blend-overlay"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-sm font-semibold text-white drop-shadow-md">Health Status</p>
+        </div>
+      </div>
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200" />
+            <span className="text-xl font-bold text-gray-900">{green}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-200" />
+            <span className="text-xl font-bold text-gray-900">{yellow}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm shadow-red-200" />
+            <span className="text-xl font-bold text-gray-900">{red}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PortfolioPage() {
-  const [data, setData] = useState<PortfolioData | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('weeks')
+  const [cardData, setCardData] = useState<PortfolioData | null>(null)
+  const [timelineData, setTimelineData] = useState<TimelineData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showOnlyIssues, setShowOnlyIssues] = useState(false)
+  const [filterType, setFilterType] = useState<FilterType>('all')
   const [selectedConsultant, setSelectedConsultant] = useState<string | null>(null)
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
 
+  // Fetch both data sets
   const fetchData = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/portfolio')
-      const result = await response.json()
-      if (result.success) {
-        setData(result.data)
-        setError(null)
-      } else {
-        setError(result.error)
+      const [cardResponse, timelineResponse] = await Promise.all([
+        fetch('/api/portfolio'),
+        fetch('/api/portfolio/timeline'),
+      ])
+
+      const cardResult = await cardResponse.json()
+      const timelineResult = await timelineResponse.json()
+
+      if (cardResult.success) {
+        setCardData(cardResult.data)
       }
+      if (timelineResult.success) {
+        setTimelineData(timelineResult.data)
+      }
+      setError(null)
     } catch {
       setError('Failed to fetch portfolio data')
     } finally {
@@ -58,251 +269,437 @@ export default function PortfolioPage() {
     fetchData()
   }, [])
 
-  // Filter design weeks based on showOnlyIssues and selectedConsultant
-  const filteredDesignWeeks = useMemo(() => {
-    if (!data) return []
-    let filtered = data.designWeeks
+  // Get unique companies from timeline data
+  const companies = useMemo(() => {
+    if (!timelineData) return []
+    return timelineData.companies.map(c => ({ id: c.id, name: c.name }))
+  }, [timelineData])
 
-    if (showOnlyIssues) {
+  // Filter design weeks for card view
+  const filteredDesignWeeks = useMemo(() => {
+    if (!cardData) return []
+    let filtered = cardData.designWeeks
+
+    if (filterType === 'issues') {
       filtered = filtered.filter(dw => dw.trafficLight !== 'green')
     }
 
     if (selectedConsultant) {
-      filtered = filtered.filter(dw =>
-        (dw.assignedTo || 'Unassigned') === selectedConsultant
-      )
+      filtered = filtered.filter(dw => (dw.assignedTo || 'Unassigned') === selectedConsultant)
     }
 
     return filtered
-  }, [data, showOnlyIssues, selectedConsultant])
+  }, [cardData, filterType, selectedConsultant])
 
-  const summary = data?.summary ?? { total: 0, green: 0, yellow: 0, red: 0 }
+  // Filter timeline companies
+  const filteredTimelineCompanies = useMemo(() => {
+    if (!timelineData) return []
+    let filteredCompanies = timelineData.companies
+
+    // Filter by company
+    if (selectedCompany) {
+      filteredCompanies = filteredCompanies.filter(c => c.id === selectedCompany)
+    }
+
+    // Filter by consultant
+    if (selectedConsultant) {
+      filteredCompanies = filteredCompanies
+        .map(c => ({
+          ...c,
+          digitalEmployees: c.digitalEmployees.filter(
+            de => de.assignedTo === selectedConsultant
+          ),
+        }))
+        .filter(c => c.digitalEmployees.length > 0)
+    }
+
+    // Filter by issues, prerequisites, or stage
+    if (filterType === 'issues') {
+      filteredCompanies = filteredCompanies
+        .map(c => ({
+          ...c,
+          digitalEmployees: c.digitalEmployees.filter(de => de.trafficLight !== 'green'),
+        }))
+        .filter(c => c.digitalEmployees.length > 0)
+    } else if (filterType === 'prereq-blocked') {
+      filteredCompanies = filteredCompanies
+        .map(c => ({
+          ...c,
+          digitalEmployees: c.digitalEmployees.filter(de => de.prerequisites.blocked > 0),
+        }))
+        .filter(c => c.digitalEmployees.length > 0)
+    } else if (filterType === 'design_week' || filterType === 'configuration' || filterType === 'uat') {
+      filteredCompanies = filteredCompanies
+        .map(c => ({
+          ...c,
+          digitalEmployees: c.digitalEmployees.filter(de => de.currentStage === filterType),
+        }))
+        .filter(c => c.digitalEmployees.length > 0)
+    }
+
+    return filteredCompanies
+  }, [timelineData, filterType, selectedConsultant, selectedCompany])
+
+  // Summary stats from timeline data
+  const summary = timelineData?.summary ?? {
+    total: 0,
+    byStage: { designWeek: 0, configuration: 0, uat: 0, live: 0 },
+    byTrafficLight: { green: 0, yellow: 0, red: 0 },
+    byTrackerStatus: { onTrack: 0, attention: 0, blocked: 0, toPlan: 0 },
+    byRiskLevel: { low: 0, medium: 0, high: 0 },
+    prerequisitesBlocked: 0,
+    companiesCount: 0,
+    currentWeek: 1,
+  }
+
+  const currentWeek = timelineData?.currentWeek ?? 1
+
+  // Handler for week changes (drag-drop)
+  const handleWeekChange = async (deId: string, startWeek: number, endWeek: number) => {
+    try {
+      const response = await fetch('/api/portfolio/timeline', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deId, startWeek, endWeek }),
+      })
+      if (response.ok) {
+        // Refresh data after update
+        fetchData()
+      }
+    } catch (error) {
+      console.error('Failed to update week:', error)
+    }
+  }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-200/50">
-              <span className="text-2xl">📈</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">Design Week Overview</h1>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Page header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Portfolio Overview</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Track all Digital Employee implementations
+            </p>
           </div>
-          <p className="text-gray-500 ml-[60px]">
-            Track all active Design Weeks and spot issues early
-          </p>
-        </div>
-        <Button
-          onClick={fetchData}
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        >
-          <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
-          Refresh
-        </Button>
-      </div>
-
-      {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
-          {error}
-        </div>
-      )}
-
-      {/* Summary stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* Total */}
-        <Card className="bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-lg">📋</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{summary.total}</p>
-                <p className="text-sm text-gray-500">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* On Track (Green) */}
-        <Card className="bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <CircleCheck className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-emerald-600">{summary.green}</p>
-                <p className="text-sm text-gray-500">On Track</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Attention (Yellow) */}
-        <Card className="bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Circle className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-amber-600">{summary.yellow}</p>
-                <p className="text-sm text-gray-500">Needs Attention</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Critical (Red) */}
-        <Card className="bg-white border-gray-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                <CircleAlert className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">{summary.red}</p>
-                <p className="text-sm text-gray-500">Critical</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Consultant Workload */}
-      {data?.consultantWorkload && data.consultantWorkload.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-gray-400" />
-            <h2 className="text-sm font-semibold text-gray-700">Consultant Workload</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {data.consultantWorkload.map((consultant) => (
-              <button
-                key={consultant.name}
-                onClick={() => setSelectedConsultant(
-                  selectedConsultant === consultant.name ? null : consultant.name
-                )}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-2 rounded-xl border transition-all',
-                  selectedConsultant === consultant.name
-                    ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200'
-                    : 'bg-white border-gray-200 hover:bg-gray-50'
-                )}
-              >
-                <span className="font-medium text-gray-900">{consultant.name}</span>
-                <div className="flex items-center gap-1.5">
-                  {consultant.red > 0 && (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
-                      {consultant.red}
-                    </span>
-                  )}
-                  {consultant.yellow > 0 && (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
-                      {consultant.yellow}
-                    </span>
-                  )}
-                  {consultant.green > 0 && (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
-                      {consultant.green}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            {/* View mode toggle */}
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+              <TabsList className="bg-white/80 backdrop-blur-sm border border-gray-200/50">
+                <TabsTrigger value="weeks" className="gap-2 data-[state=active]:bg-white">
+                  <CalendarDays className="w-4 h-4" />
+                  Weeks
+                </TabsTrigger>
+                <TabsTrigger value="gantt" className="gap-2 data-[state=active]:bg-white">
+                  <GanttChart className="w-4 h-4" />
+                  Stages
+                </TabsTrigger>
+                <TabsTrigger value="cards" className="gap-2 data-[state=active]:bg-white">
+                  <LayoutGrid className="w-4 h-4" />
+                  Cards
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button
+              onClick={fetchData}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              className="bg-white/80 backdrop-blur-sm border-gray-200/50 hover:bg-white"
+            >
+              <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
+              Refresh
+            </Button>
           </div>
         </div>
-      )}
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-        <Filter className="w-4 h-4 text-gray-400" />
-        <button
-          onClick={() => setShowOnlyIssues(!showOnlyIssues)}
-          className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all',
-            showOnlyIssues
-              ? 'bg-amber-100 border-amber-300 text-amber-700'
-              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-          )}
-        >
-          <div
-            className={cn(
-              'w-4 h-4 rounded border flex items-center justify-center transition-all',
-              showOnlyIssues
-                ? 'bg-amber-500 border-amber-500'
-                : 'border-gray-300'
-            )}
-          >
-            {showOnlyIssues && <Check className="w-3 h-3 text-white" />}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600">
+            {error}
           </div>
-          Show only issues
-        </button>
-        {showOnlyIssues && (
-          <span className="text-sm text-gray-500">
-            Showing {filteredDesignWeeks.length} of {data?.designWeeks.length ?? 0}
-          </span>
         )}
-        {selectedConsultant && (
+
+        {/* Summary stats with vibrant mesh gradients - click to filter */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <StatCard
+            label="Total DEs"
+            value={summary.total}
+            icon={FileText}
+            meshGradient="gray"
+            onClick={() => setFilterType('all')}
+            active={filterType === 'all'}
+          />
+          <StatCard
+            label="Design Week"
+            value={summary.byStage.designWeek}
+            icon={FileText}
+            meshGradient="blue"
+            onClick={() => setFilterType(filterType === 'design_week' ? 'all' : 'design_week')}
+            active={filterType === 'design_week'}
+          />
+          <StatCard
+            label="Configuration"
+            value={summary.byStage.configuration}
+            icon={Settings}
+            meshGradient="purple"
+            onClick={() => setFilterType(filterType === 'configuration' ? 'all' : 'configuration')}
+            active={filterType === 'configuration'}
+          />
+          <StatCard
+            label="UAT"
+            value={summary.byStage.uat}
+            icon={TestTube}
+            meshGradient="amber"
+            onClick={() => setFilterType(filterType === 'uat' ? 'all' : 'uat')}
+            active={filterType === 'uat'}
+          />
+          <StatCard
+            label="Prereq Blocked"
+            value={summary.prerequisitesBlocked}
+            icon={Key}
+            meshGradient="rose"
+            onClick={() => setFilterType(filterType === 'prereq-blocked' ? 'all' : 'prereq-blocked')}
+            active={filterType === 'prereq-blocked'}
+          />
+          <HealthCard
+            green={summary.byTrafficLight.green}
+            yellow={summary.byTrafficLight.yellow}
+            red={summary.byTrafficLight.red}
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+          <Filter className="w-4 h-4 text-gray-400" />
+
+          {/* Issues filter */}
           <button
-            onClick={() => setSelectedConsultant(null)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-100 border border-indigo-300 text-indigo-700 text-sm font-medium"
+            onClick={() => setFilterType(filterType === 'issues' ? 'all' : 'issues')}
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all',
+              filterType === 'issues'
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            )}
           >
-            <Users className="w-3.5 h-3.5" />
-            {selectedConsultant}
-            <span className="ml-1">×</span>
+            <div
+              className={cn(
+                'w-4 h-4 rounded-md border flex items-center justify-center transition-all',
+                filterType === 'issues' ? 'bg-amber-500 border-amber-500' : 'border-gray-300'
+              )}
+            >
+              {filterType === 'issues' && <Check className="w-3 h-3 text-white" />}
+            </div>
+            Show only issues
           </button>
+
+          {/* Company filter */}
+          {companies.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-gray-400" />
+              <select
+                value={selectedCompany || ''}
+                onChange={(e) => setSelectedCompany(e.target.value || null)}
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+              >
+                <option value="">All Companies</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Lead filter */}
+          {timelineData?.leads && timelineData.leads.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-400" />
+              <select
+                value={selectedConsultant || ''}
+                onChange={(e) => setSelectedConsultant(e.target.value || null)}
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+              >
+                <option value="">All Leads</option>
+                {timelineData.leads.map((lead) => (
+                  <option key={lead} value={lead}>
+                    {lead}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Active filters display */}
+          {(filterType !== 'all' || selectedConsultant || selectedCompany) && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-gray-500">
+                Showing{' '}
+                {viewMode === 'cards'
+                  ? filteredDesignWeeks.length
+                  : filteredTimelineCompanies.reduce((sum, c) => sum + c.digitalEmployees.length, 0)}{' '}
+                of {summary.total}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setFilterType('all')
+                  setSelectedConsultant(null)
+                  setSelectedCompany(null)
+                }}
+                className="text-xs hover:bg-gray-100"
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Content based on view mode */}
+        {loading && !cardData && !timelineData ? (
+          <div className="flex items-center justify-center py-20">
+            <RefreshCw className="w-8 h-8 animate-spin text-purple-500" />
+          </div>
+        ) : viewMode === 'weeks' ? (
+          /* Week Timeline View */
+          filteredTimelineCompanies.length === 0 ? (
+            <Card className="border-dashed border-2 bg-white/50 backdrop-blur-sm">
+              <CardContent className="py-16 text-center">
+                {filterType !== 'all' || selectedConsultant || selectedCompany ? (
+                  <>
+                    <CircleCheck className="w-16 h-16 mx-auto text-emerald-300 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No matches</h3>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      No Digital Employees match your current filters.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => {
+                        setFilterType('all')
+                        setSelectedConsultant(null)
+                        setSelectedCompany(null)
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-purple-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      No active implementations
+                    </h3>
+                    <p className="text-gray-500">
+                      Digital Employees will appear here when implementations begin.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm p-4">
+              <WeekTimeline
+                companies={filteredTimelineCompanies}
+                currentWeek={currentWeek}
+                onWeekChange={handleWeekChange}
+              />
+            </div>
+          )
+        ) : viewMode === 'gantt' ? (
+          /* Gantt Timeline View (Stages) */
+          filteredTimelineCompanies.length === 0 ? (
+            <Card className="border-dashed border-2 bg-white/50 backdrop-blur-sm">
+              <CardContent className="py-16 text-center">
+                {filterType !== 'all' || selectedConsultant || selectedCompany ? (
+                  <>
+                    <CircleCheck className="w-16 h-16 mx-auto text-emerald-300 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No matches</h3>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      No Digital Employees match your current filters.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => {
+                        setFilterType('all')
+                        setSelectedConsultant(null)
+                        setSelectedCompany(null)
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-purple-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      No active implementations
+                    </h3>
+                    <p className="text-gray-500">
+                      Digital Employees will appear here when implementations begin.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm p-4">
+              <GanttTimeline companies={filteredTimelineCompanies} />
+            </div>
+          )
+        ) : (
+          /* Card View */
+          filteredDesignWeeks.length === 0 ? (
+            <Card className="border-dashed border-2 bg-white/50 backdrop-blur-sm">
+              <CardContent className="py-16 text-center">
+                {filterType === 'issues' ? (
+                  <>
+                    <CircleCheck className="w-16 h-16 mx-auto text-emerald-300 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">All clear!</h3>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      No Design Weeks need attention right now.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => setFilterType('all')}
+                    >
+                      Show all Design Weeks
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-purple-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No active Design Weeks</h3>
+                    <p className="text-gray-500">
+                      Design Weeks will appear here when implementations begin.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredDesignWeeks.map((dw) => (
+                <DesignWeekOverviewCard key={dw.id} designWeek={dw} />
+              ))}
+            </div>
+          )
         )}
+
       </div>
 
-      {/* Design Week cards */}
-      {loading && !data ? (
-        <div className="flex items-center justify-center py-20">
-          <RefreshCw className="w-8 h-8 animate-spin text-purple-500" />
-        </div>
-      ) : filteredDesignWeeks.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 text-center">
-            {showOnlyIssues ? (
-              <>
-                <CircleCheck className="w-16 h-16 mx-auto text-emerald-300 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">All clear!</h3>
-                <p className="text-gray-500 max-w-md mx-auto">
-                  No Design Weeks need attention right now. All implementations are on track.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setShowOnlyIssues(false)}
-                >
-                  Show all Design Weeks
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">📈</span>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No active Design Weeks</h3>
-                <p className="text-gray-500">
-                  Design Weeks will appear here when implementations begin.
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredDesignWeeks.map((dw) => (
-            <DesignWeekOverviewCard key={dw.id} designWeek={dw} />
-          ))}
-        </div>
-      )}
+      {/* Freddy AI Assistant - floating button */}
+      <PortfolioFreddy onChangesApplied={fetchData} />
     </div>
   )
 }

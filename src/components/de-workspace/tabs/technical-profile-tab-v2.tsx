@@ -31,6 +31,7 @@ import {
   AuthMethod,
   IntegrationStatus,
 } from '../profile-types'
+import { PrerequisitesSection } from '../prerequisites/prerequisites-section'
 
 interface TechnicalProfileTabV2Props {
   designWeekId: string
@@ -180,6 +181,9 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
           <strong>Technical Profile</strong> captures all system integrations, data requirements, and security specifications needed for the Digital Employee implementation.
         </p>
       </div>
+
+      {/* Prerequisites Section - Gate to Configuration Phase */}
+      <PrerequisitesSection designWeekId={designWeekId} />
 
       {/* Integrations Section */}
       <TechnicalSection

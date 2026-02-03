@@ -36,6 +36,7 @@ const createMockPrisma = () => ({
     findFirst: vi.fn().mockResolvedValue(null) as MockedPrismaMethod,
     create: vi.fn() as MockedPrismaMethod,
     update: vi.fn() as MockedPrismaMethod,
+    delete: vi.fn() as MockedPrismaMethod,
     count: vi.fn().mockResolvedValue(0) as MockedPrismaMethod,
   },
   scopeItem: {
@@ -73,6 +74,7 @@ const createMockPrisma = () => ({
   extractedItem: {
     findMany: vi.fn().mockResolvedValue([]) as MockedPrismaMethod,
     createMany: vi.fn() as MockedPrismaMethod,
+    deleteMany: vi.fn() as MockedPrismaMethod,
     count: vi.fn().mockResolvedValue(0) as MockedPrismaMethod,
     groupBy: vi.fn().mockResolvedValue([]) as MockedPrismaMethod,
   },
@@ -96,6 +98,11 @@ const createMockPrisma = () => ({
   generatedDocument: {
     findMany: vi.fn().mockResolvedValue([]) as MockedPrismaMethod,
     create: vi.fn() as MockedPrismaMethod,
+    count: vi.fn().mockResolvedValue(0) as MockedPrismaMethod,
+  },
+  observatoryLLMOperation: {
+    create: vi.fn() as MockedPrismaMethod,
+    findMany: vi.fn().mockResolvedValue([]) as MockedPrismaMethod,
     count: vi.fn().mockResolvedValue(0) as MockedPrismaMethod,
   },
   $queryRaw: vi.fn().mockResolvedValue([{ test: 1 }]) as MockedPrismaMethod,

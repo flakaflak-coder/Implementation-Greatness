@@ -15,10 +15,11 @@ export function SidebarHeader() {
   const { isCollapsed, toggleCollapse } = useSidebar()
 
   return (
-    <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
-      <Link href="/" className="flex items-center gap-2 group">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-200/50 group-hover:shadow-indigo-300/50 transition-shadow duration-300">
-          <span className="text-xl">🚀</span>
+    <div className="flex h-16 items-center justify-between px-4">
+      <Link href="/" className="flex items-center gap-3 group">
+        {/* Clean logo mark */}
+        <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center flex-shrink-0">
+          <span className="text-white font-bold text-sm">F</span>
         </div>
         <div
           className={cn(
@@ -26,10 +27,9 @@ export function SidebarHeader() {
             isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
           )}
         >
-          <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent whitespace-nowrap">
-            Onboarding
+          <span className="font-bold text-xl text-gray-900 whitespace-nowrap tracking-tight">
+            Freeday
           </span>
-          <p className="text-[10px] text-gray-500 -mt-1">Command Center</p>
         </div>
       </Link>
 
@@ -41,7 +41,7 @@ export function SidebarHeader() {
             onClick={toggleCollapse}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
-              'h-8 w-8 flex-shrink-0 text-gray-500 hover:text-gray-900 hover:bg-gray-100',
+              'h-8 w-8 flex-shrink-0 text-gray-400 hover:text-gray-900 hover:bg-gray-100',
               isCollapsed && 'absolute right-2'
             )}
           >

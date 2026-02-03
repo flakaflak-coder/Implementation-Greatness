@@ -137,7 +137,7 @@ function EvidenceDialog({
           <div>
             <p className="font-medium text-gray-900">{sessionLabel}</p>
             {source.sessionDate && (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500" suppressHydrationWarning>
                 {new Date(source.sessionDate).toLocaleDateString('en-US', {
                   weekday: 'short',
                   month: 'short',

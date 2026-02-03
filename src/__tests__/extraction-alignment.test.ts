@@ -35,7 +35,7 @@ function extractTypesFromPrismaEnum(): string[] {
   const content = fs.readFileSync(filePath, 'utf-8')
 
   // Find the ExtractedItemType enum
-  const enumMatch = content.match(/enum ExtractedItemType \{([^}]+)\}/s)
+  const enumMatch = content.match(/enum ExtractedItemType \{([^}]+)\}/)
   if (!enumMatch) return []
 
   // Extract type names (skip comments)
@@ -60,7 +60,7 @@ function extractTypesFromTechnicalProfileMapper(): string[] {
   const content = fs.readFileSync(filePath, 'utf-8')
 
   // Find types in the 'in' array
-  const inArrayMatch = content.match(/in: \[([^\]]+)\]/s)
+  const inArrayMatch = content.match(/in: \[([^\]]+)\]/)
   if (!inArrayMatch) return []
 
   const types = inArrayMatch[1].match(/'([A-Z_]+)'/g) || []
@@ -72,7 +72,7 @@ function extractTypesFromTestPlanMapper(): string[] {
   const content = fs.readFileSync(filePath, 'utf-8')
 
   // Find types in the 'in' array
-  const inArrayMatch = content.match(/in: \[([^\]]+)\]/s)
+  const inArrayMatch = content.match(/in: \[([^\]]+)\]/)
   if (!inArrayMatch) return []
 
   const types = inArrayMatch[1].match(/'([A-Z_]+)'/g) || []

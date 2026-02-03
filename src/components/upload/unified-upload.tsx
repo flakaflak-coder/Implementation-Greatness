@@ -1,12 +1,65 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Upload, FileAudio, FileText, FileVideo, X, RefreshCw, CheckCircle2, AlertCircle, Settings2, Check } from 'lucide-react'
+import { Upload, FileAudio, FileText, FileVideo, X, RefreshCw, CheckCircle2, AlertCircle, Settings2, Check, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PipelineProgress, createPipelineStages } from './pipeline-progress'
 import type { ExtractionMode } from '@/lib/pipeline/types'
+
+// Estimate processing time based on file type and size
+function estimateProcessingTime(file: File): { min: number; max: number; label: string } {
+  const sizeMB = file.size / 1024 / 1024
+  const isAudioVideo = file.type.startsWith('audio/') || file.type.startsWith('video/')
+  const isDocument = file.type.includes('pdf') || file.type.includes('document') || file.type.includes('text')
+
+  if (isAudioVideo) {
+    // Audio/video: ~30-60 seconds per 10MB (transcription + extraction)
+    const baseMin = 30
+    const baseMax = 90
+    const sizeMultiplier = Math.max(1, sizeMB / 10)
+    return {
+      min: Math.round(baseMin * sizeMultiplier),
+      max: Math.round(baseMax * sizeMultiplier),
+      label: sizeMB > 50 ? 'Large recording - this may take a few minutes' : 'Processing recording...',
+    }
+  } else if (isDocument) {
+    // Documents: faster, ~15-30 seconds base + size factor
+    const baseMin = 15
+    const baseMax = 45
+    const sizeMultiplier = Math.max(1, sizeMB / 5)
+    return {
+      min: Math.round(baseMin * sizeMultiplier),
+      max: Math.round(baseMax * sizeMultiplier),
+      label: 'Processing document...',
+    }
+  }
+
+  // Default fallback
+  return { min: 30, max: 120, label: 'Processing...' }
+}
+
+function formatTimeRemaining(seconds: number): string {
+  if (seconds < 60) {
+    return `~${Math.ceil(seconds / 10) * 10}s remaining`
+  }
+  const minutes = Math.floor(seconds / 60)
+  const remainingSecs = seconds % 60
+  if (remainingSecs === 0) {
+    return `~${minutes}m remaining`
+  }
+  return `~${minutes}m ${Math.ceil(remainingSecs / 10) * 10}s remaining`
+}
+
+function formatTimeElapsed(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`
+  }
+  const minutes = Math.floor(seconds / 60)
+  const remainingSecs = seconds % 60
+  return `${minutes}:${remainingSecs.toString().padStart(2, '0')}`
+}
 
 interface UnifiedUploadProps {
   designWeekId: string
@@ -72,14 +125,36 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [extractionMode, setExtractionMode] = useState<ExtractionMode>('auto')
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [timeEstimate, setTimeEstimate] = useState<{ min: number; max: number; label: string } | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Clean up EventSource on unmount
+  // Clean up EventSource and timer on unmount
   useEffect(() => {
     return () => {
       eventSourceRef.current?.close()
+      if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [])
+
+  // Timer for tracking elapsed time during processing
+  useEffect(() => {
+    if (state === 'processing' || state === 'uploading') {
+      setElapsedTime(0)
+      timerRef.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 1)
+      }, 1000)
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [state])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -115,6 +190,8 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
 
     setFile(selectedFile)
     setError(null)
+    setTimeEstimate(estimateProcessingTime(selectedFile))
+    setElapsedTime(0)
     startUpload(selectedFile)
   }
 
@@ -217,10 +294,32 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
 
   const handleReset = () => {
     eventSourceRef.current?.close()
+    if (timerRef.current) clearInterval(timerRef.current)
     setFile(null)
     setJobStatus(null)
     setState('idle')
     setError(null)
+    setElapsedTime(0)
+    setTimeEstimate(null)
+  }
+
+  const handleCancel = async () => {
+    if (!jobStatus?.jobId) {
+      handleReset()
+      return
+    }
+
+    try {
+      // Try to cancel the job on the server
+      await fetch(`/api/upload/${jobStatus.jobId}/cancel`, {
+        method: 'POST',
+      })
+    } catch {
+      // Ignore errors - we'll reset locally anyway
+    }
+
+    // Reset local state
+    handleReset()
   }
 
   const getFileIcon = (mimeType: string) => {
@@ -348,10 +447,53 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
               )}
             </div>
 
+            {/* Time estimate banner */}
+            {timeEstimate && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
+                <Clock className="h-4 w-4 text-indigo-500" />
+                <div className="flex-1">
+                  <p className="text-sm text-indigo-700">
+                    {state === 'uploading' ? 'Uploading...' : timeEstimate.label}
+                  </p>
+                  <p className="text-xs text-indigo-500">
+                    {elapsedTime === 0 ? (
+                      `Usually takes ${timeEstimate.min < 60 ? `${timeEstimate.min}-${timeEstimate.max}s` : `${Math.ceil(timeEstimate.min / 60)}-${Math.ceil(timeEstimate.max / 60)} min`}`
+                    ) : (
+                      <>
+                        <span className="font-medium">{formatTimeElapsed(elapsedTime)}</span>
+                        {' elapsed'}
+                        {elapsedTime < timeEstimate.max && (
+                          <span className="text-indigo-400">
+                            {' • '}{formatTimeRemaining(Math.max(0, timeEstimate.max - elapsedTime))}
+                          </span>
+                        )}
+                        {elapsedTime >= timeEstimate.max && (
+                          <span className="text-indigo-400"> • Almost done...</span>
+                        )}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Pipeline progress */}
             {state === 'processing' && (
               <PipelineProgress stages={pipelineStages} />
             )}
+
+            {/* Cancel button */}
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
 

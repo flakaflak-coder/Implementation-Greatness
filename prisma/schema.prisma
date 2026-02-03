@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -47,12 +46,51 @@ model DigitalEmployee {
   // Current phase in the onboarding journey
   currentJourneyPhase JourneyPhaseType @default(SALES_HANDOVER)
 
+  // ============================================
+  // TRACKER FIELDS (for Portfolio Timeline view)
+  // ============================================
+
+  // Timeline (week numbers 1-52)
+  startWeek    Int?
+  endWeek      Int?
+  goLiveWeek   Int?
+
+  // Project tracking status (separate from lifecycle status)
+  trackerStatus  TrackerStatus  @default(ON_TRACK)
+  riskLevel      RiskLevel      @default(LOW)
+  blocker        String?
+
+  // Ownership
+  ownerClient              String?
+  ownerFreedayProject      String?
+  ownerFreedayEngineering  String?
+
+  // Weekly actions
+  thisWeekActions  String?
+
+  // Display order in timeline
+  sortOrder  Int  @default(100)
+
   // Relations
   company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   designWeek    DesignWeek?
   journeyPhases JourneyPhase[]
 
   @@map("digital_employees")
+}
+
+// Tracker status for Portfolio timeline (auto-calculated or manual)
+enum TrackerStatus {
+  ON_TRACK
+  ATTENTION
+  BLOCKED
+  TO_PLAN
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum DigitalEmployeeStatus {
@@ -109,6 +147,11 @@ model JourneyPhase {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
+  // Duration tracking for learning/feedback
+  plannedDurationDays Int?              // Standard duration (auto-set based on phase type)
+  actualDurationDays  Int?              // Calculated on completion (completedAt - startedAt)
+  varianceNotes       String?           // Why it took longer/shorter than planned
+
   // Checklist items for this phase
   checklistItems JourneyChecklistItem[]
 
@@ -147,9 +190,15 @@ model DesignWeek {
   status            DesignWeekStatus @default(NOT_STARTED)
   currentPhase      Int             @default(1)
   startedAt         DateTime?
+  plannedEndDate    DateTime?       // Auto-calculated: startedAt + 10 business days (2 weeks)
   completedAt       DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+
+  // Duration tracking for learning/feedback
+  plannedDurationDays Int           @default(10)  // Standard: 2 weeks (10 business days)
+  actualDurationDays  Int?                        // Calculated on completion
+  varianceNotes       String?                     // Why it took longer/shorter
 
   // Business Profile - stores the fixed-field profile structure
   // Auto-populated from extractions, manually editable
@@ -174,6 +223,7 @@ model DesignWeek {
   generatedDocuments GeneratedDocument[]
   rawExtractions     RawExtraction[]
   uploadJobs         UploadJob[]
+  prerequisites      Prerequisite[]      // Prerequisites to start Build phase
 
   @@map("design_weeks")
 }
@@ -453,6 +503,72 @@ model KPI {
 }
 
 // ============================================
+// PREREQUISITES (Gate between Design Week and Build)
+// ============================================
+
+model Prerequisite {
+  id              String               @id @default(cuid())
+  designWeekId    String
+
+  // What is needed
+  title           String               // "API Key for CRM System"
+  description     String?              // Detailed description
+  category        PrerequisiteCategory
+
+  // Who needs to provide it
+  ownerType       PrerequisiteOwner    // CLIENT, FREEDAY, THIRD_PARTY
+  ownerName       String?              // "Marcus Chen @ Acme Insurance"
+  ownerEmail      String?
+
+  // Tracking
+  status          PrerequisiteStatus   @default(PENDING)
+  priority        Priority             @default(MEDIUM)
+  dueDate         DateTime?
+  requestedAt     DateTime?            // When we asked for it
+  receivedAt      DateTime?            // When we got it
+  blocksPhase     JourneyPhaseType?    // What phase this blocks (ONBOARDING, UAT, etc.)
+
+  // Linking to related integration (optional)
+  integrationId   String?
+
+  notes           String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  // Relations
+  designWeek      DesignWeek           @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  integration     Integration?         @relation(fields: [integrationId], references: [id])
+
+  @@map("prerequisites")
+}
+
+enum PrerequisiteCategory {
+  API_CREDENTIALS      // API keys, tokens, secrets
+  SYSTEM_ACCESS        // VPN, portal access, accounts
+  DOCUMENTATION        // API docs, process docs, specs
+  TEST_DATA            // Test datasets, sample files
+  SECURITY_APPROVAL    // Security review, DPIA, etc.
+  LEGAL_APPROVAL       // Contract amendments, DPA, etc.
+  INFRASTRUCTURE       // Environments, servers, etc.
+  OTHER
+}
+
+enum PrerequisiteOwner {
+  CLIENT               // Client needs to provide
+  FREEDAY              // Freeday internal
+  THIRD_PARTY          // External vendor/partner
+}
+
+enum PrerequisiteStatus {
+  PENDING              // Not yet requested
+  REQUESTED            // Asked for it
+  IN_PROGRESS          // Being worked on
+  RECEIVED             // Got it!
+  BLOCKED              // Can't get it (issue)
+  NOT_NEEDED           // No longer required
+}
+
+// ============================================
 // INTEGRATIONS
 // ============================================
 
@@ -477,8 +593,9 @@ model Integration {
   updatedAt    DateTime          @updatedAt
 
   // Relations
-  designWeek DesignWeek @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
-  evidence   Evidence[]
+  designWeek    DesignWeek     @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
+  evidence      Evidence[]
+  prerequisites Prerequisite[] // Prerequisites linked to this integration
 
   @@map("integrations")
 }
@@ -1000,3 +1117,4 @@ enum PipelineStage {
   TAB_POPULATION
   COMPLETE
 }
+

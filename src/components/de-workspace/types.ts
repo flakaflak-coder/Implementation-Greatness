@@ -5,6 +5,7 @@ import type {
   ExtractedItemType,
   Session,
 } from '@prisma/client'
+import type { BusinessProfile, TechnicalProfile } from './profile-types'
 
 // Profile section definitions
 export type BusinessProfileSection =
@@ -53,6 +54,166 @@ export const TECHNICAL_PROFILE_MAPPING: Record<TechnicalProfileSection, Extracte
   security: ['SECURITY_REQUIREMENT', 'COMPLIANCE_REQUIREMENT'],
   apis: ['API_ENDPOINT', 'ERROR_HANDLING'],
   credentials: ['TECHNICAL_CONTACT'],
+}
+
+// Helper function to get covered types from Business Profile manual entries
+export function getProfileCoveredTypes(
+  profile: BusinessProfile | null,
+  technicalProfile: TechnicalProfile | null
+): {
+  business: Record<BusinessProfileSection, Set<ExtractedItemType>>
+  technical: Record<TechnicalProfileSection, Set<ExtractedItemType>>
+} {
+  const business: Record<BusinessProfileSection, Set<ExtractedItemType>> = {
+    identity: new Set(),
+    businessContext: new Set(),
+    channels: new Set(),
+    skills: new Set(),
+    process: new Set(),
+    guardrails: new Set(),
+    kpis: new Set(),
+  }
+
+  const technical: Record<TechnicalProfileSection, Set<ExtractedItemType>> = {
+    integrations: new Set(),
+    dataFields: new Set(),
+    security: new Set(),
+    apis: new Set(),
+    credentials: new Set(),
+  }
+
+  if (profile) {
+    // Identity section
+    if (profile.identity.stakeholders.length > 0) {
+      business.identity.add('STAKEHOLDER')
+    }
+    if (profile.identity.description) {
+      business.identity.add('GOAL')
+      business.identity.add('BUSINESS_CASE')
+    }
+
+    // Business Context section
+    if (profile.businessContext.problemStatement) {
+      business.businessContext.add('GOAL')
+    }
+    if (profile.businessContext.volumePerMonth !== null) {
+      business.businessContext.add('VOLUME_EXPECTATION')
+    }
+    if (profile.businessContext.costPerCase !== null) {
+      business.businessContext.add('COST_PER_CASE')
+    }
+    if (profile.businessContext.peakPeriods.length > 0) {
+      business.businessContext.add('PEAK_PERIODS')
+    }
+
+    // KPIs section
+    if (profile.kpis.length > 0) {
+      business.kpis.add('KPI_TARGET')
+      business.kpis.add('TIMELINE_CONSTRAINT')
+    }
+
+    // Channels section
+    if (profile.channels.length > 0) {
+      business.channels.add('CHANNEL')
+      business.channels.add('CHANNEL_VOLUME')
+      business.channels.add('CHANNEL_SLA')
+      business.channels.add('CHANNEL_RULE')
+    }
+
+    // Skills section
+    if (profile.skills.skills.length > 0) {
+      // Map skill types to ExtractedItemTypes
+      for (const skill of profile.skills.skills) {
+        switch (skill.type) {
+          case 'answer':
+            business.skills.add('SKILL_ANSWER')
+            break
+          case 'route':
+            business.skills.add('SKILL_ROUTE')
+            break
+          case 'approve_reject':
+            business.skills.add('SKILL_APPROVE_REJECT')
+            break
+          case 'request_info':
+            business.skills.add('SKILL_REQUEST_INFO')
+            break
+          case 'notify':
+            business.skills.add('SKILL_NOTIFY')
+            break
+          default:
+            business.skills.add('SKILL_OTHER')
+        }
+      }
+    }
+    if (profile.skills.communicationStyle.tone.length > 0) {
+      business.skills.add('BRAND_TONE')
+      business.skills.add('COMMUNICATION_STYLE')
+    }
+
+    // Process section
+    if (profile.process.happyPathSteps.length > 0) {
+      business.process.add('HAPPY_PATH_STEP')
+    }
+    if (profile.process.exceptions.length > 0) {
+      business.process.add('EXCEPTION_CASE')
+    }
+    if (profile.process.escalationRules.length > 0) {
+      business.process.add('ESCALATION_TRIGGER')
+    }
+    if (profile.process.caseTypes.length > 0) {
+      business.process.add('CASE_TYPE')
+    }
+
+    // Guardrails section
+    if (profile.guardrails.never.length > 0) {
+      business.guardrails.add('GUARDRAIL_NEVER')
+    }
+    if (profile.guardrails.always.length > 0) {
+      business.guardrails.add('GUARDRAIL_ALWAYS')
+    }
+    if (profile.guardrails.financialLimits.length > 0) {
+      business.guardrails.add('FINANCIAL_LIMIT')
+    }
+    if (profile.guardrails.legalRestrictions.length > 0) {
+      business.guardrails.add('LEGAL_RESTRICTION')
+    }
+  }
+
+  if (technicalProfile) {
+    // Integrations section
+    if (technicalProfile.integrations.length > 0) {
+      technical.integrations.add('SYSTEM_INTEGRATION')
+    }
+
+    // Data Fields section
+    if (technicalProfile.dataFields.length > 0) {
+      technical.dataFields.add('DATA_FIELD')
+    }
+
+    // Security section
+    if (technicalProfile.securityRequirements.length > 0) {
+      // Check categories to map to specific types
+      for (const req of technicalProfile.securityRequirements) {
+        if (req.category === 'compliance') {
+          technical.security.add('COMPLIANCE_REQUIREMENT')
+        } else {
+          technical.security.add('SECURITY_REQUIREMENT')
+        }
+      }
+    }
+
+    // APIs section
+    if (technicalProfile.apiEndpoints.length > 0) {
+      technical.apis.add('API_ENDPOINT')
+    }
+
+    // Credentials/Contacts section
+    if (technicalProfile.technicalContacts.length > 0) {
+      technical.credentials.add('TECHNICAL_CONTACT')
+    }
+  }
+
+  return { business, technical }
 }
 
 // Section metadata for display
@@ -173,6 +334,11 @@ export interface SectionCompleteness {
   pendingCount: number
   requiredCount: number
   missingTypes: ExtractedItemType[]
+  // Breakdown of what's affecting completeness
+  itemCountScore: number // How many approved items vs required
+  typeCoverageScore: number // How many expected types are covered
+  coveredTypesCount: number // Number of distinct types covered
+  totalTypesCount: number // Total number of expected types
 }
 
 // Overall profile completeness
@@ -282,8 +448,11 @@ export interface DEWorkspaceProps {
   digitalEmployee: DEWorkspaceDigitalEmployee
   designWeek: DEWorkspaceDesignWeek
   onUploadSession: (phase: number) => void
-  onExtractSession: (sessionId: string) => void
+  onExtractSession?: (sessionId: string) => void
   onRefresh: () => void
+  // Optional: controlled tab state (for integration with AI assistant)
+  activeTab?: WorkspaceTab
+  onTabChange?: (tab: WorkspaceTab) => void
 }
 
 // Tab state
@@ -330,20 +499,55 @@ export function groupItemsByProfile(items: ExtractedItemWithSession[]): GroupedP
 }
 
 // Helper to calculate section completeness
+// Now accepts optional profileCoveredTypes to include manually-entered profile data
 export function calculateSectionCompleteness(
   items: ExtractedItemWithSession[],
   metadata: SectionMetadata,
-  mappedTypes: ExtractedItemType[]
+  mappedTypes: ExtractedItemType[],
+  profileCoveredTypes?: Set<ExtractedItemType>
 ): SectionCompleteness {
   const approvedItems = items.filter((i) => i.status === 'APPROVED')
   const pendingItems = items.filter((i) => i.status === 'PENDING' || i.status === 'NEEDS_CLARIFICATION')
 
-  // Find which types are missing
+  // Find which types are covered (by approved extracted items)
   const coveredTypes = new Set(approvedItems.map((i) => i.type))
+
+  // Merge with types covered by manual profile entries
+  if (profileCoveredTypes) {
+    for (const type of profileCoveredTypes) {
+      coveredTypes.add(type)
+    }
+  }
+
   const missingTypes = mappedTypes.filter((t) => !coveredTypes.has(t))
 
-  // Calculate percentage based on approved items vs required count
-  const percentage = Math.min(100, Math.round((approvedItems.length / metadata.requiredCount) * 100))
+  // Calculate completeness using TWO factors:
+  // 1. Item count coverage: approved items vs required count (now considers profile as adding "virtual items")
+  // 2. Type coverage: covered types vs total expected types
+
+  // For item count, if profile contributes types, count them as if we had items
+  // This allows reaching 100% via either extraction OR manual entry
+  const effectiveItemCount = Math.max(approvedItems.length, profileCoveredTypes?.size ?? 0)
+  const itemCountScore = Math.min(100, Math.round((effectiveItemCount / metadata.requiredCount) * 100))
+
+  // Type coverage score (0-100): What percentage of expected types are covered?
+  // This now includes types covered by profile data
+  const typeCoverageScore = mappedTypes.length > 0
+    ? Math.round((coveredTypes.size / mappedTypes.length) * 100)
+    : 100 // If no types mapped, don't penalize
+
+  // Combined percentage: Take the LOWER of the two scores
+  // This ensures 100% only when BOTH conditions are met:
+  // - We have enough approved items OR profile data
+  // - We have coverage of all expected types
+  let percentage = Math.min(itemCountScore, typeCoverageScore)
+
+  // Further reduce if there are pending items that could affect the section
+  // (Pending items indicate work in progress, not yet complete)
+  if (pendingItems.length > 0 && percentage >= 80) {
+    // Cap at 90% if there are pending items awaiting review
+    percentage = Math.min(percentage, 90)
+  }
 
   return {
     section: '' as ProfileSection, // Will be set by caller
@@ -352,11 +556,27 @@ export function calculateSectionCompleteness(
     pendingCount: pendingItems.length,
     requiredCount: metadata.requiredCount,
     missingTypes,
+    // Breakdown details
+    itemCountScore,
+    typeCoverageScore,
+    coveredTypesCount: coveredTypes.size,
+    totalTypesCount: mappedTypes.length,
   }
 }
 
 // Helper to calculate overall profile completeness
-export function calculateProfileCompleteness(grouped: GroupedProfileItems): ProfileCompleteness {
+// Now accepts optional profile data to include manually-entered values in completeness calculation
+export function calculateProfileCompleteness(
+  grouped: GroupedProfileItems,
+  businessProfile?: BusinessProfile | null,
+  technicalProfile?: TechnicalProfile | null
+): ProfileCompleteness {
+  // Get types covered by manual profile entries
+  const profileCovered = getProfileCoveredTypes(
+    businessProfile ?? null,
+    technicalProfile ?? null
+  )
+
   const businessSections: Record<BusinessProfileSection, SectionCompleteness> = {} as Record<
     BusinessProfileSection,
     SectionCompleteness
@@ -367,7 +587,12 @@ export function calculateProfileCompleteness(grouped: GroupedProfileItems): Prof
     const sectionKey = section as BusinessProfileSection
     const metadata = BUSINESS_SECTION_METADATA[sectionKey]
     const types = BUSINESS_PROFILE_MAPPING[sectionKey]
-    const completeness = calculateSectionCompleteness(items, metadata, types)
+    const completeness = calculateSectionCompleteness(
+      items,
+      metadata,
+      types,
+      profileCovered.business[sectionKey]
+    )
     completeness.section = sectionKey
     businessSections[sectionKey] = completeness
     businessTotal += completeness.percentage
@@ -383,7 +608,12 @@ export function calculateProfileCompleteness(grouped: GroupedProfileItems): Prof
     const sectionKey = section as TechnicalProfileSection
     const metadata = TECHNICAL_SECTION_METADATA[sectionKey]
     const types = TECHNICAL_PROFILE_MAPPING[sectionKey]
-    const completeness = calculateSectionCompleteness(items, metadata, types)
+    const completeness = calculateSectionCompleteness(
+      items,
+      metadata,
+      types,
+      profileCovered.technical[sectionKey]
+    )
     completeness.section = sectionKey
     technicalSections[sectionKey] = completeness
     technicalTotal += completeness.percentage

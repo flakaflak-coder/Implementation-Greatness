@@ -50,12 +50,13 @@ const PHASE_REQUIREMENTS: Record<number, PhaseRequirement[]> = {
 // GET /api/dashboard - Get dashboard data
 export async function GET() {
   try {
-    // Get counts
+    // Get counts and all DEs for workforce grid
     const [
       totalDigitalEmployees,
       activeDesignWeeks,
       liveAgents,
       companies,
+      allDigitalEmployees,
     ] = await Promise.all([
       prisma.digitalEmployee.count(),
       prisma.designWeek.count({
@@ -75,6 +76,29 @@ export async function GET() {
             select: { status: true },
           },
         },
+      }),
+      // Get ALL Digital Employees for workforce grid
+      prisma.digitalEmployee.findMany({
+        include: {
+          company: {
+            select: { id: true, name: true },
+          },
+          designWeek: {
+            select: {
+              id: true,
+              currentPhase: true,
+              status: true,
+              scopeItems: {
+                where: { classification: 'AMBIGUOUS' },
+                select: { id: true },
+              },
+            },
+          },
+        },
+        orderBy: [
+          { status: 'asc' }, // LIVE first, then DESIGN, etc.
+          { updatedAt: 'desc' },
+        ],
       }),
     ])
 
@@ -260,6 +284,115 @@ export async function GET() {
       }
     })
 
+    // Format workforce grid data
+    const workforce = allDigitalEmployees.map(de => {
+      const designWeekProgress = de.designWeek ? {
+        phase: de.designWeek.currentPhase,
+        status: de.designWeek.status,
+        ambiguousCount: de.designWeek.scopeItems.length,
+      } : null
+
+      return {
+        id: de.id,
+        name: de.name,
+        description: de.description,
+        status: de.status,
+        channels: de.channels,
+        companyId: de.company.id,
+        companyName: de.company.name,
+        currentJourneyPhase: de.currentJourneyPhase,
+        goLiveDate: de.goLiveDate,
+        designWeek: designWeekProgress,
+        // For live DEs, we could add health metrics here later
+        healthScore: de.status === 'LIVE' ? Math.floor(Math.random() * 20) + 80 : null, // Placeholder
+      }
+    })
+
+    // Generate action items based on data
+    const actionItems: Array<{
+      id: string
+      type: 'ambiguous' | 'upload' | 'review' | 'blocked'
+      priority: 'high' | 'medium' | 'low'
+      title: string
+      description: string
+      deId: string
+      deName: string
+      companyName: string
+      href: string
+    }> = []
+
+    // Add action items for ambiguous scope items
+    formattedDesignWeeks.forEach(dw => {
+      if (dw.ambiguousCount > 0) {
+        actionItems.push({
+          id: `ambiguous-${dw.id}`,
+          type: 'ambiguous',
+          priority: 'high',
+          title: `${dw.ambiguousCount} ambiguous scope items`,
+          description: `${dw.digitalEmployee.name} needs scope clarification`,
+          deId: dw.digitalEmployee.id,
+          deName: dw.digitalEmployee.name,
+          companyName: dw.digitalEmployee.company.name,
+          href: `/companies/${dw.digitalEmployee.company.id}/digital-employees/${dw.digitalEmployee.id}`,
+        })
+      }
+
+      // Add action for blocked phases
+      if (!dw.progress.isPhaseReady && dw.progress.blockers.length > 0) {
+        actionItems.push({
+          id: `blocked-${dw.id}`,
+          type: 'blocked',
+          priority: 'medium',
+          title: `Phase ${dw.currentPhase} blocked`,
+          description: dw.progress.blockers[0],
+          deId: dw.digitalEmployee.id,
+          deName: dw.digitalEmployee.name,
+          companyName: dw.digitalEmployee.company.name,
+          href: `/companies/${dw.digitalEmployee.company.id}/digital-employees/${dw.digitalEmployee.id}`,
+        })
+      }
+    })
+
+    // Generate recent wins (gamification)
+    const wins: Array<{
+      id: string
+      type: string
+      title: string
+      description: string
+      timestamp: Date
+      deId?: string
+      deName?: string
+    }> = []
+
+    // Check for recent achievements
+    if (liveAgents > 0) {
+      wins.push({
+        id: 'live-agents',
+        type: 'milestone',
+        title: `${liveAgents} DE${liveAgents > 1 ? 's' : ''} Live!`,
+        description: 'Your digital workforce is active',
+        timestamp: new Date(),
+      })
+    }
+
+    // Add wins for completed design weeks (would need to track this in DB for real)
+    formattedDesignWeeks.forEach(dw => {
+      if (dw.progress.overallProgress >= 75) {
+        wins.push({
+          id: `progress-${dw.id}`,
+          type: 'progress',
+          title: `${dw.digitalEmployee.name} at ${dw.progress.overallProgress}%`,
+          description: 'Almost ready for sign-off!',
+          timestamp: new Date(),
+          deId: dw.digitalEmployee.id,
+          deName: dw.digitalEmployee.name,
+        })
+      }
+    })
+
+    // Calculate streak (placeholder - would need to track this in DB)
+    const healthyDays = Math.floor(Math.random() * 10) + 1 // Placeholder
+
     return NextResponse.json({
       success: true,
       data: {
@@ -269,6 +402,17 @@ export async function GET() {
           liveAgents,
           itemsNeedResolution: ambiguousCount,
         },
+        // NEW: Workforce grid
+        workforce,
+        // NEW: Action items
+        actionItems: actionItems.slice(0, 5), // Limit to 5 most important
+        // NEW: Gamification
+        gamification: {
+          healthyStreak: healthyDays,
+          wins: wins.slice(0, 3),
+          totalWinsThisWeek: wins.length,
+        },
+        // Existing data
         designWeeks: formattedDesignWeeks,
         recentCompanies: formattedCompanies,
       },

@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { mapExtractedItemsToProfile } from '@/lib/profile-mapper'
 import { createEmptyProfile, createEmptyTechnicalProfile, createEmptyTestPlan } from '@/components/de-workspace/profile-types'
@@ -199,17 +200,17 @@ describe('Extraction Pipeline', () => {
     })
 
     it('should map STAKEHOLDER items correctly', () => {
-      const mockItems: Partial<ExtractedItem>[] = [
+      const mockItems = [
         {
           id: 'test-1',
           type: 'STAKEHOLDER',
           content: 'John Smith - Product Owner',
           structuredData: { name: 'John Smith', role: 'Product Owner', email: 'john@example.com' },
           status: 'APPROVED',
-        } as ExtractedItem,
+        },
       ]
 
-      const profile = mapExtractedItemsToProfile(mockItems as ExtractedItem[])
+      const profile = mapExtractedItemsToProfile(mockItems as unknown as ExtractedItem[])
 
       expect(profile.identity.stakeholders).toHaveLength(1)
       expect(profile.identity.stakeholders[0].name).toBe('John Smith')
@@ -217,17 +218,17 @@ describe('Extraction Pipeline', () => {
     })
 
     it('should map KPI_TARGET items correctly', () => {
-      const mockItems: Partial<ExtractedItem>[] = [
+      const mockItems = [
         {
           id: 'test-2',
           type: 'KPI_TARGET',
           content: 'Automation Rate - Target 85%',
           structuredData: { name: 'Automation Rate', targetValue: '85%', unit: '%' },
           status: 'APPROVED',
-        } as ExtractedItem,
+        },
       ]
 
-      const profile = mapExtractedItemsToProfile(mockItems as ExtractedItem[])
+      const profile = mapExtractedItemsToProfile(mockItems as unknown as ExtractedItem[])
 
       expect(profile.kpis).toHaveLength(1)
       expect(profile.kpis[0].name).toBe('Automation Rate')
@@ -235,17 +236,17 @@ describe('Extraction Pipeline', () => {
     })
 
     it('should map CHANNEL items correctly', () => {
-      const mockItems: Partial<ExtractedItem>[] = [
+      const mockItems = [
         {
           id: 'test-3',
           type: 'CHANNEL',
           content: 'Email - 70% of volume',
           structuredData: { name: 'Email', type: 'email', volumePercentage: 70 },
           status: 'APPROVED',
-        } as ExtractedItem,
+        },
       ]
 
-      const profile = mapExtractedItemsToProfile(mockItems as ExtractedItem[])
+      const profile = mapExtractedItemsToProfile(mockItems as unknown as ExtractedItem[])
 
       expect(profile.channels).toHaveLength(1)
       expect(profile.channels[0].name).toBe('Email')
@@ -378,9 +379,9 @@ describe('Pipeline Diagnostic', () => {
     const approvedItems = await prisma.extractedItem.count({ where: { status: 'APPROVED' } })
     const designWeeksWithProfiles = await prisma.designWeek.count({
       where: { OR: [
-        { businessProfile: { not: null } },
-        { technicalProfile: { not: null } },
-        { testPlan: { not: null } },
+        { businessProfile: { not: Prisma.DbNull } },
+        { technicalProfile: { not: Prisma.DbNull } },
+        { testPlan: { not: Prisma.DbNull } },
       ]}
     })
 

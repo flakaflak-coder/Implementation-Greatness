@@ -4,10 +4,14 @@
  * Run with: npx tsx scripts/reprocess-extractions.ts
  */
 
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient, ExtractedItemType } from '@prisma/client'
 import { mapToExtractedItemType } from '../src/lib/pipeline/extract-specialized'
 
-const prisma = new PrismaClient()
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
 
 interface RawEntity {
   type: string

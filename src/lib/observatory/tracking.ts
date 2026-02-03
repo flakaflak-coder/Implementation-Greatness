@@ -1,5 +1,8 @@
 // Observatory tracking utilities
 // Use these to track events, errors, and LLM operations
+//
+// Client-side: Uses buffering and API calls
+// Server-side: Writes directly to database via trackLLMOperationServer()
 
 type EventType = 'FEATURE_USAGE' | 'PAGE_VIEW' | 'API_CALL' | 'ERROR' | 'LLM_OPERATION'
 
@@ -204,4 +207,82 @@ export function withTracking<T extends (...args: unknown[]) => Promise<unknown>>
       })
     }
   }) as T
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SERVER-SIDE TRACKING
+// These functions write directly to the database and should only be used server-side
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Track an LLM operation server-side (writes directly to database)
+ * Use this in claude.ts, gemini.ts, and other server-side LLM code
+ */
+export async function trackLLMOperationServer(options: TrackLLMOptions): Promise<void> {
+  // Dynamic import to avoid bundling Prisma in client code
+  try {
+    const { prisma } = await import('@/lib/db')
+    await prisma.observatoryLLMOperation.create({
+      data: {
+        pipelineName: options.pipelineName,
+        model: options.model,
+        inputTokens: options.inputTokens,
+        outputTokens: options.outputTokens,
+        latencyMs: options.latencyMs,
+        cost: options.cost,
+        success: options.success ?? true,
+        errorMessage: options.errorMessage,
+        metadata: options.metadata as object | undefined,
+      },
+    })
+  } catch (error) {
+    // Silently fail - don't break the main operation
+    console.error('[Observatory] Failed to track LLM operation:', error)
+  }
+}
+
+/**
+ * Track an error server-side (writes directly to database)
+ * Use this in API routes and server-side code
+ */
+export async function trackErrorServer(
+  error: Error,
+  options: TrackErrorOptions = {}
+): Promise<void> {
+  try {
+    const { prisma } = await import('@/lib/db')
+
+    // Check for existing error with same message
+    const existing = await prisma.observatoryError.findFirst({
+      where: {
+        message: error.message,
+        status: { in: ['NEW', 'INVESTIGATING'] },
+      },
+    })
+
+    if (existing) {
+      await prisma.observatoryError.update({
+        where: { id: existing.id },
+        data: {
+          count: { increment: 1 },
+          lastSeen: new Date(),
+          metadata: options.metadata as object | undefined,
+        },
+      })
+    } else {
+      await prisma.observatoryError.create({
+        data: {
+          message: error.message,
+          stack: error.stack,
+          featureId: options.featureId,
+          userId: options.userId,
+          endpoint: options.endpoint,
+          metadata: options.metadata as object | undefined,
+          status: 'NEW',
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[Observatory] Failed to track error:', err)
+  }
 }

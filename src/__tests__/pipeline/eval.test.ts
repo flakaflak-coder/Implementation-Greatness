@@ -170,3 +170,185 @@ describe('Judge Test Cases (data only)', () => {
     // These should match and pass validation
   })
 })
+
+// ============================================================================
+// NEW JUDGE TEST CASES
+// ============================================================================
+
+describe('Confidence Calibration Test Cases (data only)', () => {
+  const WELL_CALIBRATED_ITEMS = [
+    {
+      id: 'cal-1',
+      predictedConfidence: 0.95,
+      itemContent: 'Reduce costs by 30%',
+      itemType: 'GOAL',
+      sourceQuote: 'Our primary goal is to reduce costs by 30 percent',
+    },
+    {
+      id: 'cal-2',
+      predictedConfidence: 0.70,
+      itemContent: 'Sarah mentioned integration concerns',
+      itemType: 'RISK',
+      sourceQuote: 'I think there might be some integration issues',
+    },
+  ]
+
+  const OVERCONFIDENT_ITEMS = [
+    {
+      id: 'over-1',
+      predictedConfidence: 0.95, // Too high - vague source
+      itemContent: 'Process takes 2-3 days',
+      itemType: 'PROCESS_DETAIL',
+      sourceQuote: 'It usually takes a few days',
+    },
+  ]
+
+  const UNDERCONFIDENT_ITEMS = [
+    {
+      id: 'under-1',
+      predictedConfidence: 0.50, // Too low - very clear source
+      itemContent: 'John is the decision maker',
+      itemType: 'STAKEHOLDER',
+      sourceQuote: 'John is the final decision maker for this project',
+    },
+  ]
+
+  it('identifies well-calibrated predictions', () => {
+    expect(WELL_CALIBRATED_ITEMS[0].predictedConfidence).toBeGreaterThan(0.9)
+    expect(WELL_CALIBRATED_ITEMS[0].sourceQuote).toContain('30 percent')
+  })
+
+  it('identifies overconfident predictions', () => {
+    expect(OVERCONFIDENT_ITEMS[0].predictedConfidence).toBeGreaterThan(0.9)
+    expect(OVERCONFIDENT_ITEMS[0].sourceQuote).toContain('a few days')
+    // Vague "few days" shouldn't warrant 0.95 confidence
+  })
+
+  it('identifies underconfident predictions', () => {
+    expect(UNDERCONFIDENT_ITEMS[0].predictedConfidence).toBeLessThan(0.6)
+    expect(UNDERCONFIDENT_ITEMS[0].sourceQuote).toContain('final decision maker')
+    // Clear statement should have higher confidence
+  })
+})
+
+describe('Document Alignment Test Cases (data only)', () => {
+  const EXTRACTED_DATA = {
+    stakeholders: [
+      { name: 'Sarah Jones', role: 'Project Manager' },
+      { name: 'Tom Wilson', role: 'IT Director' },
+    ],
+    goals: ['Reduce processing time by 50%', 'Improve customer satisfaction'],
+    kpis: [{ name: 'Processing Time', target: '< 24 hours' }],
+    processSteps: ['Receive request', 'Validate data', 'Process claim'],
+    integrations: ['Salesforce', 'SAP'],
+    scopeIn: ['Claims processing', 'Email notifications'],
+    scopeOut: ['Payment processing', 'Fraud detection'],
+  }
+
+  const ALIGNED_CONTENT = {
+    executiveSummary: 'This project, led by Sarah Jones (Project Manager) and Tom Wilson (IT Director), aims to reduce processing time by 50% and improve customer satisfaction.',
+    currentState: 'The current process involves three main steps: receiving requests, validating data, and processing claims.',
+    scopeAnalysis: 'In scope: Claims processing and email notifications. Out of scope: Payment processing and fraud detection.',
+  }
+
+  const FABRICATED_CONTENT = {
+    executiveSummary: 'This project will achieve 70% cost savings and integrate with Microsoft Dynamics.', // 70% and Dynamics not in extracted data
+    currentState: 'The process typically takes 5-7 business days.', // Time frame not in extracted data
+    riskAssessment: 'The main risk is budget overruns estimated at $500K.', // Budget never mentioned
+  }
+
+  it('validates aligned content matches extracted data', () => {
+    expect(ALIGNED_CONTENT.executiveSummary).toContain('Sarah Jones')
+    expect(ALIGNED_CONTENT.executiveSummary).toContain('50%')
+    expect(EXTRACTED_DATA.stakeholders.some(s => s.name === 'Sarah Jones')).toBe(true)
+    expect(EXTRACTED_DATA.goals.some(g => g.includes('50%'))).toBe(true)
+  })
+
+  it('detects fabricated claims not in extracted data', () => {
+    expect(FABRICATED_CONTENT.executiveSummary).toContain('70%')
+    expect(FABRICATED_CONTENT.executiveSummary).toContain('Microsoft Dynamics')
+    expect(EXTRACTED_DATA.goals.some(g => g.includes('70%'))).toBe(false)
+    expect(EXTRACTED_DATA.integrations.includes('Microsoft Dynamics')).toBe(false)
+  })
+
+  it('detects invented metrics', () => {
+    expect(FABRICATED_CONTENT.riskAssessment).toContain('$500K')
+    // No budget figures in extracted data - this is fabricated
+  })
+})
+
+describe('Avatar Quality Test Cases (data only)', () => {
+  const GOOD_AVATAR_CONTEXT = {
+    deName: 'Alex',
+    deRole: 'Claims Processing Assistant',
+    dePersonality: ['helpful', 'professional', 'friendly'],
+    brandTone: 'Modern, approachable corporate',
+  }
+
+  const RISKY_AVATAR_CONTEXT = {
+    deName: 'Max',
+    deRole: 'Customer Service Bot',
+    dePersonality: ['casual', 'playful'],
+    brandTone: 'Youthful, startup culture',
+  }
+
+  it('provides clear context for good avatar generation', () => {
+    expect(GOOD_AVATAR_CONTEXT.dePersonality).toContain('professional')
+    expect(GOOD_AVATAR_CONTEXT.brandTone).toContain('corporate')
+  })
+
+  it('flags potentially problematic avatar contexts', () => {
+    expect(RISKY_AVATAR_CONTEXT.dePersonality).toContain('playful')
+    // Playful personas may result in less professional avatars
+  })
+})
+
+describe('Prompt Regression Test Cases (data only)', () => {
+  const BEFORE_PROMPT = `Extract stakeholders from the transcript. Return JSON with name, role, and isDecisionMaker fields.`
+
+  const IMPROVED_PROMPT = `Extract stakeholders from the transcript.
+For each stakeholder, identify:
+- name: Full name as mentioned
+- role: Job title or organizational role
+- isDecisionMaker: true if they have final approval authority
+- confidence: 0.0-1.0 based on clarity of mention
+
+Return as JSON array. Only include people explicitly mentioned by name.`
+
+  const DEGRADED_PROMPT = `Get the people from the text.` // Too vague
+
+  const TEST_INPUT = 'Sarah, the project manager, mentioned that John as CTO will make the final call on this.'
+
+  const GOOD_OUTPUT = [
+    { name: 'Sarah', role: 'Project Manager', isDecisionMaker: false, confidence: 0.9 },
+    { name: 'John', role: 'CTO', isDecisionMaker: true, confidence: 0.95 },
+  ]
+
+  const POOR_OUTPUT = [
+    { name: 'Sarah', role: 'manager' }, // Missing fields, generic role
+  ]
+
+  it('improved prompt has more specific guidance', () => {
+    expect(IMPROVED_PROMPT.length).toBeGreaterThan(BEFORE_PROMPT.length)
+    expect(IMPROVED_PROMPT).toContain('confidence')
+    expect(BEFORE_PROMPT).not.toContain('confidence')
+  })
+
+  it('degraded prompt lacks specificity', () => {
+    expect(DEGRADED_PROMPT.length).toBeLessThan(50)
+    expect(DEGRADED_PROMPT).not.toContain('stakeholder')
+    expect(DEGRADED_PROMPT).not.toContain('JSON')
+  })
+
+  it('good output has complete fields', () => {
+    expect(GOOD_OUTPUT).toHaveLength(2)
+    expect(GOOD_OUTPUT.every(s => 'confidence' in s)).toBe(true)
+    expect(GOOD_OUTPUT.find(s => s.name === 'John')?.isDecisionMaker).toBe(true)
+  })
+
+  it('poor output is incomplete', () => {
+    expect(POOR_OUTPUT).toHaveLength(1) // Missing John
+    expect(POOR_OUTPUT[0]).not.toHaveProperty('isDecisionMaker')
+    expect(POOR_OUTPUT[0]).not.toHaveProperty('confidence')
+  })
+})

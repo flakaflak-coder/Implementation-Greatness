@@ -8,11 +8,20 @@
  * Usage:
  *   import { evaluatePipeline, quickEvaluate } from '@/lib/pipeline/eval'
  *
- *   // Full evaluation (async, uses LLM judges)
+ *   // Full extraction evaluation (async, uses LLM judges)
  *   const result = await evaluatePipeline(jobId, classInput, extractInput, specInput)
  *
  *   // Quick evaluation (sync, automated checks only)
  *   const quick = quickEvaluate(confidence, entityCount, coverage)
+ *
+ *   // Document generation evaluation
+ *   const docResult = await evaluateDocumentGeneration({ documentInput, jobId })
+ *
+ *   // Avatar evaluation
+ *   const avatarResult = await evaluateAvatarGeneration({ avatarInput, jobId })
+ *
+ *   // Prompt regression testing
+ *   const promptResult = await evaluatePromptChange({ promptInput, jobId })
  */
 
 export {
@@ -23,11 +32,25 @@ export {
   quickEvaluate,
 } from './evaluator'
 
+// New orchestrator functions
+export {
+  evaluateExtraction as evaluateExtractionPipeline,
+  evaluateDocumentGeneration,
+  evaluateAvatarGeneration,
+  evaluatePromptChange,
+  quickEvaluate as quickEvaluateOrchestrated,
+} from './orchestrator'
+
 export {
   runClassificationJudge,
   runHallucinationJudge,
   runCoverageJudge,
   runConsistencyJudge,
+  // New judges
+  runConfidenceCalibrationJudge,
+  runDocumentAlignmentJudge,
+  runAvatarQualityJudge,
+  runPromptRegressionJudge,
   validateSchema,
   checkConfidenceGate,
 } from './judges'
@@ -40,6 +63,15 @@ export type {
   ClassificationEvalInput,
   ExtractionEvalInput,
   SpecializedEvalInput,
+  // New types
+  DocumentEvalInput,
+  DocumentAlignmentJudgeResult,
+  ConfidenceCalibrationInput,
+  ConfidenceCalibrationJudgeResult,
+  AvatarEvalInput,
+  AvatarQualityJudgeResult,
+  PromptRegressionInput,
+  PromptRegressionJudgeResult,
   EvalThresholds,
   EvalMetrics,
 } from './types'

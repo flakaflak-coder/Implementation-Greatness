@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
 import { FEATURES, getFeatureSummary } from '@/lib/observatory/features'
 
 // GET /api/observatory - Get observatory metrics
@@ -15,7 +16,7 @@ export async function GET() {
       return acc
     }, {} as Record<string, typeof FEATURES>)
 
-    // Calculate health metrics
+    // Calculate health metrics from feature registry
     const healthMetrics = {
       overall: featureSummary.broken > 0 ? 'unhealthy' : featureSummary.degraded > 0 ? 'degraded' : 'healthy',
       features: {
@@ -26,39 +27,224 @@ export async function GET() {
       },
     }
 
-    // Mock usage data (in production, query from database)
+    // Query real usage data from database
+    const now = new Date()
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+    // Get usage event counts
+    const [dailyEvents, weeklyEvents, totalEvents] = await Promise.all([
+      prisma.observatoryEvent.count({
+        where: { timestamp: { gte: oneDayAgo } },
+      }),
+      prisma.observatoryEvent.count({
+        where: { timestamp: { gte: oneWeekAgo } },
+      }),
+      prisma.observatoryEvent.count(),
+    ])
+
+    // Get unique users (from sessionId or userId)
+    const [dailyActiveUsers, weeklyActiveUsers] = await Promise.all([
+      prisma.observatoryEvent.findMany({
+        where: {
+          timestamp: { gte: oneDayAgo },
+          OR: [{ userId: { not: null } }, { sessionId: { not: null } }],
+        },
+        select: { userId: true, sessionId: true },
+        distinct: ['userId', 'sessionId'],
+      }),
+      prisma.observatoryEvent.findMany({
+        where: {
+          timestamp: { gte: oneWeekAgo },
+          OR: [{ userId: { not: null } }, { sessionId: { not: null } }],
+        },
+        select: { userId: true, sessionId: true },
+        distinct: ['userId', 'sessionId'],
+      }),
+    ])
+
+    // Get top features by usage
+    const topFeaturesRaw = await prisma.observatoryEvent.groupBy({
+      by: ['featureId'],
+      where: {
+        featureId: { not: null },
+        timestamp: { gte: oneWeekAgo },
+      },
+      _count: { featureId: true },
+      orderBy: { _count: { featureId: 'desc' } },
+      take: 5,
+    })
+
+    const topFeatures = topFeaturesRaw.map((f) => ({
+      featureId: f.featureId,
+      count: f._count.featureId,
+    }))
+
+    // Get recent activity
+    const recentActivity = await prisma.observatoryEvent.findMany({
+      where: { type: 'FEATURE_USAGE' },
+      orderBy: { timestamp: 'desc' },
+      take: 10,
+      select: {
+        featureId: true,
+        type: true,
+        timestamp: true,
+        success: true,
+      },
+    })
+
     const usageMetrics = {
-      dailyActiveUsers: 0, // No real users yet
-      weeklyActiveUsers: 0,
-      totalEvents: 0,
-      topFeatures: [],
-      recentActivity: [],
+      dailyActiveUsers: dailyActiveUsers.length,
+      weeklyActiveUsers: weeklyActiveUsers.length,
+      totalEvents,
+      dailyEvents,
+      weeklyEvents,
+      topFeatures,
+      recentActivity,
     }
 
-    // Mock error data (in production, query from database)
+    // Query real error data from database
+    const [newErrors, investigatingErrors, resolvedErrors, totalErrors] = await Promise.all([
+      prisma.observatoryError.count({ where: { status: 'NEW' } }),
+      prisma.observatoryError.count({ where: { status: 'INVESTIGATING' } }),
+      prisma.observatoryError.count({ where: { status: 'RESOLVED' } }),
+      prisma.observatoryError.count(),
+    ])
+
+    const recentErrors = await prisma.observatoryError.findMany({
+      where: { status: { in: ['NEW', 'INVESTIGATING'] } },
+      orderBy: { lastSeen: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        message: true,
+        featureId: true,
+        endpoint: true,
+        count: true,
+        status: true,
+        firstSeen: true,
+        lastSeen: true,
+      },
+    })
+
     const errorMetrics = {
-      total: 0,
-      new: 0,
-      investigating: 0,
-      resolved: 0,
-      recentErrors: [],
+      total: totalErrors,
+      new: newErrors,
+      investigating: investigatingErrors,
+      resolved: resolvedErrors,
+      recentErrors,
     }
 
-    // Mock feedback data (in production, query from database)
+    // Query real feedback data from database
+    const [newFeedback, totalFeedback] = await Promise.all([
+      prisma.observatoryFeedback.count({ where: { status: 'NEW' } }),
+      prisma.observatoryFeedback.count(),
+    ])
+
+    // Calculate average NPS
+    const npsScores = await prisma.observatoryFeedback.findMany({
+      where: { npsScore: { not: null } },
+      select: { npsScore: true },
+    })
+    const averageNPS =
+      npsScores.length > 0
+        ? npsScores.reduce((sum, f) => sum + (f.npsScore || 0), 0) / npsScores.length
+        : null
+
+    const recentFeedback = await prisma.observatoryFeedback.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        type: true,
+        content: true,
+        featureId: true,
+        npsScore: true,
+        status: true,
+        createdAt: true,
+      },
+    })
+
     const feedbackMetrics = {
-      total: 0,
-      new: 0,
-      averageNPS: null,
-      recentFeedback: [],
+      total: totalFeedback,
+      new: newFeedback,
+      averageNPS,
+      recentFeedback,
     }
 
-    // LLM metrics (in production, query from database)
+    // Query real LLM metrics from database
+    const [llmOperations, successfulOps, failedOps] = await Promise.all([
+      prisma.observatoryLLMOperation.findMany({
+        where: { timestamp: { gte: oneWeekAgo } },
+        select: {
+          pipelineName: true,
+          model: true,
+          inputTokens: true,
+          outputTokens: true,
+          latencyMs: true,
+          cost: true,
+          success: true,
+        },
+      }),
+      prisma.observatoryLLMOperation.count({
+        where: { timestamp: { gte: oneWeekAgo }, success: true },
+      }),
+      prisma.observatoryLLMOperation.count({
+        where: { timestamp: { gte: oneWeekAgo }, success: false },
+      }),
+    ])
+
+    // Calculate LLM metrics
+    const totalOperations = llmOperations.length
+    const totalLatency = llmOperations.reduce((sum, op) => sum + op.latencyMs, 0)
+    const averageLatency = totalOperations > 0 ? Math.round(totalLatency / totalOperations) : 0
+    const totalCost = llmOperations.reduce((sum, op) => sum + (op.cost || 0), 0)
+    const successRate = totalOperations > 0 ? Math.round((successfulOps / totalOperations) * 100) : 100
+    const totalInputTokens = llmOperations.reduce((sum, op) => sum + op.inputTokens, 0)
+    const totalOutputTokens = llmOperations.reduce((sum, op) => sum + op.outputTokens, 0)
+
+    // Group by pipeline
+    const operationsByPipeline = llmOperations.reduce(
+      (acc, op) => {
+        if (!acc[op.pipelineName]) {
+          acc[op.pipelineName] = { count: 0, totalLatency: 0, totalTokens: 0 }
+        }
+        acc[op.pipelineName].count++
+        acc[op.pipelineName].totalLatency += op.latencyMs
+        acc[op.pipelineName].totalTokens += op.inputTokens + op.outputTokens
+        return acc
+      },
+      {} as Record<string, { count: number; totalLatency: number; totalTokens: number }>
+    )
+
+    // Get recent LLM operations
+    const recentLLMOperations = await prisma.observatoryLLMOperation.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        pipelineName: true,
+        model: true,
+        inputTokens: true,
+        outputTokens: true,
+        latencyMs: true,
+        cost: true,
+        success: true,
+        errorMessage: true,
+        timestamp: true,
+      },
+    })
+
     const llmMetrics = {
-      totalOperations: 0,
-      averageLatency: 0,
-      totalCost: 0,
-      successRate: 100,
-      operationsByPipeline: {},
+      totalOperations,
+      averageLatency,
+      totalCost: Math.round(totalCost * 100) / 100,
+      successRate,
+      failedOperations: failedOps,
+      totalInputTokens,
+      totalOutputTokens,
+      operationsByPipeline,
+      recentOperations: recentLLMOperations,
     }
 
     return NextResponse.json({

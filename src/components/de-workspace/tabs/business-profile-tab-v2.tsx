@@ -287,7 +287,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                 placeholder="12.50"
               />
               {profile.businessContext.totalMonthlyCost && (
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-gray-500 mt-1 ml-1" suppressHydrationWarning>
                   Total: {profile.businessContext.currency || '€'}{profile.businessContext.totalMonthlyCost.toLocaleString()}/month
                 </p>
               )}
@@ -1066,6 +1066,7 @@ interface ProcessStepsListProps {
 function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [newDescription, setNewDescription] = useState('')
 
   const handleAdd = () => {
     if (newTitle.trim()) {
@@ -1075,10 +1076,11 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
           id: `step-${Date.now()}`,
           order: steps.length + 1,
           title: newTitle.trim(),
-          description: '',
+          description: newDescription.trim(),
         },
       ])
       setNewTitle('')
+      setNewDescription('')
       setIsAdding(false)
     }
   }
@@ -1099,7 +1101,7 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
         <div className="flex items-start gap-2 overflow-x-auto pb-2">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
-              <div className="flex flex-col items-center min-w-[120px] group">
+              <div className="flex flex-col items-center min-w-[160px] max-w-[180px] group">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                     {step.order}
@@ -1111,9 +1113,14 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
                     <X className="h-3 w-3" />
                   </button>
                 </div>
-                <p className="text-xs text-center font-medium text-gray-900 mt-2 max-w-[100px]">
+                <p className="text-xs text-center font-medium text-gray-900 mt-2">
                   {step.title}
                 </p>
+                {step.description && (
+                  <p className="text-xs text-center text-gray-500 mt-1 line-clamp-2">
+                    {step.description}
+                  </p>
+                )}
               </div>
               {index < steps.length - 1 && (
                 <div className="w-8 h-0.5 bg-amber-200 -mt-4" />
@@ -1123,26 +1130,39 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
         </div>
       )}
       {isAdding ? (
-        <div className="flex items-center gap-2 mt-2">
+        <div className="space-y-2 mt-2">
           <input
             type="text"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Step title"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            placeholder="Step title (e.g., Receive Request)"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
-          <button
-            onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-          >
-            Add
-          </button>
-          <button
-            onClick={() => setIsAdding(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <input
+            type="text"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            placeholder="Description (e.g., User submits request via email or portal)"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAdd}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Add
+            </button>
+            <button
+              onClick={() => {
+                setIsAdding(false)
+                setNewTitle('')
+                setNewDescription('')
+              }}
+              className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       ) : (
         <button

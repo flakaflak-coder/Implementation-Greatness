@@ -128,6 +128,113 @@ export interface PipelineEvalResult {
   requiresHumanReview: boolean
 }
 
+// Document Generation Evaluation
+export interface DocumentEvalInput {
+  extractedData: {
+    stakeholders: Array<{ name: string; role: string }>
+    goals: string[]
+    kpis: Array<{ name: string; target: string }>
+    processSteps: string[]
+    integrations: string[]
+    scopeIn: string[]
+    scopeOut: string[]
+  }
+  generatedContent: {
+    executiveSummary: string
+    currentState: string
+    futureState: string
+    processAnalysis: string
+    scopeAnalysis: string
+    technicalFoundation: string
+    riskAssessment: string
+  }
+  language: string
+}
+
+export interface DocumentAlignmentJudgeResult extends JudgeResult {
+  details: {
+    alignmentScore: number
+    fabricatedClaims: Array<{
+      claim: string
+      section: string
+      severity: 'high' | 'medium' | 'low'
+    }>
+    missedDataPoints: Array<{
+      dataPoint: string
+      expectedSection: string
+    }>
+    sectionScores: Record<string, number>
+  }
+}
+
+// Confidence Calibration Evaluation
+export interface ConfidenceCalibrationInput {
+  predictions: Array<{
+    id: string
+    predictedConfidence: number
+    itemContent: string
+    itemType: string
+    sourceQuote?: string
+  }>
+  sourceContent: string
+  contentType: string
+}
+
+export interface ConfidenceCalibrationJudgeResult extends JudgeResult {
+  details: {
+    calibrationScore: number
+    overconfidentItems: Array<{ id: string; claimed: number; estimated: number }>
+    underconfidentItems: Array<{ id: string; claimed: number; estimated: number }>
+    avgCalibrationError: number
+  }
+}
+
+// Avatar Quality Evaluation
+export interface AvatarEvalInput {
+  imageBase64: string
+  deName: string
+  deRole: string
+  dePersonality: string[]
+  brandTone: string
+}
+
+export interface AvatarQualityJudgeResult extends JudgeResult {
+  details: {
+    professionalismScore: number
+    styleCompliance: boolean  // Not photorealistic
+    brandAlignment: number
+    qualityIssues: string[]
+    recommendations: string[]
+  }
+}
+
+// Prompt Regression Evaluation
+export interface PromptRegressionInput {
+  promptType: string  // EXTRACT_KICKOFF, EXTRACT_PROCESS, etc.
+  beforePrompt: string
+  afterPrompt: string
+  testCases: Array<{
+    input: string
+    beforeOutput: unknown
+    afterOutput: unknown
+    groundTruth?: unknown
+  }>
+}
+
+export interface PromptRegressionJudgeResult extends JudgeResult {
+  details: {
+    qualityDelta: number  // Positive = improvement, negative = regression
+    degradedCases: number
+    improvedCases: number
+    unchangedCases: number
+    criticalRegressions: Array<{
+      testCaseIndex: number
+      description: string
+    }>
+    recommendation: 'approve' | 'review' | 'reject'
+  }
+}
+
 // Metrics for tracking
 export interface EvalMetrics {
   classificationAccuracy: number
@@ -135,6 +242,10 @@ export interface EvalMetrics {
   coverageScore: number
   stageConsistency: number
   checklistCoverage: number
+  documentAlignmentScore: number
+  confidenceCalibration: number
+  avatarQualityScore: number
+  promptRegressionDelta: number
   latencyP50: number
   latencyP99: number
 }
@@ -145,6 +256,10 @@ export interface EvalThresholds {
   coverageScore: number             // Minimum coverage score
   stageAlignment: number            // Minimum stage alignment
   checklistCoverage: number         // Minimum checklist coverage
+  documentAlignment: number         // Minimum document alignment score
+  confidenceCalibration: number     // Maximum calibration error
+  avatarQuality: number             // Minimum avatar quality score
+  promptRegressionTolerance: number // Maximum negative delta before rejection
 }
 
 export const DEFAULT_THRESHOLDS: EvalThresholds = {
@@ -153,4 +268,8 @@ export const DEFAULT_THRESHOLDS: EvalThresholds = {
   coverageScore: 0.75,
   stageAlignment: 0.80,
   checklistCoverage: 0.50,
+  documentAlignment: 0.85,
+  confidenceCalibration: 0.15,  // Max 15% avg calibration error
+  avatarQuality: 0.70,
+  promptRegressionTolerance: -0.10,  // Max 10% quality decrease
 }

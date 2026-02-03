@@ -110,8 +110,8 @@ describe('POST /api/companies', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.success).toBe(false)
-    expect(data.error).toBe('Company name is required')
+    expect(data.error).toBe('Validation failed')
+    expect(data.details).toBeDefined()
     expect(mockedPrisma.company.create).not.toHaveBeenCalled()
   })
 

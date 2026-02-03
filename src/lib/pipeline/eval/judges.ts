@@ -13,10 +13,18 @@ import type {
   SpecializedEvalInput,
   ConsistencyJudgeResult,
   EvalThresholds,
+  ConfidenceCalibrationInput,
+  ConfidenceCalibrationJudgeResult,
+  DocumentEvalInput,
+  DocumentAlignmentJudgeResult,
+  AvatarEvalInput,
+  AvatarQualityJudgeResult,
+  PromptRegressionInput,
+  PromptRegressionJudgeResult,
 } from './types'
 import { DEFAULT_THRESHOLDS } from './types'
 
-const JUDGE_MODEL = 'claude-3-haiku-20240307'
+const JUDGE_MODEL = 'claude-haiku-4-20250514'
 
 // Lazy-load Anthropic client to avoid initialization in test environments
 let _anthropic: import('@anthropic-ai/sdk').default | null = null
@@ -426,4 +434,456 @@ export function checkConfidenceGate(
     return { passed: false, recommendation: 'Low confidence, review classification' }
   }
   return { passed: false, recommendation: 'Very low confidence, likely misclassified' }
+}
+
+// ============================================================================
+// NEW JUDGES - Addressing Critical Evaluation Gaps
+// ============================================================================
+
+/**
+ * Confidence Calibration Judge
+ * Verifies that confidence scores actually correlate with accuracy
+ */
+export async function runConfidenceCalibrationJudge(
+  input: ConfidenceCalibrationInput,
+  thresholds: EvalThresholds = DEFAULT_THRESHOLDS
+): Promise<ConfidenceCalibrationJudgeResult> {
+  const startTime = Date.now()
+
+  const prompt = `You are evaluating the calibration of confidence scores in an LLM extraction.
+
+Well-calibrated confidence means: if the model says 0.9 confidence, it should be correct ~90% of the time.
+
+SOURCE CONTENT:
+${input.sourceContent.substring(0, 6000)}
+
+CONTENT TYPE: ${input.contentType}
+
+EXTRACTED ITEMS WITH CLAIMED CONFIDENCE:
+${JSON.stringify(input.predictions.slice(0, 10), null, 2)}
+
+For each item, assess:
+1. Is the item actually present and correctly extracted from the source?
+2. What confidence SHOULD it have based on clarity of evidence?
+3. Is the claimed confidence over/under the estimated true confidence?
+
+Respond in JSON only:
+{
+  "items": [
+    {
+      "id": "item-id",
+      "claimed_confidence": 0.9,
+      "estimated_true_confidence": 0.85,
+      "is_actually_correct": true,
+      "calibration_error": 0.05,
+      "reasoning": "brief explanation"
+    }
+  ],
+  "avg_calibration_error": 0.0-1.0,
+  "overconfident_count": 0,
+  "underconfident_count": 0,
+  "calibration_score": 0.0-1.0
+}`
+
+  try {
+    const anthropic = await getAnthropicClient()
+    const response = await anthropic.messages.create({
+      model: JUDGE_MODEL,
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Failed to parse judge response')
+
+    const result = JSON.parse(jsonMatch[0])
+    const passed = result.avg_calibration_error <= thresholds.confidenceCalibration
+
+    const overconfidentItems = result.items
+      .filter((i: { claimed_confidence: number; estimated_true_confidence: number }) =>
+        i.claimed_confidence > i.estimated_true_confidence + 0.1)
+      .map((i: { id: string; claimed_confidence: number; estimated_true_confidence: number }) => ({
+        id: i.id,
+        claimed: i.claimed_confidence,
+        estimated: i.estimated_true_confidence,
+      }))
+
+    const underconfidentItems = result.items
+      .filter((i: { claimed_confidence: number; estimated_true_confidence: number }) =>
+        i.claimed_confidence < i.estimated_true_confidence - 0.1)
+      .map((i: { id: string; claimed_confidence: number; estimated_true_confidence: number }) => ({
+        id: i.id,
+        claimed: i.claimed_confidence,
+        estimated: i.estimated_true_confidence,
+      }))
+
+    return {
+      judge: 'confidence-calibration',
+      verdict: passed ? 'pass' : result.avg_calibration_error <= 0.25 ? 'review' : 'fail',
+      score: result.calibration_score,
+      issues: overconfidentItems.length > 0
+        ? [`${overconfidentItems.length} items overconfident by >10%`]
+        : [],
+      details: {
+        calibrationScore: result.calibration_score,
+        overconfidentItems,
+        underconfidentItems,
+        avgCalibrationError: result.avg_calibration_error,
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  } catch (error) {
+    return {
+      judge: 'confidence-calibration',
+      verdict: 'review',
+      score: 0,
+      issues: [`Judge error: ${error instanceof Error ? error.message : 'Unknown'}`],
+      details: {
+        calibrationScore: 0,
+        overconfidentItems: [],
+        underconfidentItems: [],
+        avgCalibrationError: 1,
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  }
+}
+
+/**
+ * Document Alignment Judge
+ * Ensures generated document content references actual extracted data
+ */
+export async function runDocumentAlignmentJudge(
+  input: DocumentEvalInput,
+  thresholds: EvalThresholds = DEFAULT_THRESHOLDS
+): Promise<DocumentAlignmentJudgeResult> {
+  const startTime = Date.now()
+
+  const prompt = `You are verifying that a generated document accurately represents extracted data.
+
+EXTRACTED DATA (this is the ground truth):
+${JSON.stringify(input.extractedData, null, 2)}
+
+GENERATED DOCUMENT SECTIONS:
+${Object.entries(input.generatedContent)
+  .map(([section, content]) => `### ${section}\n${content}`)
+  .join('\n\n')}
+
+LANGUAGE: ${input.language}
+
+Your task:
+1. Check each claim in the generated content against the extracted data
+2. Flag any "fabricated claims" - statements not supported by extracted data
+3. Note any important extracted data points that should have been included but weren't
+4. Score each section for alignment (0.0-1.0)
+
+CRITICAL: The generated document should ONLY contain:
+- Information directly from extracted data
+- Reasonable inferences clearly marked as such
+- Standard consulting language/framing
+
+Respond in JSON only:
+{
+  "fabricated_claims": [
+    {
+      "claim": "specific claim made",
+      "section": "executiveSummary",
+      "severity": "high/medium/low",
+      "reason": "why this is fabricated"
+    }
+  ],
+  "missed_data_points": [
+    {
+      "data_point": "what was missed",
+      "expected_section": "where it should appear"
+    }
+  ],
+  "section_scores": {
+    "executiveSummary": 0.9,
+    "currentState": 0.85,
+    "futureState": 0.8,
+    "processAnalysis": 0.95,
+    "scopeAnalysis": 0.9,
+    "technicalFoundation": 0.85,
+    "riskAssessment": 0.75
+  },
+  "overall_alignment_score": 0.0-1.0
+}`
+
+  try {
+    const anthropic = await getAnthropicClient()
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514', // Use Sonnet for more thorough analysis
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Failed to parse judge response')
+
+    const result = JSON.parse(jsonMatch[0])
+    const passed = result.overall_alignment_score >= thresholds.documentAlignment
+
+    const highSeverityFabrications = result.fabricated_claims.filter(
+      (c: { severity: string }) => c.severity === 'high'
+    )
+
+    return {
+      judge: 'document-alignment',
+      verdict: passed && highSeverityFabrications.length === 0
+        ? 'pass'
+        : highSeverityFabrications.length > 0
+        ? 'fail'
+        : 'review',
+      score: result.overall_alignment_score,
+      issues: result.fabricated_claims.map(
+        (c: { claim: string; section: string; severity: string }) =>
+          `[${c.severity.toUpperCase()}] ${c.section}: "${c.claim}"`
+      ),
+      details: {
+        alignmentScore: result.overall_alignment_score,
+        fabricatedClaims: result.fabricated_claims,
+        missedDataPoints: result.missed_data_points,
+        sectionScores: result.section_scores,
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  } catch (error) {
+    return {
+      judge: 'document-alignment',
+      verdict: 'review',
+      score: 0,
+      issues: [`Judge error: ${error instanceof Error ? error.message : 'Unknown'}`],
+      details: {
+        alignmentScore: 0,
+        fabricatedClaims: [],
+        missedDataPoints: [],
+        sectionScores: {},
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  }
+}
+
+/**
+ * Avatar Quality Judge
+ * Assesses generated avatar for quality and brand compliance
+ */
+export async function runAvatarQualityJudge(
+  input: AvatarEvalInput,
+  thresholds: EvalThresholds = DEFAULT_THRESHOLDS
+): Promise<AvatarQualityJudgeResult> {
+  const startTime = Date.now()
+
+  const prompt = `You are evaluating the quality of an AI-generated avatar for a Digital Employee.
+
+DIGITAL EMPLOYEE DETAILS:
+- Name: ${input.deName}
+- Role: ${input.deRole}
+- Personality traits: ${input.dePersonality.join(', ')}
+- Brand tone: ${input.brandTone}
+
+IMAGE: [Attached as base64]
+
+Evaluate the avatar on these criteria:
+
+1. **Professionalism (0.0-1.0)**: Does it look professional and appropriate for business use?
+2. **Style Compliance**: Is it NON-photorealistic (illustrated/stylized)? Photorealistic faces are NOT allowed.
+3. **Brand Alignment (0.0-1.0)**: Does the style match the described brand tone?
+4. **Technical Quality**: Check for artifacts, distortions, or generation issues.
+5. **Personality Match**: Does the avatar convey the described personality?
+
+Respond in JSON only:
+{
+  "professionalism_score": 0.0-1.0,
+  "style_compliant": true/false,
+  "brand_alignment_score": 0.0-1.0,
+  "quality_issues": ["any visual defects or problems"],
+  "personality_match": true/false,
+  "recommendations": ["suggestions for improvement"],
+  "overall_score": 0.0-1.0
+}`
+
+  try {
+    const anthropic = await getAnthropicClient()
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514', // Sonnet for vision capability
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: input.imageBase64,
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        },
+      ],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Failed to parse judge response')
+
+    const result = JSON.parse(jsonMatch[0])
+    const passed =
+      result.overall_score >= thresholds.avatarQuality && result.style_compliant
+
+    return {
+      judge: 'avatar-quality',
+      verdict: passed ? 'pass' : !result.style_compliant ? 'fail' : 'review',
+      score: result.overall_score,
+      issues: [
+        ...(result.style_compliant ? [] : ['CRITICAL: Avatar is photorealistic']),
+        ...result.quality_issues,
+      ],
+      details: {
+        professionalismScore: result.professionalism_score,
+        styleCompliance: result.style_compliant,
+        brandAlignment: result.brand_alignment_score,
+        qualityIssues: result.quality_issues,
+        recommendations: result.recommendations,
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  } catch (error) {
+    return {
+      judge: 'avatar-quality',
+      verdict: 'review',
+      score: 0,
+      issues: [`Judge error: ${error instanceof Error ? error.message : 'Unknown'}`],
+      details: {
+        professionalismScore: 0,
+        styleCompliance: false,
+        brandAlignment: 0,
+        qualityIssues: ['Could not evaluate image'],
+        recommendations: [],
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  }
+}
+
+/**
+ * Prompt Regression Judge
+ * Detects quality degradation after prompt template changes
+ */
+export async function runPromptRegressionJudge(
+  input: PromptRegressionInput,
+  thresholds: EvalThresholds = DEFAULT_THRESHOLDS
+): Promise<PromptRegressionJudgeResult> {
+  const startTime = Date.now()
+
+  const prompt = `You are evaluating whether a prompt change improved or degraded extraction quality.
+
+PROMPT TYPE: ${input.promptType}
+
+BEFORE PROMPT (first 500 chars):
+${input.beforePrompt.substring(0, 500)}...
+
+AFTER PROMPT (first 500 chars):
+${input.afterPrompt.substring(0, 500)}...
+
+TEST CASES (${input.testCases.length} total):
+${JSON.stringify(input.testCases.slice(0, 3), null, 2)}
+
+For each test case:
+1. Compare beforeOutput vs afterOutput quality
+2. If groundTruth is provided, check which is closer
+3. Score: +1 if afterOutput is better, -1 if worse, 0 if same
+
+Consider:
+- Accuracy of extracted information
+- Completeness of extraction
+- Proper confidence scoring
+- Correct categorization
+
+Respond in JSON only:
+{
+  "case_assessments": [
+    {
+      "test_case_index": 0,
+      "before_quality": 0.0-1.0,
+      "after_quality": 0.0-1.0,
+      "delta": -1/0/+1,
+      "notes": "why"
+    }
+  ],
+  "degraded_cases": 0,
+  "improved_cases": 0,
+  "unchanged_cases": 0,
+  "critical_regressions": [
+    {
+      "test_case_index": 0,
+      "description": "what went seriously wrong"
+    }
+  ],
+  "quality_delta": -1.0 to +1.0,
+  "recommendation": "approve/review/reject"
+}`
+
+  try {
+    const anthropic = await getAnthropicClient()
+    const response = await anthropic.messages.create({
+      model: JUDGE_MODEL,
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('Failed to parse judge response')
+
+    const result = JSON.parse(jsonMatch[0])
+    const passed =
+      result.quality_delta >= thresholds.promptRegressionTolerance &&
+      result.critical_regressions.length === 0
+
+    return {
+      judge: 'prompt-regression',
+      verdict: passed
+        ? result.quality_delta > 0.05
+          ? 'pass'
+          : 'review'
+        : 'fail',
+      score: (result.quality_delta + 1) / 2, // Normalize -1..1 to 0..1
+      issues:
+        result.quality_delta < 0
+          ? [`Quality decreased by ${Math.abs(result.quality_delta * 100).toFixed(0)}%`]
+          : [],
+      details: {
+        qualityDelta: result.quality_delta,
+        degradedCases: result.degraded_cases,
+        improvedCases: result.improved_cases,
+        unchangedCases: result.unchanged_cases,
+        criticalRegressions: result.critical_regressions,
+        recommendation: result.recommendation,
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  } catch (error) {
+    return {
+      judge: 'prompt-regression',
+      verdict: 'review',
+      score: 0.5, // Neutral score on error
+      issues: [`Judge error: ${error instanceof Error ? error.message : 'Unknown'}`],
+      details: {
+        qualityDelta: 0,
+        degradedCases: 0,
+        improvedCases: 0,
+        unchangedCases: 0,
+        criticalRegressions: [],
+        recommendation: 'review',
+      },
+      latencyMs: Date.now() - startTime,
+    }
+  }
 }

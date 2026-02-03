@@ -158,6 +158,153 @@ export interface DEDesignDocument {
     glossary?: Record<string, string>
     openItems?: string[]
   }
+  // Comprehensive LLM-generated narrative content (optional, added when enhanced=true)
+  _generated?: GeneratedDocumentContent
+}
+
+// Comprehensive generated content structure for enhanced documents
+export interface GeneratedDocumentContent {
+  // Executive Summary Section
+  executiveSummary: {
+    opening: string
+    overview: string
+    keyObjectives: string[]
+    valueProposition: string
+    expectedOutcomes: string[]
+  }
+
+  // Current State Analysis
+  currentStateAnalysis: {
+    introduction: string
+    challenges: Array<{ challenge: string; impact: string; frequency: string }>
+    inefficiencies: string
+    opportunityCost: string
+  }
+
+  // Future State Vision
+  futureStateVision: {
+    introduction: string
+    transformationNarrative: string
+    dayInTheLife: string
+    benefits: Array<{ benefit: string; description: string; metric?: string }>
+  }
+
+  // Detailed Process Analysis
+  processAnalysis: {
+    introduction: string
+    processOverview: string
+    stepByStepNarrative: string
+    automationBenefits: string
+    exceptionHandlingApproach: string
+    humanMachineCollaboration: string
+  }
+
+  // Scope & Boundaries
+  scopeAnalysis: {
+    introduction: string
+    inScopeRationale: string
+    outOfScopeRationale: string
+    guardrailsExplanation: string
+    boundaryManagement: string
+  }
+
+  // Technical Foundation
+  technicalFoundation: {
+    introduction: string
+    architectureOverview: string
+    integrationStrategy: string
+    dataFlowNarrative: string
+    securityApproach: string
+  }
+
+  // Risk Assessment
+  riskAssessment: {
+    introduction: string
+    risks: Array<{
+      risk: string
+      likelihood: 'Low' | 'Medium' | 'High'
+      impact: 'Low' | 'Medium' | 'High'
+      mitigation: string
+    }>
+    overallRiskPosture: string
+  }
+
+  // Implementation Approach
+  implementationApproach: {
+    introduction: string
+    phases: Array<{ phase: string; description: string; deliverables: string[] }>
+    successFactors: string[]
+    changeManagement: string
+    trainingPlan: {
+      overview: string
+      sessions: Array<{
+        topic: string
+        audience: string
+        duration: string
+        deliveryMethod: string
+        keyContent: string[]
+      }>
+      materials: string[]
+      supportPlan: string
+    }
+  }
+
+  // Success Metrics
+  successMetrics: {
+    introduction: string
+    kpiNarrative: string
+    measurementApproach: string
+    reportingCadence: string
+  }
+
+  // Conclusion & Next Steps
+  conclusion: {
+    summary: string
+    callToAction: string
+    nextSteps: Array<{ step: string; owner: string; timeline: string }>
+    closingStatement: string
+  }
+
+  // Quick Reference Card (1-page summary for frontline teams)
+  quickReference: {
+    agentName: string
+    purpose: string // 1-2 sentence summary
+    canDo: string[] // What the agent CAN do (5-7 items)
+    cannotDo: string[] // What the agent CANNOT do (5-7 items)
+    escalationTriggers: Array<{
+      trigger: string
+      action: string
+      contactMethod: string
+    }>
+    keyContacts: Array<{
+      role: string
+      name: string
+      responsibility: string
+    }>
+    quickTips: string[] // 3-5 tips for working with the agent
+  }
+
+  // Executive One-Pager (standalone summary for leadership)
+  executiveOnePager: {
+    headline: string // Compelling headline
+    problem: string // The problem being solved (2-3 sentences)
+    solution: string // The solution (2-3 sentences)
+    keyBenefits: Array<{ benefit: string; metric: string }>
+    investment: string // High-level investment summary
+    timeline: string // Implementation timeline summary
+    bottomLine: string // "The bottom line" closing statement
+  }
+
+  // Process Flow Summary (text-based visual representation)
+  processFlowSummary: {
+    happyPathFlow: string // Text representation: "Step 1 → Step 2 → Step 3"
+    escalationFlow: string // When and how escalation happens
+    decisionPoints: Array<{
+      point: string
+      options: string[]
+      criteria: string
+    }>
+  }
 }
 
 // Color scheme for PDF

@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/db'
-import { PipelineStage, UploadJobStatus } from '@prisma/client'
+import { PipelineStage, UploadJobStatus, ContentClassification, DesignWeekStatus } from '@prisma/client'
 import { classifyContent } from './classify'
 import { extractGeneralEntities } from './extract-general'
 import { extractSpecializedEntities } from './extract-specialized'
 import { extractWithOptions, isMultiModelResult } from './extract-enhanced'
 import { populateTabs } from './populate-tabs'
+import { calculateDesignWeekEndDate, calculateActualDuration } from '@/lib/phase-durations'
 import type {
   PipelineContext,
   PipelineResult,
@@ -15,6 +16,21 @@ import type {
   SpecializedItem,
   ExtractionMode,
 } from './types'
+
+/**
+ * Map content classification to Design Week phase
+ */
+const CLASSIFICATION_TO_PHASE: Record<ContentClassification, number> = {
+  KICKOFF_SESSION: 1,
+  PROCESS_DESIGN_SESSION: 2,
+  SKILLS_GUARDRAILS_SESSION: 2, // Part of Process Design
+  TECHNICAL_SESSION: 3,
+  SIGNOFF_SESSION: 4,
+  REQUIREMENTS_DOCUMENT: 1, // Typically part of Kickoff
+  TECHNICAL_SPEC: 3,
+  PROCESS_DOCUMENT: 2,
+  UNKNOWN: 1,
+}
 
 /**
  * Enhanced extraction modes that already do comprehensive extraction
@@ -250,6 +266,12 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
     })
 
     // ============================================
+    // Update Design Week Progress
+    // ============================================
+    console.log('\n[Pipeline] === UPDATING DESIGN WEEK PROGRESS ===')
+    await updateDesignWeekProgress(designWeekId, classification.type)
+
+    // ============================================
     // Complete
     // ============================================
     console.log(`\n${'='.repeat(60)}`)
@@ -335,6 +357,92 @@ function formatClassificationType(type: string): string {
     .replace(/_/g, ' ')
     .toLowerCase()
     .replace(/\b\w/g, (l) => l.toUpperCase())
+}
+
+/**
+ * Update Design Week status and phase based on processed content
+ * - Sets status to IN_PROGRESS if not already further along
+ * - Updates currentPhase to the highest phase seen
+ */
+async function updateDesignWeekProgress(
+  designWeekId: string,
+  classificationType: ContentClassification
+): Promise<void> {
+  console.log(`[Pipeline] updateDesignWeekProgress called with designWeekId=${designWeekId}, classificationType=${classificationType}`)
+
+  try {
+    const designWeek = await prisma.designWeek.findUnique({
+      where: { id: designWeekId },
+    })
+
+    if (!designWeek) {
+      console.error(`[Pipeline] Design Week not found: ${designWeekId}`)
+      return
+    }
+
+    console.log(`[Pipeline] Current Design Week state: status=${designWeek.status}, phase=${designWeek.currentPhase}`)
+
+    const processedPhase = CLASSIFICATION_TO_PHASE[classificationType] || 1
+    console.log(`[Pipeline] Classification ${classificationType} maps to phase ${processedPhase}`)
+
+    // Calculate new status: NOT_STARTED → IN_PROGRESS
+    // Don't downgrade from PENDING_SIGNOFF or COMPLETE
+    let newStatus: DesignWeekStatus = designWeek.status
+    if (designWeek.status === 'NOT_STARTED') {
+      newStatus = 'IN_PROGRESS'
+    }
+
+    // Update currentPhase to the highest phase we've seen content for
+    // Phase 4 (Sign-off) means we're in PENDING_SIGNOFF status
+    const newPhase = Math.max(designWeek.currentPhase, processedPhase)
+    if (processedPhase === 4 && newStatus === 'IN_PROGRESS') {
+      newStatus = 'PENDING_SIGNOFF'
+    }
+
+    console.log(`[Pipeline] Calculated new state: status=${newStatus}, phase=${newPhase}`)
+
+    // Only update if something changed
+    if (newStatus !== designWeek.status || newPhase !== designWeek.currentPhase) {
+      console.log(`[Pipeline] Updating Design Week progress: phase ${designWeek.currentPhase} → ${newPhase}, status ${designWeek.status} → ${newStatus}`)
+
+      // Calculate dates when starting
+      const isStarting = designWeek.status === 'NOT_STARTED'
+      const startDate = isStarting ? new Date() : designWeek.startedAt
+      const plannedEndDate = isStarting && startDate
+        ? calculateDesignWeekEndDate(startDate, designWeek.plannedDurationDays)
+        : designWeek.plannedEndDate
+
+      // Calculate actual duration when completing
+      const isCompleting = newStatus === 'COMPLETE' && designWeek.status !== 'COMPLETE'
+      const completedAt = isCompleting ? new Date() : undefined
+      const actualDurationDays = isCompleting && startDate && completedAt
+        ? calculateActualDuration(startDate, completedAt)
+        : undefined
+
+      await prisma.designWeek.update({
+        where: { id: designWeekId },
+        data: {
+          status: newStatus,
+          currentPhase: newPhase,
+          ...(isStarting ? { startedAt: startDate, plannedEndDate } : {}),
+          ...(isCompleting ? { completedAt, actualDurationDays } : {}),
+        },
+      })
+
+      if (isStarting) {
+        console.log(`[Pipeline] Design Week started: plannedEndDate=${plannedEndDate?.toISOString()}`)
+      }
+      if (isCompleting) {
+        console.log(`[Pipeline] Design Week completed: actualDurationDays=${actualDurationDays}`)
+      }
+      console.log(`[Pipeline] Design Week updated successfully`)
+    } else {
+      console.log(`[Pipeline] No Design Week update needed (state unchanged)`)
+    }
+  } catch (error) {
+    console.error(`[Pipeline] Error updating Design Week progress:`, error)
+    // Don't throw - let the pipeline continue even if status update fails
+  }
 }
 
 /**

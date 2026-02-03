@@ -40,3 +40,8 @@ next-env.d.ts
 
 # Claude Code personal files
 CLAUDE.local.md
+
+# Uploads and temp files
+/uploads
+cookies*.txt
+Project\ update\ sessie/
