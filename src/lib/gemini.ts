@@ -611,8 +611,14 @@ export async function processDocument(
 
 import { GoogleGenAI } from '@google/genai'
 
-// Initialize the new GenAI client for Imagen
-const genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' })
+// Lazy-initialize Imagen client
+let _genAIClient: GoogleGenAI | null = null
+function getGenAIClient() {
+  if (!_genAIClient) {
+    _genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' })
+  }
+  return _genAIClient
+}
 
 /**
  * Generate an avatar for a Digital Employee using Gemini Imagen 4
@@ -650,7 +656,7 @@ The avatar should feel like a friendly colleague - professional enough for busin
 DO NOT include: text, logos, harsh colors, scary expressions, photorealistic human faces, complex backgrounds.`
 
     // Call Imagen 4 via the new GenAI SDK
-    const response = await genAIClient.models.generateImages({
+    const response = await getGenAIClient().models.generateImages({
       model: 'imagen-4.0-generate-001',
       prompt,
       config: {
