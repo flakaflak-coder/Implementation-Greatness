@@ -28,7 +28,7 @@ RUN mkdir -p public
 # Build the application
 RUN npm run build
 
-# Remove prisma.config.ts from standalone output (has unresolvable imports in production)
+# Remove prisma.config.ts from standalone (URL is in schema.prisma via env("DATABASE_URL"))
 RUN rm -f .next/standalone/prisma.config.ts
 
 # Production image, copy all the files and run next
