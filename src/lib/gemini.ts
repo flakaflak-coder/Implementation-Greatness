@@ -9,11 +9,16 @@ import {
 } from './prompt-utils'
 import { trackLLMOperationServer } from './observatory/tracking'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
-
-// Use Gemini 3 Pro Preview for multimodal processing (audio/video/documents)
-// Alternatives: 'gemini-2.5-pro' for stable, 'gemini-3-flash-preview' for faster
-const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+// Lazy-initialize to avoid errors during Next.js build (no API key at build time)
+let _model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null
+function getModel() {
+  if (!_model) {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+    // Use Gemini 3 Pro Preview for multimodal processing (audio/video/documents)
+    _model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+  }
+  return _model
+}
 
 export interface ExtractionResult {
   transcript: string
@@ -437,7 +442,7 @@ export async function processRecording(
   // Use session-type-specific prompt
   const prompt = getPromptForSessionType(sessionPhase)
 
-  const result = await model.generateContent([
+  const result = await getModel().generateContent([
     prompt,
     audioPart,
   ])
@@ -529,7 +534,7 @@ export async function processDocument(
     .replace(/recording/g, 'document')
     .replace(/timestamp/g, 'page/paragraph')
 
-  const result = await model.generateContent([
+  const result = await getModel().generateContent([
     prompt,
     docPart,
   ])

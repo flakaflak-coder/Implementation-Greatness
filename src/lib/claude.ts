@@ -12,9 +12,16 @@ import {
 } from './prompt-utils'
 import { trackLLMOperationServer } from './observatory/tracking'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-})
+// Lazy-initialize to avoid errors during Next.js build (no API key at build time)
+let _anthropic: Anthropic | null = null
+function getAnthropic() {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
+    })
+  }
+  return _anthropic
+}
 
 // Default model - can be overridden per prompt template
 const DEFAULT_MODEL = 'claude-sonnet-4-20250514'
@@ -305,7 +312,7 @@ export async function extractFromTranscript(
   // Build safe prompt with sanitized user content
   const safePrompt = buildSafePrompt(template.prompt, transcript, 'TRANSCRIPT')
 
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: template.model,
     max_tokens: template.maxTokens,
     temperature: template.temperature,
@@ -453,7 +460,7 @@ export async function generateDocument(
 
   const startTime = Date.now()
 
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: template.model,
     max_tokens: template.maxTokens,
     temperature: template.temperature,
