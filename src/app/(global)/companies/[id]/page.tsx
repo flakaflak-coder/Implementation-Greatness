@@ -10,7 +10,6 @@ import {
   Plus,
   ArrowRight,
   RefreshCw,
-  Pencil,
   Trash2,
   Mail,
   Phone,
@@ -224,12 +223,6 @@ export default function CompanyDetailPage({
           <Button onClick={fetchCompany} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/companies/${id}/edit`}>
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit
-            </Link>
           </Button>
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <DialogTrigger asChild>
