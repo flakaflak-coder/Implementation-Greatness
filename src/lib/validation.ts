@@ -114,7 +114,7 @@ export const UpdateDesignWeekSchema = z.object({
 // UPLOAD SCHEMAS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const ExtractionModeSchema = z.enum(['standard', 'multi-model', 'two-pass'])
+export const ExtractionModeSchema = z.enum(['standard', 'auto', 'exhaustive', 'multi-model', 'two-pass', 'section-based'])
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSISTANT SCHEMAS
