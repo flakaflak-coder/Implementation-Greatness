@@ -23,34 +23,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        username: { label: 'Login Name', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          console.error('[Auth] Missing email or password')
+        if (!credentials?.username || !credentials?.password) {
+          console.error('[Auth] Missing username or password')
           return null
         }
 
-        const email = credentials.email as string
+        const username = credentials.username as string
         const password = credentials.password as string
 
         // Single user from environment variables
-        const adminEmail = process.env.ADMIN_EMAIL
+        const adminUsername = process.env.ADMIN_USERNAME || process.env.ADMIN_EMAIL
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
 
-        console.error('[Auth] Checking credentials for:', email)
-        console.error('[Auth] Admin email from env:', adminEmail)
+        console.error('[Auth] Checking credentials for:', username)
+        console.error('[Auth] Admin username from env:', adminUsername)
         console.error('[Auth] Hash exists:', !!adminPasswordHash, 'Length:', adminPasswordHash?.length)
 
-        if (!adminEmail || !adminPasswordHash) {
-          console.error('[Auth] ADMIN_EMAIL and ADMIN_PASSWORD_HASH must be set')
+        if (!adminUsername || !adminPasswordHash) {
+          console.error('[Auth] ADMIN_USERNAME and ADMIN_PASSWORD_HASH must be set')
           return null
         }
 
-        // Check email matches
-        if (email.toLowerCase() !== adminEmail.toLowerCase()) {
-          console.error('[Auth] Email mismatch')
+        // Check username matches (case-insensitive)
+        if (username.toLowerCase() !== adminUsername.toLowerCase()) {
+          console.error('[Auth] Username mismatch')
           return null
         }
 
@@ -64,7 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Return user object (will be available in session)
         return {
           id: '1',
-          email: adminEmail,
+          email: adminUsername,
           name: process.env.ADMIN_NAME || 'Admin',
           role: 'admin', // Future: different roles
         }

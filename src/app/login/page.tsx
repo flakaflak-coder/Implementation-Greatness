@@ -13,7 +13,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
 
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -25,13 +25,13 @@ function LoginForm() {
 
     try {
       const result = await signIn('credentials', {
-        email,
+        username,
         password,
         redirect: false,
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
+        setError('Invalid username or password')
         setIsLoading(false)
         return
       }
@@ -55,17 +55,17 @@ function LoginForm() {
       )}
 
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium text-gray-700">
-          Email
+        <label htmlFor="username" className="text-sm font-medium text-gray-700">
+          Login Name
         </label>
         <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="sophie@freeday.ai"
+          id="username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter your login name"
           required
-          autoComplete="email"
+          autoComplete="username"
           disabled={isLoading}
         />
       </div>
