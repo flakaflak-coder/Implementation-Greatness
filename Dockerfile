@@ -63,5 +63,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run migrations and start the server
-CMD npx prisma migrate deploy && node server.js
+# Run migrations and push schema to ensure sync, then start the server
+CMD npx prisma migrate deploy && npx prisma db push --skip-generate && node server.js
