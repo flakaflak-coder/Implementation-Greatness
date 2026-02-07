@@ -48,7 +48,7 @@ export async function GET(
     }
 
     const filePath = pathSegments.join('/')
-    const storagePath = process.env.STORAGE_PATH || '/data/uploads'
+    const storagePath = process.env.STORAGE_PATH || '/app/uploads'
 
     // Validate path is within storage directory
     if (!isPathSafe(filePath, storagePath)) {

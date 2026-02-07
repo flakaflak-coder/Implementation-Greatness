@@ -10,7 +10,7 @@ export interface StorageConfig {
 
 const config: StorageConfig = {
   type: (process.env.STORAGE_TYPE as 'volume' | 's3') || 'volume',
-  volumePath: process.env.STORAGE_PATH || '/data/uploads',
+  volumePath: process.env.STORAGE_PATH || '/app/uploads',
   s3Bucket: process.env.AWS_S3_BUCKET,
   s3Region: process.env.AWS_REGION,
 }
