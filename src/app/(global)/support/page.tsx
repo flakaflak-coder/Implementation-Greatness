@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Monitor Digital Employee health and manage support operations',
 }
 
-// Revalidate every 30 seconds for near-real-time feel
-export const revalidate = 30
+// Force dynamic rendering — DB queries can't run at build time
+export const dynamic = 'force-dynamic'
 
 // Shape returned by Prisma findMany with includes
 interface PrismaDE {
