@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { trackLLMOperationServer } from '@/lib/observatory/tracking'
+import { validateId } from '@/lib/validation'
 
 // Lazy-initialize to avoid errors during Next.js build
 let _anthropic: Anthropic | null = null
@@ -49,6 +50,9 @@ export async function POST(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
     const { profile } = body
 
@@ -99,7 +103,7 @@ ${JSON.stringify(profile, null, 2)}`
   } catch (error) {
     console.error('Error running quality check:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Quality check failed' },
+      { error: 'Quality check failed. Please try again.' },
       { status: 500 }
     )
   }

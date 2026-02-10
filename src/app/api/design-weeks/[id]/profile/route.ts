@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { mapExtractedItemsToProfile, mergeProfiles } from '@/lib/profile-mapper'
 import type { BusinessProfile } from '@/components/de-workspace/profile-types'
 import { createEmptyProfile } from '@/components/de-workspace/profile-types'
+import { validateId, validateBody, ProfileUpdateSchema } from '@/lib/validation'
 
 /**
  * GET /api/design-weeks/[id]/profile
@@ -17,6 +18,8 @@ export async function GET(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
     // Get design week with extracted items
     const designWeek = await prisma.designWeek.findUnique({
@@ -72,7 +75,7 @@ export async function GET(
   } catch (error) {
     console.error('Error loading profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load profile' },
+      { error: 'Failed to load profile' },
       { status: 500 }
     )
   }
@@ -89,8 +92,12 @@ export async function PUT(
 ) {
   try {
     const { id: designWeekId } = await params
-    const body = await request.json()
-    const { profile } = body as { profile: BusinessProfile }
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
+    const validation = await validateBody(request, ProfileUpdateSchema)
+    if (!validation.success) return validation.response
+    const { profile } = validation.data as unknown as { profile: BusinessProfile }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 })
@@ -118,7 +125,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error saving profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save profile' },
+      { error: 'Failed to save profile' },
       { status: 500 }
     )
   }
@@ -136,6 +143,9 @@ export async function POST(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json().catch(() => ({}))
     const { merge = true } = body as { merge?: boolean }
 
@@ -195,7 +205,7 @@ export async function POST(
   } catch (error) {
     console.error('Error regenerating profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to regenerate profile' },
+      { error: 'Failed to recalculate profile' },
       { status: 500 }
     )
   }

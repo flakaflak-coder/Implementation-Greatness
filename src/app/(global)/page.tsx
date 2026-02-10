@@ -115,8 +115,8 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   },
   DESIGN: {
     label: 'In Design',
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100',
+    color: 'text-[#C2703E]',
+    bgColor: 'bg-[#FDF3EC]',
     icon: <Sparkles className="w-3 h-3" />,
   },
   ONBOARDING: {
@@ -127,8 +127,8 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   },
   UAT: {
     label: 'UAT',
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-100',
+    color: 'text-[#6B8F71]',
+    bgColor: 'bg-[#EDF4EE]',
     icon: <Target className="w-3 h-3" />,
   },
   PAUSED: {
@@ -149,12 +149,12 @@ function DECard({ de }: { de: WorkforceDE }) {
       href={`/companies/${de.companyId}/digital-employees/${de.id}`}
       className="group"
     >
-      <Card className="h-full bg-white border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+      <Card className="h-full bg-white border-gray-200 hover:border-[#D4956A] hover:shadow-md transition-all duration-200 overflow-hidden">
         <CardContent className="p-4">
           {/* Avatar and status */}
           <div className="flex items-start gap-3 mb-3">
             <div className="relative">
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-indigo-100 to-violet-100 ring-2 ring-white shadow-md group-hover:ring-indigo-200 transition-all">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FDF3EC] ring-2 ring-white shadow-md group-hover:ring-[#E8D5C4] transition-all">
                 <Image
                   src={avatarUrl}
                   alt={de.name}
@@ -174,7 +174,7 @@ function DECard({ de }: { de: WorkforceDE }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-semibold text-gray-900 truncate group-hover:text-[#C2703E] transition-colors">
                 {de.name}
               </h3>
               <p className="text-xs text-gray-500 truncate">{de.companyName}</p>
@@ -253,8 +253,8 @@ function ActionItemCard({ item }: { item: ActionItem }) {
     },
     review: {
       icon: <CheckCircle2 className="w-4 h-4" />,
-      color: 'text-violet-600',
-      bg: 'bg-violet-100',
+      color: 'text-[#C2703E]',
+      bg: 'bg-[#FDF3EC]',
     },
   }
 
@@ -267,14 +267,14 @@ function ActionItemCard({ item }: { item: ActionItem }) {
           <span className={config.color}>{config.icon}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">
+          <p className="font-medium text-gray-900 text-sm group-hover:text-[#C2703E] transition-colors">
             {item.title}
           </p>
           <p className="text-xs text-gray-500 truncate">
             {item.deName} • {item.companyName}
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#C2703E] group-hover:translate-x-0.5 transition-all" />
       </div>
     </Link>
   )
@@ -361,7 +361,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
+            <div className="w-12 h-12 rounded-xl bg-[#C2703E] flex items-center justify-center shadow-lg shadow-[#C2703E]/15">
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -441,14 +441,14 @@ export default function DashboardPage() {
       {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="animate-fade-in-up stagger-1">
-          <Card className="bg-gradient-to-br from-indigo-500 to-violet-600 border-0 text-white">
+          <Card className="bg-[#C2703E] border-0 text-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-3xl font-bold">{stats.totalDigitalEmployees}</p>
-                  <p className="text-sm text-indigo-100">Digital Employees</p>
+                  <p className="text-sm text-white/70">Digital Employees</p>
                 </div>
-                <Bot className="w-8 h-8 text-indigo-200" />
+                <Bot className="w-8 h-8 text-white/30" />
               </div>
             </CardContent>
           </Card>
@@ -486,8 +486,8 @@ export default function DashboardPage() {
           <Card className={cn(
             'border-0 text-white',
             stats.itemsNeedResolution > 0
-              ? 'bg-gradient-to-br from-rose-500 to-pink-600'
-              : 'bg-gradient-to-br from-gray-400 to-gray-500'
+              ? 'bg-[#C45353]'
+              : 'bg-gray-400'
           )}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -536,8 +536,8 @@ export default function DashboardPage() {
           ) : filteredWorkforce.length === 0 ? (
             <Card className="bg-white border-gray-200">
               <CardContent className="py-16 text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center mx-auto mb-4">
-                  <Bot className="w-10 h-10 text-indigo-400" />
+                <div className="w-20 h-20 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+                  <Bot className="w-10 h-10 text-[#D4956A]" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">
                   {searchQuery ? 'No matching DEs' : 'No Digital Employees yet'}
@@ -548,7 +548,7 @@ export default function DashboardPage() {
                     : 'Start by adding a company and creating your first DE'}
                 </p>
                 {!searchQuery && (
-                  <Button asChild className="bg-gradient-to-r from-indigo-500 to-violet-600">
+                  <Button asChild className="bg-[#C2703E] hover:bg-[#A05A32]">
                     <Link href="/companies/new">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Company
@@ -566,12 +566,12 @@ export default function DashboardPage() {
               ))}
               {/* Add new DE card */}
               <Link href="/companies" className="group">
-                <Card className="h-full bg-white border-2 border-dashed border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all duration-200">
+                <Card className="h-full bg-white border-2 border-dashed border-gray-200 hover:border-[#D4956A] hover:bg-[#FDF3EC]/50 transition-all duration-200">
                   <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[140px]">
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-indigo-100 flex items-center justify-center mb-2 transition-colors">
-                      <Plus className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#FDF3EC] flex items-center justify-center mb-2 transition-colors">
+                      <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#C2703E] transition-colors" />
                     </div>
-                    <span className="text-sm font-medium text-gray-500 group-hover:text-indigo-600 transition-colors">
+                    <span className="text-sm font-medium text-gray-500 group-hover:text-[#C2703E] transition-colors">
                       Add DE
                     </span>
                   </CardContent>
@@ -616,10 +616,10 @@ export default function DashboardPage() {
           </Card>
 
           {/* Wins & Celebrations */}
-          <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-200">
+          <Card className="bg-[#FAF9F6] border-gray-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Trophy className="w-5 h-5 text-violet-500" />
+                <Trophy className="w-5 h-5 text-[#C2703E]" />
                 This Week&apos;s Wins
               </CardTitle>
             </CardHeader>
@@ -629,10 +629,10 @@ export default function DashboardPage() {
                   {data.gamification.wins.map((win) => (
                     <div
                       key={win.id}
-                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-violet-100"
+                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center">
-                        <PartyPopper className="w-5 h-5 text-violet-500" />
+                      <div className="w-10 h-10 rounded-lg bg-[#FDF3EC] flex items-center justify-center">
+                        <PartyPopper className="w-5 h-5 text-[#C2703E]" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 text-sm">{win.title}</p>
@@ -643,7 +643,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="py-6 text-center">
-                  <p className="text-sm text-violet-600">Keep going! Wins will appear here.</p>
+                  <p className="text-sm text-[#C2703E]">Keep going! Wins will appear here.</p>
                 </div>
               )}
             </CardContent>
@@ -672,8 +672,8 @@ export default function DashboardPage() {
                 className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <Target className="w-5 h-5 text-violet-600" />
+                  <div className="w-10 h-10 rounded-lg bg-[#FDF3EC] flex items-center justify-center">
+                    <Target className="w-5 h-5 text-[#C2703E]" />
                   </div>
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">Portfolio View</span>
                 </div>

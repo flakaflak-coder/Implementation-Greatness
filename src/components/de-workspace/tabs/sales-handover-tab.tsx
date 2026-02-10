@@ -59,7 +59,7 @@ const sectionColors: Record<string, string> = {
   blue: 'border-blue-200 bg-blue-50/50',
   amber: 'border-amber-200 bg-amber-50/50',
   rose: 'border-rose-200 bg-rose-50/50',
-  violet: 'border-violet-200 bg-violet-50/50',
+  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
   emerald: 'border-emerald-200 bg-emerald-50/50',
 }
 
@@ -67,7 +67,7 @@ const iconColors: Record<string, string> = {
   blue: 'text-blue-600',
   amber: 'text-amber-600',
   rose: 'text-rose-600',
-  violet: 'text-violet-600',
+  violet: 'text-[#C2703E]',
   emerald: 'text-emerald-600',
 }
 
@@ -90,7 +90,7 @@ const severityColors = {
 }
 
 const categoryColors = {
-  political: 'bg-purple-100 text-purple-700',
+  political: 'bg-[#F5E6DA] text-[#A05A32]',
   technical: 'bg-cyan-100 text-cyan-700',
   timeline: 'bg-orange-100 text-orange-700',
   scope: 'bg-emerald-100 text-emerald-700',
@@ -489,7 +489,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
           <button
             onClick={handleQualityCheck}
             disabled={checkingQuality || completeness.overall < 10}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors disabled:opacity-50 shrink-0"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#A05A32] bg-[#FDF3EC] hover:bg-[#F5E6DA] border border-[#E8D5C4] rounded-lg transition-colors disabled:opacity-50 shrink-0"
           >
             {checkingQuality ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -790,7 +790,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
             }
             label="Client Preferences"
             placeholder="Add preference..."
-            color="violet"
+            color="sienna"
           />
 
           <TextArea
@@ -857,7 +857,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
                     },
                   }))
                 }
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-violet-600 hover:bg-violet-50 rounded-lg border-2 border-dashed border-violet-200 w-full justify-center transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#C2703E] hover:bg-[#FDF3EC] rounded-lg border-2 border-dashed border-[#E8D5C4] w-full justify-center transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add Promise
@@ -1048,7 +1048,7 @@ function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <Rocket className="h-4 w-4 text-indigo-600" />
+          <Rocket className="h-4 w-4 text-[#C2703E]" />
           Implementation Progress
         </h3>
         {data.daysSinceAccepted !== null && (
@@ -1336,19 +1336,19 @@ function PromisedCapabilityItem({
         value={capability.description}
         onChange={(e) => onUpdate({ ...capability, description: e.target.value })}
         placeholder="What was promised?"
-        className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       />
       <input
         type="text"
         value={capability.source}
         onChange={(e) => onUpdate({ ...capability, source: e.target.value })}
         placeholder="Source"
-        className="w-28 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="w-28 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       />
       <select
         value={capability.priority}
         onChange={(e) => onUpdate({ ...capability, priority: e.target.value as PromisedCapability['priority'] })}
-        className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       >
         <option value="must_have">Must Have</option>
         <option value="should_have">Should Have</option>

@@ -44,7 +44,7 @@ export interface BusinessRule {
 // Category config
 const CATEGORY_CONFIG = {
   validation: { label: 'Validation', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50', description: 'Data validation rules' },
-  calculation: { label: 'Calculation', icon: Zap, color: 'text-purple-600 bg-purple-50', description: 'Computation logic' },
+  calculation: { label: 'Calculation', icon: Zap, color: 'text-[#C2703E] bg-[#FDF3EC]', description: 'Computation logic' },
   routing: { label: 'Routing', icon: Scale, color: 'text-emerald-600 bg-emerald-50', description: 'Decision routing' },
   escalation: { label: 'Escalation', icon: AlertTriangle, color: 'text-amber-600 bg-amber-50', description: 'Human handoff triggers' },
   compliance: { label: 'Compliance', icon: ShieldCheck, color: 'text-red-600 bg-red-50', description: 'Regulatory requirements' },

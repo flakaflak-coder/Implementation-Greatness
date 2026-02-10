@@ -184,7 +184,7 @@ export function DesignWeekOverviewCard({ designWeek, className }: DesignWeekOver
               <span>{formatTimeAgo(designWeek.lastUpdated)}</span>
             </div>
           </div>
-          <Button asChild variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
+          <Button asChild variant="ghost" size="sm" className="text-[#C2703E] hover:text-[#A05A32]">
             <Link
               href={`/companies/${designWeek.company.id}/digital-employees/${designWeek.digitalEmployee.id}`}
             >

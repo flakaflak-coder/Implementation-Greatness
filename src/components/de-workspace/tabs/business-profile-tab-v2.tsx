@@ -49,22 +49,22 @@ interface BusinessProfileTabV2Props {
 
 // Section colors mapping
 const sectionColors: Record<string, string> = {
-  indigo: 'border-indigo-200 bg-indigo-50/50',
+  indigo: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
   blue: 'border-blue-200 bg-blue-50/50',
   emerald: 'border-emerald-200 bg-emerald-50/50',
   cyan: 'border-cyan-200 bg-cyan-50/50',
-  violet: 'border-violet-200 bg-violet-50/50',
+  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
   amber: 'border-amber-200 bg-amber-50/50',
   rose: 'border-rose-200 bg-rose-50/50',
   pink: 'border-pink-200 bg-pink-50/50',
 }
 
 const iconColors: Record<string, string> = {
-  indigo: 'text-indigo-600',
+  indigo: 'text-[#C2703E]',
   blue: 'text-blue-600',
   emerald: 'text-emerald-600',
   cyan: 'text-cyan-600',
-  violet: 'text-violet-600',
+  violet: 'text-[#C2703E]',
   amber: 'text-amber-600',
   rose: 'text-rose-600',
   pink: 'text-pink-600',
@@ -441,7 +441,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                       },
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
                 >
                   <option value="formal">Formal</option>
                   <option value="casual">Casual</option>
@@ -679,11 +679,11 @@ interface ProfileSectionProps {
 }
 
 const accentGradients: Record<string, string> = {
-  indigo: 'from-indigo-400 to-indigo-600',
+  indigo: 'from-[#D4956A] to-[#C2703E]',
   blue: 'from-blue-400 to-blue-600',
   emerald: 'from-emerald-400 to-emerald-600',
   cyan: 'from-cyan-400 to-cyan-600',
-  violet: 'from-violet-400 to-violet-600',
+  violet: 'from-[#D4956A] to-[#C2703E]',
   amber: 'from-amber-400 to-amber-600',
   rose: 'from-rose-400 to-rose-600',
   pink: 'from-pink-400 to-pink-600',
@@ -768,7 +768,7 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
       {stakeholders.length === 0 && !isAdding && (
         <ProfileEmptyState
           icon={User}
-          color="indigo"
+          color="sienna"
           title="No stakeholders yet"
           description="Add key people involved in this Digital Employee"
           actionLabel="Add stakeholder"
@@ -784,7 +784,7 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
               index < 6 && `stagger-${index + 1}`,
             )}
           >
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
               <User className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
@@ -807,14 +807,14 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Name"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <input
             type="text"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
             placeholder="Role"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <button
             onClick={handleAdd}
@@ -838,7 +838,7 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
           onClick={() => setIsAdding(true)}
           variant="outline"
           size="sm"
-          className="w-full border-dashed border-indigo-200/60 hover:border-indigo-300 hover:bg-indigo-50/50 mt-1"
+          className="w-full border-dashed border-[#E8D5C4]/60 hover:border-[#D4956A] hover:bg-[#FDF3EC]/50 mt-1"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           Add stakeholder
@@ -1181,7 +1181,7 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
       {skills.length === 0 && !isAdding && (
         <ProfileEmptyState
           icon={Sparkles}
-          color="violet"
+          color="sienna"
           title="No skills yet"
           description="Define what this Digital Employee can do"
           actionLabel="Add skill"
@@ -1199,11 +1199,11 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-violet-100 text-violet-600 rounded-lg">
+                <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-xs px-2 py-0.5 bg-violet-100 text-violet-600 rounded font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-[#F5E6DA] text-[#C2703E] rounded font-medium">
                     {skillTypeLabels[skill.type] || skill.type}
                   </span>
                   <h4 className="font-medium text-gray-900 mt-1">{skill.name}</h4>
@@ -1223,19 +1223,19 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
         ))}
       </div>
       {isAdding ? (
-        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-violet-300">
+        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-[#D4956A]">
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Skill name"
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as Skill['type'])}
-              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             >
               <option value="answer">Answer Questions</option>
               <option value="route">Route Cases</option>
@@ -1250,7 +1250,7 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description"
             rows={2}
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -1272,7 +1272,7 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
           onClick={() => setIsAdding(true)}
           variant="outline"
           size="sm"
-          className="w-full border-dashed border-violet-200/60 hover:border-violet-300 hover:bg-violet-50/50 mt-1"
+          className="w-full border-dashed border-[#E8D5C4]/60 hover:border-[#D4956A] hover:bg-[#FDF3EC]/50 mt-1"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           Add skill

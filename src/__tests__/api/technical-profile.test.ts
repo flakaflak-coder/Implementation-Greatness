@@ -192,7 +192,7 @@ describe('GET /api/design-weeks/[id]/technical-profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Database error')
+    expect(data.error).toBe('Failed to load technical profile')
   })
 })
 
@@ -238,7 +238,7 @@ describe('PUT /api/design-weeks/[id]/technical-profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Profile is required')
+    expect(data.error).toBe('Validation failed')
   })
 
   it('returns 404 when design week not found', async () => {
@@ -269,6 +269,6 @@ describe('PUT /api/design-weeks/[id]/technical-profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Update failed')
+    expect(data.error).toBe('Failed to save technical profile')
   })
 })

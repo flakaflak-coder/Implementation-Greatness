@@ -38,9 +38,9 @@ export function getDEAvatar(deId: string, deName: string): string {
 // Predefined background colors for DE status
 export const statusColors = {
   LIVE: '#10b981', // emerald-500
-  DESIGN: '#6366f1', // indigo-500
+  DESIGN: '#C2703E', // terracotta
   ONBOARDING: '#f59e0b', // amber-500
-  UAT: '#8b5cf6', // violet-500
+  UAT: '#D4956A', // warm terracotta
   PAUSED: '#6b7280', // gray-500
 } as const
 

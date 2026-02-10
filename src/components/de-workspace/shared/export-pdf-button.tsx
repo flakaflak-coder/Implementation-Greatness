@@ -485,7 +485,7 @@ export function ExportPDFButton({
           <Button
             onClick={() => handleExport(true)}
             disabled={disabled}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="gap-2 bg-[#C2703E] hover:bg-[#A05A32]"
           >
             <Sparkles className="h-4 w-4" />
             <FileDown className="h-4 w-4" />
@@ -508,7 +508,7 @@ export function ExportPDFButton({
         ) : (
           /* Document type description with timing hint */
           <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-indigo-500" />
+            <Sparkles className="h-3 w-3 text-[#C2703E]" />
             {DOCUMENT_TYPES.find(d => d.code === selectedDocType)?.description}
             <span className="text-gray-400 ml-1">
               (~{GENERATION_TIMES[selectedDocType].min}-{GENERATION_TIMES[selectedDocType].max}s)
@@ -544,11 +544,11 @@ export function ExportPDFButton({
           <DialogHeader className="flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-indigo-500" />
+                <Eye className="h-5 w-5 text-[#C2703E]" />
                 PDF Preview
               </DialogTitle>
               <div className="flex items-center gap-2">
-                <Button onClick={handleDownload} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                <Button onClick={handleDownload} className="gap-2 bg-[#C2703E] hover:bg-[#A05A32]">
                   <Download className="h-4 w-4" />
                   Download
                 </Button>

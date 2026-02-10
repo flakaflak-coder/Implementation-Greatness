@@ -433,7 +433,7 @@ export function PromptManager() {
           <div className={cn(
             'h-1 bg-gradient-to-r',
             info?.icon === 'extract'
-              ? 'from-violet-500 to-purple-500'
+              ? 'from-[#C2703E] to-[#A05A32]'
               : 'from-blue-500 to-cyan-500'
           )} />
           <CollapsibleTrigger asChild>
@@ -442,10 +442,10 @@ export function PromptManager() {
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     'w-9 h-9 rounded-lg flex items-center justify-center',
-                    info?.icon === 'extract' ? 'bg-violet-100' : 'bg-blue-100'
+                    info?.icon === 'extract' ? 'bg-[#F5E6DA]' : 'bg-blue-100'
                   )}>
                     {info?.icon === 'extract' ? (
-                      <Sparkles className="w-4 h-4 text-violet-600" />
+                      <Sparkles className="w-4 h-4 text-[#C2703E]" />
                     ) : (
                       <FileText className="w-4 h-4 text-blue-600" />
                     )}
@@ -460,7 +460,7 @@ export function PromptManager() {
                   <Badge className={cn(
                     'border-0 text-xs',
                     info?.icon === 'extract'
-                      ? 'bg-violet-100 text-violet-700'
+                      ? 'bg-[#F5E6DA] text-[#A05A32]'
                       : 'bg-blue-100 text-blue-700'
                   )}>
                     {template.model}
@@ -695,7 +695,7 @@ export function PromptManager() {
           {/* Avatar Generation Prompt */}
           <div className="mb-6">
             <h4 className="text-md font-medium mb-3 flex items-center gap-2">
-              <Image className="w-4 h-4 text-purple-500" />
+              <Image className="w-4 h-4 text-[#C2703E]" />
               Avatar Generation
               <Badge variant="outline" className="ml-2">Imagen 4</Badge>
             </h4>

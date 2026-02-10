@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdatePromptSchema } from '@/lib/validation'
 
 // Get a specific prompt template
 export async function GET(
@@ -34,14 +35,13 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
-    const { prompt, model, temperature, maxTokens, description } = body as {
-      prompt?: string
-      model?: string
-      temperature?: number
-      maxTokens?: number
-      description?: string
-    }
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
+    const bodyCheck = await validateBody(request, UpdatePromptSchema)
+    if (!bodyCheck.success) return bodyCheck.response
+
+    const { prompt, model, temperature, maxTokens, description } = bodyCheck.data
 
     const existing = await prisma.promptTemplate.findUnique({
       where: { id },
@@ -89,6 +89,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     await prisma.promptTemplate.update({
       where: { id },

@@ -372,7 +372,7 @@ export const PROFILE_SECTION_CONFIG = {
   identity: {
     title: 'Identity',
     icon: 'Bot',
-    color: 'indigo',
+    color: 'sienna',
     description: 'Who is this Digital Employee?',
   },
   businessContext: {
@@ -396,7 +396,7 @@ export const PROFILE_SECTION_CONFIG = {
   skills: {
     title: 'Skills & Capabilities',
     icon: 'Sparkles',
-    color: 'violet',
+    color: 'sienna',
     description: 'What the DE can do',
   },
   process: {
@@ -518,7 +518,7 @@ export const SALES_HANDOVER_SECTION_CONFIG = {
   specialNotes: {
     title: 'Special Notes & Promises',
     icon: 'Star',
-    color: 'violet',
+    color: 'sienna',
     description: 'Anything else we should know?',
   },
   stakeholders: {
@@ -774,7 +774,7 @@ export const TECHNICAL_SECTION_CONFIG = {
   integrations: {
     title: 'System Integrations',
     icon: 'Plug',
-    color: 'violet',
+    color: 'sienna',
     description: 'Connected systems and APIs',
   },
   dataFields: {
@@ -882,7 +882,7 @@ export const TEST_PLAN_SECTION_CONFIG = {
   boundary: {
     title: 'Boundary Tests',
     icon: 'XSquare',
-    color: 'violet',
+    color: 'sienna',
     description: 'Verify out-of-scope items are rejected or escalated',
   },
 } as const

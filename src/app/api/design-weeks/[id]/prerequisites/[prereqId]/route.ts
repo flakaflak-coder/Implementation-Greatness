@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdatePrerequisiteSchema } from '@/lib/validation'
 
 /**
  * PATCH /api/design-weeks/[id]/prerequisites/[prereqId]
@@ -10,36 +11,34 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; prereqId: string }> }
 ) {
   const resolvedParams = await params
+  const idCheck = validateId(resolvedParams.id)
+  if (!idCheck.success) return idCheck.response
+  const prereqIdCheck = validateId(resolvedParams.prereqId)
+  if (!prereqIdCheck.success) return prereqIdCheck.response
 
   try {
-    const body = await request.json()
+    const validation = await validateBody(request, UpdatePrerequisiteSchema)
+    if (!validation.success) return validation.response
     const {
       title,
       description,
-      category,
-      ownerType,
-      ownerName,
-      ownerEmail,
       status,
       priority,
+      ownerName,
+      ownerEmail,
       dueDate,
-      blocksPhase,
-      integrationId,
+      receivedAt,
       notes,
-    } = body
+    } = validation.data
 
     // Build update data
     const updateData: Record<string, unknown> = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
-    if (category !== undefined) updateData.category = category
-    if (ownerType !== undefined) updateData.ownerType = ownerType
     if (ownerName !== undefined) updateData.ownerName = ownerName
     if (ownerEmail !== undefined) updateData.ownerEmail = ownerEmail
     if (priority !== undefined) updateData.priority = priority
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
-    if (blocksPhase !== undefined) updateData.blocksPhase = blocksPhase
-    if (integrationId !== undefined) updateData.integrationId = integrationId
     if (notes !== undefined) updateData.notes = notes
 
     // Handle status changes with timestamps
@@ -87,6 +86,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; prereqId: string }> }
 ) {
   const resolvedParams = await params
+  const idCheck = validateId(resolvedParams.id)
+  if (!idCheck.success) return idCheck.response
+  const prereqIdCheck = validateId(resolvedParams.prereqId)
+  if (!prereqIdCheck.success) return prereqIdCheck.response
 
   try {
     await prisma.prerequisite.delete({

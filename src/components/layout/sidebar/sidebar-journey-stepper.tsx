@@ -113,7 +113,7 @@ export function SidebarJourneyStepper({
                   className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200',
                     status === 'COMPLETE' && 'bg-emerald-50 text-emerald-600',
-                    isActive && status !== 'COMPLETE' && 'bg-indigo-50 text-indigo-600 shadow-sm',
+                    isActive && status !== 'COMPLETE' && 'bg-[#FDF3EC] text-[#C2703E] shadow-sm',
                     status === 'NOT_STARTED' && !isActive && 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
                   )}
                 >
@@ -176,7 +176,7 @@ export function SidebarJourneyStepper({
               <div
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative',
-                  isCurrentPath && 'bg-indigo-50',
+                  isCurrentPath && 'bg-[#FDF3EC]',
                   !isCurrentPath && 'hover:bg-gray-100'
                 )}
               >
@@ -185,10 +185,10 @@ export function SidebarJourneyStepper({
                   className={cn(
                     'relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white flex-shrink-0',
                     status === 'COMPLETE' && 'border-emerald-500 bg-emerald-500',
-                    status === 'IN_PROGRESS' && 'border-indigo-500',
+                    status === 'IN_PROGRESS' && 'border-[#C2703E]',
                     status === 'BLOCKED' && 'border-red-500',
                     status === 'NOT_STARTED' && 'border-gray-300',
-                    isActive && status !== 'COMPLETE' && 'border-indigo-500 ring-2 ring-indigo-100 shadow-sm'
+                    isActive && status !== 'COMPLETE' && 'border-[#C2703E] ring-2 ring-[#F5E6DA] shadow-sm'
                   )}
                 >
                   {status === 'COMPLETE' ? (
@@ -197,7 +197,7 @@ export function SidebarJourneyStepper({
                     <IconComponent
                       className={cn(
                         'h-3 w-3',
-                        status === 'IN_PROGRESS' && 'text-indigo-600',
+                        status === 'IN_PROGRESS' && 'text-[#C2703E]',
                         status === 'BLOCKED' && 'text-red-500',
                         status === 'NOT_STARTED' && 'text-gray-400'
                       )}
@@ -212,7 +212,7 @@ export function SidebarJourneyStepper({
                   className={cn(
                     'font-medium',
                     status === 'COMPLETE' && 'text-emerald-600',
-                    isActive && status !== 'COMPLETE' && 'text-indigo-600',
+                    isActive && status !== 'COMPLETE' && 'text-[#C2703E]',
                     status === 'NOT_STARTED' && !isActive && 'text-gray-500'
                   )}
                 >
@@ -240,7 +240,7 @@ export function SidebarJourneyStepper({
                             href={subPhaseUrl}
                             className={cn(
                               'flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition-colors',
-                              pathname.includes(subPhaseUrl) && 'bg-indigo-50',
+                              pathname.includes(subPhaseUrl) && 'bg-[#FDF3EC]',
                               !pathname.includes(subPhaseUrl) && 'hover:bg-gray-100'
                             )}
                           >
@@ -248,14 +248,14 @@ export function SidebarJourneyStepper({
                               className={cn(
                                 'h-2 w-2 rounded-full',
                                 isSubPhaseComplete && 'bg-emerald-500',
-                                isSubPhaseCurrent && 'bg-indigo-500 shadow-sm',
+                                isSubPhaseCurrent && 'bg-[#FDF3EC]0 shadow-sm',
                                 !isSubPhaseComplete && !isSubPhaseCurrent && 'bg-gray-300'
                               )}
                             />
                             <span
                               className={cn(
                                 isSubPhaseComplete && 'text-emerald-600',
-                                isSubPhaseCurrent && 'text-indigo-600',
+                                isSubPhaseCurrent && 'text-[#C2703E]',
                                 !isSubPhaseComplete && !isSubPhaseCurrent && 'text-gray-500'
                               )}
                             >
@@ -283,11 +283,11 @@ export function SidebarJourneyStepper({
       <div className="px-3 pt-4">
         <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
           <span>Journey Progress</span>
-          <span className="text-indigo-600 font-medium">{progressPercent}%</span>
+          <span className="text-[#C2703E] font-medium">{progressPercent}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
+            className="h-full bg-[#C2703E] rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

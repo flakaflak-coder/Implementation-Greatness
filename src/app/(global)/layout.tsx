@@ -21,7 +21,7 @@ export default function GlobalLayout({
   const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAF9F6]">
       {/* Command Palette - Global search */}
       <CommandPalette />
 
@@ -42,7 +42,7 @@ export default function GlobalLayout({
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-0 border-gray-200 bg-white">
+        <SheetContent side="left" className="w-[280px] p-0 border-gray-200 bg-[#F5F0EB]">
           <Sidebar variant="global" />
         </SheetContent>
       </Sheet>
@@ -50,7 +50,7 @@ export default function GlobalLayout({
       {/* Main content */}
       <main
         className={cn(
-          'min-h-screen transition-all duration-300 bg-gray-50',
+          'min-h-screen transition-all duration-300 bg-[#FAF9F6]',
           'lg:pl-[280px]',
           isCollapsed && 'lg:pl-[72px]'
         )}

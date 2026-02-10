@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Channel } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdateDigitalEmployeeSchema } from '@/lib/validation'
 
 // GET /api/digital-employees/[id] - Get a single digital employee with full details
 export async function GET(
@@ -8,6 +10,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     const digitalEmployee = await prisma.digitalEmployee.findUnique({
       where: { id },
@@ -103,15 +107,19 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
-    const { name, description, channels, status, goLiveDate } = body
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
+    const validation = await validateBody(request, UpdateDigitalEmployeeSchema)
+    if (!validation.success) return validation.response
+    const { name, description, channels, status, goLiveDate } = validation.data
 
     const digitalEmployee = await prisma.digitalEmployee.update({
       where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
-        ...(channels && { channels }),
+        ...(channels && { channels: channels as Channel[] }),
         ...(status && { status }),
         ...(goLiveDate !== undefined && { goLiveDate: goLiveDate ? new Date(goLiveDate) : null }),
       },
@@ -138,6 +146,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     await prisma.digitalEmployee.delete({
       where: { id },

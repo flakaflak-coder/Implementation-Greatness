@@ -58,6 +58,13 @@ export interface TimelineDE {
     progress: number
     sessionProgress: number
     scopeProgress: number
+    phaseCompletions: {
+      phase: number
+      autoCompleted: boolean
+      manuallyCompleted: boolean
+      completed: boolean
+    }[]
+    manualCompletions: number[]
   } | null
   prerequisites: {
     total: number
@@ -82,8 +89,8 @@ interface GanttTimelineProps {
 
 // Stage configuration
 const STAGE_CONFIG: Record<LifecycleStage, { label: string; color: string; bg: string }> = {
-  design_week: { label: 'Design Week', color: 'text-blue-700', bg: 'bg-blue-500' },
-  configuration: { label: 'Configuration', color: 'text-violet-700', bg: 'bg-violet-500' },
+  design_week: { label: 'Design Week', color: 'text-[#C2703E]', bg: 'bg-[#C2703E]' },
+  configuration: { label: 'Configuration', color: 'text-[#6B8F71]', bg: 'bg-[#6B8F71]' },
   uat: { label: 'UAT', color: 'text-amber-700', bg: 'bg-amber-500' },
   live: { label: 'Live', color: 'text-emerald-700', bg: 'bg-emerald-500' },
 }

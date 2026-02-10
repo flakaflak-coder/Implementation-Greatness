@@ -50,7 +50,7 @@ const GROUP_CONFIG: Record<
     title: 'Boundary Tests',
     description: 'Verify out-of-scope items are rejected or escalated',
     icon: 'XSquare',
-    color: 'violet',
+    color: 'sienna',
   },
 }
 
@@ -97,11 +97,11 @@ export function TestGroup({
       text: 'text-blue-700',
       headerBg: 'bg-blue-500',
     },
-    violet: {
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
-      text: 'text-violet-700',
-      headerBg: 'bg-violet-500',
+    sienna: {
+      bg: 'bg-[#FDF3EC]',
+      border: 'border-[#E8D5C4]',
+      text: 'text-[#A05A32]',
+      headerBg: 'bg-[#C2703E]',
     },
   }
 

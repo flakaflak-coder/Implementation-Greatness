@@ -115,6 +115,8 @@ model DigitalEmployee {
   designWeek    DesignWeek?
   journeyPhases JourneyPhase[]
 
+  @@index([companyId])
+  @@index([status])
   @@map("digital_employees")
 }
 
@@ -198,6 +200,7 @@ model JourneyPhase {
   digitalEmployee DigitalEmployee @relation(fields: [digitalEmployeeId], references: [id], onDelete: Cascade)
 
   @@unique([digitalEmployeeId, phaseType])
+  @@index([digitalEmployeeId])
   @@map("journey_phases")
 }
 
@@ -252,6 +255,10 @@ model DesignWeek {
   // Sales Handover Profile - stores deal context, watch-outs, deadlines, special notes
   salesHandoverProfile Json?        @db.JsonB
 
+  // Manual phase completions - stores array of phase numbers manually marked complete
+  // e.g. [1, 2] means Kickoff and Process Design were manually checked off
+  manualPhaseCompletions Json?      @db.JsonB
+
   // Relations
   digitalEmployee    DigitalEmployee     @relation(fields: [digitalEmployeeId], references: [id], onDelete: Cascade)
   sessions           Session[]
@@ -302,6 +309,7 @@ model Session {
   transcript      TranscriptSegment[]
   rawExtractions  RawExtraction[]
 
+  @@index([designWeekId])
   @@map("sessions")
 }
 
@@ -325,6 +333,7 @@ model Material {
   // Relations
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
   @@map("materials")
 }
 
@@ -348,6 +357,7 @@ model TranscriptSegment {
   // Relations
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
   @@map("transcript_segments")
 }
 
@@ -410,11 +420,11 @@ model Evidence {
   integrationId    String?
   escalationRuleId String?
 
-  scopeItem      ScopeItem?      @relation(fields: [scopeItemId], references: [id])
-  scenario       Scenario?       @relation(fields: [scenarioId], references: [id])
-  kpi            KPI?            @relation(fields: [kpiId], references: [id])
-  integration    Integration?    @relation(fields: [integrationId], references: [id])
-  escalationRule EscalationRule? @relation(fields: [escalationRuleId], references: [id])
+  scopeItem      ScopeItem?      @relation(fields: [scopeItemId], references: [id], onDelete: Cascade)
+  scenario       Scenario?       @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  kpi            KPI?            @relation(fields: [kpiId], references: [id], onDelete: Cascade)
+  integration    Integration?    @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  escalationRule EscalationRule? @relation(fields: [escalationRuleId], references: [id], onDelete: Cascade)
 
   @@map("evidence")
 }
@@ -492,6 +502,7 @@ model ScenarioStep {
   // Relations
   scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
+  @@index([scenarioId])
   @@map("scenario_steps")
 }
 
@@ -512,6 +523,7 @@ model EdgeCase {
   // Relations
   scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
 
+  @@index([scenarioId])
   @@map("edge_cases")
 }
 
@@ -581,6 +593,7 @@ model Prerequisite {
   designWeek      DesignWeek           @relation(fields: [designWeekId], references: [id], onDelete: Cascade)
   integration     Integration?         @relation(fields: [integrationId], references: [id])
 
+  @@index([designWeekId])
   @@map("prerequisites")
 }
 
@@ -914,6 +927,7 @@ model PromptTemplate {
   extractedItems    ExtractedItem[]
   generatedDocuments GeneratedDocument[]
 
+  @@index([isActive])
   @@map("prompt_templates")
 }
 

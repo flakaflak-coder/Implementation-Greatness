@@ -343,7 +343,7 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Upload className="h-4 w-4 text-indigo-500" />
+          <Upload className="h-4 w-4 text-[#C2703E]" />
           Upload Session Material
         </CardTitle>
       </CardHeader>
@@ -351,15 +351,15 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
         {state === 'idle' && (
           <div className="space-y-4">
             {/* Extraction Mode Selector - Always visible */}
-            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div className="p-4 bg-[#FDF3EC] rounded-lg border border-[#E8D5C4]">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-indigo-600" />
-                  <p className="text-sm font-medium text-indigo-900">
+                  <Settings2 className="h-4 w-4 text-[#C2703E]" />
+                  <p className="text-sm font-medium text-[#A05A32]">
                     Extraction Mode
                   </p>
                 </div>
-                <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-1 rounded">
+                <span className="text-xs text-[#C2703E] bg-[#F5E6DA] px-2 py-1 rounded">
                   {EXTRACTION_MODES.find(m => m.value === extractionMode)?.label}
                 </span>
               </div>
@@ -371,8 +371,8 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
                     className={cn(
                       'p-3 rounded-lg border text-left transition-all relative',
                       extractionMode === mode.value
-                        ? 'border-indigo-500 bg-white ring-2 ring-indigo-500 shadow-sm'
-                        : 'border-indigo-100 bg-white/50 hover:border-indigo-300 hover:bg-white'
+                        ? 'border-[#C2703E] bg-white ring-2 ring-[#C2703E] shadow-sm'
+                        : 'border-[#F5E6DA] bg-white/50 hover:border-[#C2703E] hover:bg-white'
                     )}
                   >
                     {mode.recommended && (
@@ -383,10 +383,10 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
                     <div className="flex items-center justify-between mb-1">
                       <span className={cn(
                         'font-medium text-sm',
-                        extractionMode === mode.value ? 'text-indigo-700' : 'text-gray-700'
+                        extractionMode === mode.value ? 'text-[#A05A32]' : 'text-gray-700'
                       )}>{mode.label}</span>
                       {extractionMode === mode.value && (
-                        <Check className="h-4 w-4 text-indigo-500" />
+                        <Check className="h-4 w-4 text-[#C2703E]" />
                       )}
                     </div>
                     <p className="text-xs text-gray-500">{mode.description}</p>
@@ -400,7 +400,7 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
               className={cn(
                 'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
                 isDragging
-                  ? 'border-indigo-400 bg-indigo-50'
+                  ? 'border-[#C2703E] bg-[#FDF3EC]'
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
               )}
               onDragOver={handleDragOver}
@@ -432,7 +432,7 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               {(() => {
                 const Icon = getFileIcon(file.type)
-                return <Icon className="h-8 w-8 text-indigo-500" />
+                return <Icon className="h-8 w-8 text-[#C2703E]" />
               })()}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
@@ -443,19 +443,19 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
                 </p>
               </div>
               {state === 'uploading' && (
-                <div className="h-5 w-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <div className="h-5 w-5 border-2 border-[#C2703E] border-t-transparent rounded-full animate-spin" />
               )}
             </div>
 
             {/* Time estimate banner */}
             {timeEstimate && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <Clock className="h-4 w-4 text-indigo-500" />
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#FDF3EC] border border-[#F5E6DA] rounded-lg">
+                <Clock className="h-4 w-4 text-[#C2703E]" />
                 <div className="flex-1">
-                  <p className="text-sm text-indigo-700">
+                  <p className="text-sm text-[#A05A32]">
                     {state === 'uploading' ? 'Uploading...' : timeEstimate.label}
                   </p>
-                  <p className="text-xs text-indigo-500">
+                  <p className="text-xs text-[#C2703E]">
                     {elapsedTime === 0 ? (
                       `Usually takes ${timeEstimate.min < 60 ? `${timeEstimate.min}-${timeEstimate.max}s` : `${Math.ceil(timeEstimate.min / 60)}-${Math.ceil(timeEstimate.max / 60)} min`}`
                     ) : (
@@ -463,12 +463,12 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
                         <span className="font-medium">{formatTimeElapsed(elapsedTime)}</span>
                         {' elapsed'}
                         {elapsedTime < timeEstimate.max && (
-                          <span className="text-indigo-400">
+                          <span className="text-[#C2703E]/70">
                             {' • '}{formatTimeRemaining(Math.max(0, timeEstimate.max - elapsedTime))}
                           </span>
                         )}
                         {elapsedTime >= timeEstimate.max && (
-                          <span className="text-indigo-400"> • Almost done...</span>
+                          <span className="text-[#C2703E]/70"> • Almost done...</span>
                         )}
                       </>
                     )}

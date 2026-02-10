@@ -116,7 +116,7 @@ export function PortfolioFeedbackWidget({
     <div className={cn('bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden', className)}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#C2703E] flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
@@ -145,7 +145,7 @@ export function PortfolioFeedbackWidget({
                 onClick={handleSubmit}
                 disabled={!feedback.trim() || loading}
                 size="sm"
-                className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                className="bg-[#C2703E] hover:bg-[#A05A32]"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -6,7 +6,7 @@
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus } from '@prisma/client'
+import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus, PrerequisiteCategory, PrerequisiteOwner, PrerequisiteStatus, Priority, ExtractedItemType, GeneratedDocType, JourneyPhaseType } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMMON SCHEMAS
@@ -53,6 +53,13 @@ export const CreateCompanySchema = z.object({
 export const UpdateCompanySchema = z.object({
   name: z.string().min(1).max(255).trim().optional(),
   industry: z.string().max(100).trim().nullable().optional(),
+  contactName: z.string().max(255).trim().nullable().optional(),
+  contactEmail: EmailSchema.nullable().optional(),
+  contactPhone: z.string().max(50).trim().nullable().optional(),
+  logoUrl: SafeUrlSchema.nullable().optional(),
+  vision: z.string().max(5000).trim().nullable().optional(),
+  journeyStartDate: z.string().datetime().nullable().optional(),
+  journeyTargetDate: z.string().datetime().nullable().optional(),
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -71,6 +78,19 @@ export const UpdateDigitalEmployeeSchema = z.object({
   description: z.string().max(2000).trim().nullable().optional(),
   channels: z.array(z.string().max(50)).max(10).optional(),
   lifecycle: z.enum(['DESIGN', 'BUILD', 'UAT', 'LIVE']).optional(),
+  status: z.enum(['DESIGN', 'ONBOARDING', 'LIVE', 'PAUSED']).optional(),
+  goLiveDate: z.string().datetime().nullable().optional(),
+  startWeek: z.number().int().min(1).max(52).nullable().optional(),
+  endWeek: z.number().int().min(1).max(52).nullable().optional(),
+  goLiveWeek: z.number().int().min(1).max(52).nullable().optional(),
+  trackerStatus: z.nativeEnum(TrackerStatus).optional(),
+  riskLevel: z.nativeEnum(RiskLevel).optional(),
+  blocker: z.string().max(2000).trim().nullable().optional(),
+  ownerClient: z.string().max(255).trim().nullable().optional(),
+  ownerFreedayProject: z.string().max(255).trim().nullable().optional(),
+  ownerFreedayEngineering: z.string().max(255).trim().nullable().optional(),
+  thisWeekActions: z.string().max(2000).trim().nullable().optional(),
+  sortOrder: z.number().int().min(0).optional(),
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -115,6 +135,120 @@ export const UpdateDesignWeekSchema = z.object({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const ExtractionModeSchema = z.enum(['standard', 'auto', 'exhaustive', 'multi-model', 'two-pass', 'section-based'])
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PREREQUISITE SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CreatePrerequisiteSchema = z.object({
+  title: z.string().min(1).max(500).trim(),
+  description: z.string().max(2000).trim().nullable().optional(),
+  category: z.nativeEnum(PrerequisiteCategory),
+  ownerType: z.nativeEnum(PrerequisiteOwner),
+  ownerName: z.string().max(255).trim().nullable().optional(),
+  ownerEmail: EmailSchema.nullable().optional(),
+  priority: z.nativeEnum(Priority).optional(),
+  dueDate: z.string().datetime().nullable().optional(),
+  integrationId: IdSchema.nullable().optional(),
+  blocksPhase: z.nativeEnum(JourneyPhaseType).nullable().optional(),
+})
+
+export const UpdatePrerequisiteSchema = z.object({
+  title: z.string().min(1).max(500).trim().optional(),
+  description: z.string().max(2000).trim().nullable().optional(),
+  status: z.nativeEnum(PrerequisiteStatus).optional(),
+  priority: z.nativeEnum(Priority).optional(),
+  ownerName: z.string().max(255).trim().nullable().optional(),
+  ownerEmail: EmailSchema.nullable().optional(),
+  dueDate: z.string().datetime().nullable().optional(),
+  receivedAt: z.string().datetime().nullable().optional(),
+  notes: z.string().max(2000).trim().nullable().optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT GENERATION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const GenerateDocumentSchema = z.object({
+  documentType: z.nativeEnum(GeneratedDocType),
+  language: z.enum(['en', 'nl', 'de', 'fr', 'es']).optional().default('en'),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXTRACTION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const ExtractSessionSchema = z.object({
+  transcript: z.string().min(1).max(500000),
+  promptType: z.string().max(100).optional(),
+})
+
+export const CreateExtractedItemSchema = z.object({
+  sessionId: IdSchema,
+  type: z.nativeEnum(ExtractedItemType),
+  content: SafeStringSchema.min(1),
+  category: z.string().max(200).trim().nullable().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  structuredData: z.record(z.string(), z.unknown()).nullable().optional(),
+  sourceQuote: z.string().max(10000).nullable().optional(),
+  sourceSpeaker: z.string().max(255).nullable().optional(),
+  sourceTimestamp: z.number().min(0).nullable().optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROMPT SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CreatePromptSchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+  type: z.string().min(1).max(100),
+  description: z.string().max(500).trim().optional(),
+  prompt: z.string().min(1).max(100000),
+  model: z.string().max(100).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).max(200000).optional(),
+})
+
+export const UpdatePromptSchema = z.object({
+  prompt: z.string().min(1).max(100000).optional(),
+  description: z.string().max(500).trim().optional(),
+  model: z.string().max(100).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).max(200000).optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROFILE SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const ProfileUpdateSchema = z.object({
+  profile: z.record(z.string(), z.unknown()),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHECKLIST SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const UpdateChecklistItemSchema = z.object({
+  itemId: IdSchema,
+  isCompleted: z.boolean(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEARCH SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const SearchQuerySchema = z.string().min(1).max(200).trim()
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GENERATE DESCRIPTION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const GenerateDescriptionSchema = z.object({
+  name: z.string().min(1).max(255),
+  companyName: z.string().min(1).max(255),
+  channels: z.array(z.string().max(50)).max(10).optional(),
+})
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSISTANT SCHEMAS

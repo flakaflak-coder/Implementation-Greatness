@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import type { SalesHandoverProfile } from '@/components/de-workspace/profile-types'
 import { createEmptySalesHandoverProfile } from '@/components/de-workspace/profile-types'
 import { getPhaseLabel } from '@/lib/utils'
+import { validateId } from '@/lib/validation'
 
 // Zod schema for status transitions
 const StatusTransitionSchema = z.object({
@@ -22,6 +23,8 @@ export async function GET(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
     const designWeek = await prisma.designWeek.findUnique({
       where: { id: designWeekId },
@@ -127,7 +130,7 @@ export async function GET(
   } catch (error) {
     console.error('Error loading sales handover profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load profile' },
+      { error: 'Failed to load sales handover profile' },
       { status: 500 }
     )
   }
@@ -146,6 +149,9 @@ export async function PUT(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
 
     // Check if this is a status transition
@@ -183,7 +189,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error saving sales handover profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save profile' },
+      { error: 'Failed to save sales handover profile' },
       { status: 500 }
     )
   }

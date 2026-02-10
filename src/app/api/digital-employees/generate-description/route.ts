@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateDEDescription, generateDEDescriptionVariants, generateDETagline } from '@/lib/de-description-generator'
+import { validateBody, GenerateDescriptionSchema } from '@/lib/validation'
 
 /**
  * POST /api/digital-employees/generate-description
@@ -18,16 +19,10 @@ import { generateDEDescription, generateDEDescriptionVariants, generateDETagline
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, department, companyName, channels, skills, variants = 1 } = body
-
-    // Validation
-    if (!name || !companyName) {
-      return NextResponse.json(
-        { error: 'name and companyName are required' },
-        { status: 400 }
-      )
-    }
+    const validation = await validateBody(request, GenerateDescriptionSchema.passthrough())
+    if (!validation.success) return validation.response
+    const { name, companyName, channels } = validation.data
+    const { department, skills, variants = 1 } = validation.data as Record<string, unknown> as { department?: string; skills?: string[]; variants?: number }
 
     const input = {
       name,
@@ -61,7 +56,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error generating description:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate description' },
+      { error: 'Failed to generate description. Please try again.' },
       { status: 500 }
     )
   }

@@ -42,7 +42,7 @@ export interface PhaseDetailPanelProps {
 
 const phaseConfig = {
   1: { icon: Target, gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
-  2: { icon: MessageSquare, gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200' },
+  2: { icon: MessageSquare, gradient: 'from-[#C2703E] to-[#A05A32]', bg: 'bg-[#FDF3EC]', text: 'text-[#C2703E]', border: 'border-[#E8D5C4]' },
   3: { icon: Cpu, gradient: 'from-orange-500 to-amber-500', bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
   4: { icon: Signature, gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
 }
@@ -99,7 +99,7 @@ export function PhaseDetailPanel({
             </div>
             <Button
               onClick={onUpload}
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50"
+              className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15"
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload Session
@@ -183,7 +183,7 @@ export function PhaseDetailPanel({
             </p>
             <Button
               onClick={onUpload}
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50"
+              className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15"
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload Session

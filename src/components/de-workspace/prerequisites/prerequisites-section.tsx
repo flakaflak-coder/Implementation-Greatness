@@ -95,7 +95,7 @@ const categoryLabels: Record<PrerequisiteCategory, string> = {
 }
 
 const categoryColors: Record<PrerequisiteCategory, string> = {
-  API_CREDENTIALS: 'bg-violet-100 text-violet-700',
+  API_CREDENTIALS: 'bg-[#F5E6DA] text-[#A05A32]',
   SYSTEM_ACCESS: 'bg-blue-100 text-blue-700',
   DOCUMENTATION: 'bg-cyan-100 text-cyan-700',
   TEST_DATA: 'bg-emerald-100 text-emerald-700',
@@ -346,7 +346,7 @@ export function PrerequisitesSection({ designWeekId, className }: PrerequisitesS
                       {prereq.ownerName && `: ${prereq.ownerName}`}
                     </span>
                     {prereq.integration && (
-                      <span className="text-xs text-violet-600">
+                      <span className="text-xs text-[#C2703E]">
                         → {prereq.integration.systemName}
                       </span>
                     )}

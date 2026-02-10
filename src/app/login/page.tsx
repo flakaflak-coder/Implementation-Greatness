@@ -88,7 +88,7 @@ function LoginForm() {
 
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+        className="w-full bg-[#C2703E] hover:bg-[#A05A32]"
         disabled={isLoading}
       >
         {isLoading ? (
@@ -119,10 +119,10 @@ function LoginFormFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+          <div className="mx-auto mb-4 w-12 h-12 bg-[#C2703E] rounded-xl flex items-center justify-center">
             <span className="text-white text-xl font-bold">OCC</span>
           </div>
           <CardTitle className="text-2xl">Onboarding Command Center</CardTitle>

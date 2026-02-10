@@ -177,7 +177,7 @@ export function ManualEntryDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5 text-indigo-500" />
+            <Plus className="h-5 w-5 text-[#C2703E]" />
             Add {profileType === 'business' ? 'Business' : 'Technical'} Profile Item
           </DialogTitle>
           <DialogDescription>
@@ -264,7 +264,7 @@ export function ManualEntryDialog({
           <Button
             onClick={handleSave}
             disabled={saving || !content.trim() || !itemType}
-            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white"
+            className="bg-[#C2703E] hover:bg-[#A05A32] text-white"
           >
             {saving ? (
               <>Saving...</>

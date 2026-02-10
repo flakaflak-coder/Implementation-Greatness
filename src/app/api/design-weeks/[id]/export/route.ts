@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 import { DEDesignPDF, mapToDocument } from '@/lib/documents'
 import {
   generateDocumentContent,
@@ -72,6 +73,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params
+  const idCheck = validateId(resolvedParams.id)
+  if (!idCheck.success) return idCheck.response
 
   try {
     const { searchParams } = new URL(request.url)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import type { TestPlan, TestCase } from '@/components/de-workspace/profile-types'
 import { createEmptyTestPlan } from '@/components/de-workspace/profile-types'
+import { validateId, validateBody, ProfileUpdateSchema } from '@/lib/validation'
 
 /**
  * GET /api/design-weeks/[id]/test-plan
@@ -14,6 +15,8 @@ export async function GET(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
     const designWeek = await prisma.designWeek.findUnique({
       where: { id: designWeekId },
@@ -77,7 +80,7 @@ export async function GET(
   } catch (error) {
     console.error('Error loading test plan:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load test plan' },
+      { error: 'Failed to load test plan' },
       { status: 500 }
     )
   }
@@ -94,8 +97,12 @@ export async function PUT(
 ) {
   try {
     const { id: designWeekId } = await params
-    const body = await request.json()
-    const { testPlan } = body as { testPlan: TestPlan }
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
+    const validation = await validateBody(request, ProfileUpdateSchema)
+    if (!validation.success) return validation.response
+    const testPlan = validation.data.profile as unknown as TestPlan
 
     if (!testPlan) {
       return NextResponse.json({ error: 'Test plan is required' }, { status: 400 })
@@ -124,7 +131,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error saving test plan:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save test plan' },
+      { error: 'Failed to save test plan' },
       { status: 500 }
     )
   }

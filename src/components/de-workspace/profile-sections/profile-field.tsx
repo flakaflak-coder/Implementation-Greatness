@@ -144,7 +144,7 @@ export function ProfileField({ item, onEdit, onApprove, onReject, className }: P
 
       {/* Source quote (if available and not manual) */}
       {item.sourceQuote && !isManual && (
-        <div className="mt-3 pl-3 border-l-2 border-indigo-200">
+        <div className="mt-3 pl-3 border-l-2 border-[#E8D5C4]">
           <p className="text-xs text-gray-500 italic">"{item.sourceQuote}"</p>
         </div>
       )}

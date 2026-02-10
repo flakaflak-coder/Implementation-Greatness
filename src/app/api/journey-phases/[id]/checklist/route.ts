@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdateChecklistItemSchema } from '@/lib/validation'
 
 /**
  * PATCH /api/journey-phases/[id]/checklist
@@ -12,15 +13,13 @@ export async function PATCH(
 ) {
   try {
     const { id: checklistItemId } = await params
-    const body = await request.json()
-    const { isCompleted, completedBy } = body as {
-      isCompleted: boolean
-      completedBy?: string
-    }
+    const idCheck = validateId(checklistItemId)
+    if (!idCheck.success) return idCheck.response
 
-    if (typeof isCompleted !== 'boolean') {
-      return NextResponse.json({ error: 'isCompleted is required' }, { status: 400 })
-    }
+    const bodyCheck = await validateBody(request, UpdateChecklistItemSchema)
+    if (!bodyCheck.success) return bodyCheck.response
+
+    const { isCompleted } = bodyCheck.data
 
     const item = await prisma.journeyChecklistItem.findUnique({
       where: { id: checklistItemId },
@@ -35,7 +34,7 @@ export async function PATCH(
       data: {
         isCompleted,
         completedAt: isCompleted ? new Date() : null,
-        completedBy: isCompleted ? (completedBy || 'Sophie') : null,
+        completedBy: isCompleted ? 'Sophie' : null,
       },
     })
 
@@ -43,7 +42,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating checklist item:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update checklist item' },
+      { error: 'Failed to update checklist item' },
       { status: 500 }
     )
   }

@@ -2,17 +2,17 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
-  --sidebar-bg: #ffffff;
+  --background: #FAF9F6;
+  --foreground: #1A1816;
+  --sidebar-bg: #F5F0EB;
   --card-bg: #ffffff;
-  --border: #e5e7eb;
-  --muted: #6b7280;
-  --accent: #6366f1;
-  --accent-light: #818cf8;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #ef4444;
+  --border: #E8E0D8;
+  --muted: #8C8279;
+  --accent: #C2703E;
+  --accent-light: #D4956A;
+  --success: #3D8B5E;
+  --warning: #D49A2A;
+  --error: #C45353;
 }
 
 body {
@@ -21,33 +21,42 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Starfield background effect */
+/* Subtle warm texture background */
 .bg-starfield {
   background-image:
-    radial-gradient(2px 2px at 20px 30px, rgba(168, 85, 247, 0.4), transparent),
-    radial-gradient(2px 2px at 40px 70px, rgba(192, 132, 252, 0.3), transparent),
-    radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(2px 2px at 130px 80px, rgba(168, 85, 247, 0.3), transparent),
-    radial-gradient(1px 1px at 160px 120px, rgba(255, 255, 255, 0.4), transparent);
+    radial-gradient(1px 1px at 20px 30px, rgba(194, 112, 62, 0.08), transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(212, 149, 106, 0.06), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(140, 130, 121, 0.05), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(194, 112, 62, 0.06), transparent),
+    radial-gradient(1px 1px at 160px 120px, rgba(140, 130, 121, 0.04), transparent);
   background-repeat: repeat;
   background-size: 200px 150px;
 }
 
 /* Gradient text */
 .text-gradient {
-  background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #C2703E 0%, #A05A32 50%, #D4956A 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 /* Glow effects */
+.glow-warm {
+  box-shadow: 0 0 20px rgba(194, 112, 62, 0.15);
+}
+
+.glow-warm-sm {
+  box-shadow: 0 0 10px rgba(194, 112, 62, 0.10);
+}
+
+/* Keep old class names as aliases for compatibility */
 .glow-purple {
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 20px rgba(194, 112, 62, 0.15);
 }
 
 .glow-purple-sm {
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 10px rgba(194, 112, 62, 0.10);
 }
 
 /* Subtle pulse animation */
@@ -78,7 +87,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(168, 85, 247, 0.1) 50%,
+    rgba(194, 112, 62, 0.06) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -136,10 +145,10 @@ body {
 /* Glow pulse for buttons/indicators */
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 20px rgba(194, 112, 62, 0.15);
   }
   50% {
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 30px rgba(194, 112, 62, 0.25);
   }
 }
 
@@ -240,7 +249,7 @@ body {
   animation: gradient-shift 8s ease-in-out infinite;
 }
 
-/* Skeleton shimmer — neutral gray for loading states */
+/* Skeleton shimmer — warm neutral for loading states */
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -253,9 +262,9 @@ body {
 .animate-skeleton {
   background: linear-gradient(
     90deg,
-    #e5e7eb 0%,
-    #f3f4f6 40%,
-    #e5e7eb 80%
+    #E7E5E4 0%,
+    #F5F5F4 40%,
+    #E7E5E4 80%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.8s ease-in-out infinite;

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 const PHASE_NAMES: Record<number, string> = {
   1: 'Kickoff',
@@ -26,6 +27,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     // Fetch the Digital Employee with all relevant data
     const de = await prisma.digitalEmployee.findUnique({

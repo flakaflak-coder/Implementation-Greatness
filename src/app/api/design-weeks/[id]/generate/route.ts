@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { generateDocument } from '@/lib/claude'
 import { GeneratedDocType } from '@prisma/client'
+import { validateId, validateBody, GenerateDocumentSchema } from '@/lib/validation'
 
 // Generate a document for a design week
 export async function POST(
@@ -10,17 +11,12 @@ export async function POST(
 ) {
   try {
     const { id: designWeekId } = await params
-    const body = await request.json()
-    const { documentType } = body as {
-      documentType: 'DE_DESIGN' | 'SOLUTION_DESIGN' | 'TEST_PLAN'
-    }
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
-    if (!documentType) {
-      return NextResponse.json(
-        { error: 'documentType is required' },
-        { status: 400 }
-      )
-    }
+    const validation = await validateBody(request, GenerateDocumentSchema)
+    if (!validation.success) return validation.response
+    const { documentType } = validation.data as { documentType: 'DE_DESIGN' | 'SOLUTION_DESIGN' | 'TEST_PLAN' }
 
     // Verify design week exists
     const designWeek = await prisma.designWeek.findUnique({
@@ -114,7 +110,7 @@ export async function POST(
   } catch (error) {
     console.error('Document generation error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Generation failed' },
+      { error: 'Document generation failed. Please try again.' },
       { status: 500 }
     )
   }
@@ -127,6 +123,8 @@ export async function GET(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
     const documents = await prisma.generatedDocument.findMany({
       where: { designWeekId },

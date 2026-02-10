@@ -139,7 +139,7 @@ export function DEWorkspace({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#C2703E]">
               <Upload className="w-5 h-5 text-white" />
             </div>
             <div>

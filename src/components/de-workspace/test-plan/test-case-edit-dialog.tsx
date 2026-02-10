@@ -142,12 +142,12 @@ export function TestCaseEditDialog({
           <DialogTitle className="flex items-center gap-2">
             {isNew ? (
               <>
-                <Plus className="h-5 w-5 text-indigo-500" />
+                <Plus className="h-5 w-5 text-[#C2703E]" />
                 Add Test Case
               </>
             ) : (
               <>
-                <Save className="h-5 w-5 text-indigo-500" />
+                <Save className="h-5 w-5 text-[#C2703E]" />
                 Edit Test Case
               </>
             )}
@@ -278,7 +278,7 @@ export function TestCaseEditDialog({
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white"
+            className="bg-[#C2703E] hover:bg-[#A05A32] text-white"
           >
             <Save className="w-4 h-4 mr-2" />
             {isNew ? 'Add Test' : 'Save Changes'}

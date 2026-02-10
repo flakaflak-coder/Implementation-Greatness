@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -15,6 +16,13 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params
+  const idCheck = validateId(jobId)
+  if (!idCheck.success) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid ID format' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 
   // Verify job exists
   const initialJob = await prisma.uploadJob.findUnique({

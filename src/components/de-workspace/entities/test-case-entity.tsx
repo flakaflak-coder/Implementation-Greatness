@@ -49,7 +49,7 @@ const TEST_TYPES = {
   exception: { label: 'Exception', color: 'text-amber-600 bg-amber-50', description: 'Error handling scenarios' },
   guardrail: { label: 'Guardrail', color: 'text-red-600 bg-red-50', description: 'Safety and boundary checks' },
   scope: { label: 'Scope', color: 'text-blue-600 bg-blue-50', description: 'In-scope verification' },
-  boundary: { label: 'Boundary', color: 'text-purple-600 bg-purple-50', description: 'Edge case testing' },
+  boundary: { label: 'Boundary', color: 'text-[#C2703E] bg-[#FDF3EC]', description: 'Edge case testing' },
 } as const
 
 const PRIORITY_CONFIG = {
@@ -456,8 +456,8 @@ export function StructuredTestCaseSection({
         className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-            <FlaskConical className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 rounded-lg bg-[#F5E6DA] flex items-center justify-center">
+            <FlaskConical className="w-5 h-5 text-[#C2703E]" />
           </div>
           <div className="text-left">
             <h3 className="font-semibold text-gray-900">Structured Test Cases</h3>

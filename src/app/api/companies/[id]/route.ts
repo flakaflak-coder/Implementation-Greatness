@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdateCompanySchema } from '@/lib/validation'
 
 // GET /api/companies/[id] - Get a single company with full details
 export async function GET(
@@ -8,6 +9,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     const company = await prisma.company.findUnique({
       where: { id },
@@ -63,11 +66,15 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
+    const validation = await validateBody(request, UpdateCompanySchema)
+    if (!validation.success) return validation.response
     const {
       name, industry, contactName, contactEmail, contactPhone, logoUrl,
       vision, journeyStartDate, journeyTargetDate,
-    } = body
+    } = validation.data
 
     const company = await prisma.company.update({
       where: { id },
@@ -104,6 +111,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     await prisma.company.delete({
       where: { id },

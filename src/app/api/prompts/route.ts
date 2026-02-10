@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { PromptType } from '@prisma/client'
+import { validateBody, CreatePromptSchema } from '@/lib/validation'
 
 // Get all prompt templates
 export async function GET() {
@@ -36,9 +37,11 @@ export async function GET() {
 // Create or update a prompt template
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const bodyCheck = await validateBody(request, CreatePromptSchema)
+    if (!bodyCheck.success) return bodyCheck.response
+
     const { type, name, description, prompt, model, temperature, maxTokens } =
-      body as {
+      bodyCheck.data as {
         type: PromptType
         name?: string
         description?: string
@@ -47,13 +50,6 @@ export async function POST(request: NextRequest) {
         temperature?: number
         maxTokens?: number
       }
-
-    if (!type || !prompt) {
-      return NextResponse.json(
-        { error: 'type and prompt are required' },
-        { status: 400 }
-      )
-    }
 
     // Get current version
     const existing = await prisma.promptTemplate.findFirst({

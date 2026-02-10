@@ -75,7 +75,7 @@ export function StatusUpdateModal({ digitalEmployeeId, isOpen, onClose }: Status
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#C2703E] flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -95,7 +95,7 @@ export function StatusUpdateModal({ digitalEmployeeId, isOpen, onClose }: Status
         <div className="flex-1 overflow-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
+              <RefreshCw className="w-8 h-8 animate-spin text-[#C2703E]" />
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -113,7 +113,7 @@ export function StatusUpdateModal({ digitalEmployeeId, isOpen, onClose }: Status
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     activeTab === 'full'
-                      ? 'bg-indigo-100 text-indigo-700'
+                      ? 'bg-[#F5E6DA] text-[#A05A32]'
                       : 'text-gray-600 hover:bg-gray-100'
                   )}
                 >
@@ -124,7 +124,7 @@ export function StatusUpdateModal({ digitalEmployeeId, isOpen, onClose }: Status
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     activeTab === 'short'
-                      ? 'bg-indigo-100 text-indigo-700'
+                      ? 'bg-[#F5E6DA] text-[#A05A32]'
                       : 'text-gray-600 hover:bg-gray-100'
                   )}
                 >
@@ -199,7 +199,7 @@ export function StatusUpdateModal({ digitalEmployeeId, isOpen, onClose }: Status
               </Button>
               <Button
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-[#C2703E] hover:bg-[#A05A32]"
                 onClick={() => {
                   const text = activeTab === 'full' ? data.statusUpdate : data.shortUpdate
                   const mailtoUrl = `mailto:?subject=${encodeURIComponent(`${data.digitalEmployee.name} - Status Update`)}&body=${encodeURIComponent(text)}`

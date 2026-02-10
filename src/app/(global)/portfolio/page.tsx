@@ -106,12 +106,12 @@ const MESH_GRADIENTS = {
     radial-gradient(at 0% 100%, hsla(260, 85%, 55%, 1) 0px, transparent 50%),
     linear-gradient(135deg, hsl(250, 80%, 65%), hsl(220, 85%, 60%))
   `,
-  purple: `
-    radial-gradient(at 0% 0%, hsla(320, 85%, 65%, 1) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(280, 90%, 60%, 1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(260, 85%, 55%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 80%, hsla(300, 90%, 65%, 1) 0px, transparent 50%),
-    linear-gradient(135deg, hsl(300, 80%, 60%), hsl(270, 85%, 55%))
+  sienna: `
+    radial-gradient(at 0% 0%, hsla(20, 65%, 55%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(25, 70%, 50%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(15, 60%, 45%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 80%, hsla(30, 75%, 55%, 1) 0px, transparent 50%),
+    linear-gradient(135deg, hsl(20, 65%, 50%), hsl(15, 60%, 45%))
   `,
   amber: `
     radial-gradient(at 0% 0%, hsla(35, 95%, 60%, 1) 0px, transparent 50%),
@@ -158,7 +158,7 @@ function StatCard({
       className={cn(
         'relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100/50 transition-all duration-300',
         onClick && 'cursor-pointer hover:scale-[1.02] hover:shadow-md',
-        active && 'ring-2 ring-offset-2 ring-purple-400'
+        active && 'ring-2 ring-offset-2 ring-[#C2703E]'
       )}
     >
       {/* Vibrant mesh gradient header */}
@@ -363,11 +363,26 @@ export default function PortfolioPage() {
         body: JSON.stringify({ id: deId, startWeek, endWeek }),
       })
       if (response.ok) {
-        // Refresh data after update
         fetchData()
       }
     } catch (error) {
       console.error('Failed to update week:', error)
+    }
+  }
+
+  // Handler for manual phase toggle
+  const handlePhaseToggle = async (designWeekId: string, phase: number, completed: boolean) => {
+    try {
+      const response = await fetch(`/api/design-weeks/${designWeekId}/phases`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase, completed }),
+      })
+      if (response.ok) {
+        fetchData()
+      }
+    } catch (error) {
+      console.error('Failed to toggle phase:', error)
     }
   }
 
@@ -441,7 +456,7 @@ export default function PortfolioPage() {
             label="Configuration"
             value={summary.byStage.configuration}
             icon={Settings}
-            meshGradient="purple"
+            meshGradient="sienna"
             onClick={() => setFilterType(filterType === 'configuration' ? 'all' : 'configuration')}
             active={filterType === 'configuration'}
           />
@@ -500,7 +515,7 @@ export default function PortfolioPage() {
               <select
                 value={selectedCompany || ''}
                 onChange={(e) => setSelectedCompany(e.target.value || null)}
-                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
               >
                 <option value="">All Companies</option>
                 {companies.map((c) => (
@@ -519,7 +534,7 @@ export default function PortfolioPage() {
               <select
                 value={selectedConsultant || ''}
                 onChange={(e) => setSelectedConsultant(e.target.value || null)}
-                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
               >
                 <option value="">All Leads</option>
                 {timelineData.leads.map((lead) => (
@@ -560,7 +575,7 @@ export default function PortfolioPage() {
         {/* Content based on view mode */}
         {loading && !cardData && !timelineData ? (
           <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-purple-500" />
+            <RefreshCw className="w-8 h-8 animate-spin text-[#C2703E]" />
           </div>
         ) : viewMode === 'weeks' ? (
           /* Week Timeline View */
@@ -588,8 +603,8 @@ export default function PortfolioPage() {
                   </>
                 ) : (
                   <>
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
-                      <Rocket className="w-8 h-8 text-purple-600" />
+                    <div className="w-20 h-20 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-[#C2703E]" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       No active implementations
@@ -607,6 +622,7 @@ export default function PortfolioPage() {
                 companies={filteredTimelineCompanies}
                 currentWeek={currentWeek}
                 onWeekChange={handleWeekChange}
+                onPhaseToggle={handlePhaseToggle}
               />
             </div>
           )
@@ -636,8 +652,8 @@ export default function PortfolioPage() {
                   </>
                 ) : (
                   <>
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
-                      <Rocket className="w-8 h-8 text-purple-600" />
+                    <div className="w-20 h-20 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-[#C2703E]" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       No active implementations
@@ -676,8 +692,8 @@ export default function PortfolioPage() {
                   </>
                 ) : (
                   <>
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
-                      <Rocket className="w-8 h-8 text-purple-600" />
+                    <div className="w-20 h-20 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+                      <Rocket className="w-8 h-8 text-[#C2703E]" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No active Design Weeks</h3>
                     <p className="text-gray-500">

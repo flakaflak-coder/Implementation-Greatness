@@ -56,10 +56,10 @@ export function ProfileSection({
 
   const colorClasses: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
     indigo: {
-      bg: 'bg-indigo-50',
-      border: 'border-indigo-200',
-      text: 'text-indigo-700',
-      iconBg: 'bg-indigo-100',
+      bg: 'bg-[#FDF3EC]',
+      border: 'border-[#E8D5C4]',
+      text: 'text-[#A05A32]',
+      iconBg: 'bg-[#F5E6DA]',
     },
     blue: {
       bg: 'bg-blue-50',
@@ -74,10 +74,10 @@ export function ProfileSection({
       iconBg: 'bg-cyan-100',
     },
     violet: {
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
-      text: 'text-violet-700',
-      iconBg: 'bg-violet-100',
+      bg: 'bg-[#FDF3EC]',
+      border: 'border-[#E8D5C4]',
+      text: 'text-[#A05A32]',
+      iconBg: 'bg-[#F5E6DA]',
     },
     emerald: {
       bg: 'bg-emerald-50',

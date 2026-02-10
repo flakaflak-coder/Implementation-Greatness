@@ -47,7 +47,7 @@ interface TechnicalProfileTabV2Props {
 
 // Section colors
 const sectionColors: Record<string, string> = {
-  violet: 'border-violet-200 bg-violet-50/50',
+  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
   blue: 'border-blue-200 bg-blue-50/50',
   cyan: 'border-cyan-200 bg-cyan-50/50',
   rose: 'border-rose-200 bg-rose-50/50',
@@ -56,7 +56,7 @@ const sectionColors: Record<string, string> = {
 }
 
 const iconColors: Record<string, string> = {
-  violet: 'text-violet-600',
+  violet: 'text-[#C2703E]',
   blue: 'text-blue-600',
   cyan: 'text-cyan-600',
   rose: 'text-rose-600',
@@ -204,8 +204,8 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
       />
 
       {/* Info banner */}
-      <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
-        <p className="text-sm text-violet-700">
+      <div className="p-4 bg-[#FDF3EC] border border-[#E8D5C4] rounded-lg">
+        <p className="text-sm text-[#A05A32]">
           <strong>Technical Profile</strong> captures all system integrations, data requirements, and security specifications needed for the Digital Employee implementation.
         </p>
       </div>
@@ -316,7 +316,7 @@ interface TechnicalSectionProps {
 }
 
 const accentGradients: Record<string, string> = {
-  violet: 'from-violet-400 to-violet-600',
+  violet: 'from-[#D4956A] to-[#C2703E]',
   blue: 'from-blue-400 to-blue-600',
   cyan: 'from-cyan-400 to-cyan-600',
   rose: 'from-rose-400 to-rose-600',
@@ -440,7 +440,7 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
       {integrations.length === 0 && !isAdding && (
         <ProfileEmptyState
           icon={Plug}
-          color="violet"
+          color="sienna"
           title="No integrations yet"
           description="Add systems this Digital Employee connects to"
           actionLabel="Add integration"
@@ -458,7 +458,7 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-100 text-violet-600 rounded-lg">
+              <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
                 <Server className="h-5 w-5" />
               </div>
               <div>
@@ -536,19 +536,19 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
         </div>
       ))}
       {isAdding ? (
-        <div className="p-4 bg-white rounded-lg border-2 border-violet-300 space-y-3">
+        <div className="p-4 bg-white rounded-lg border-2 border-[#D4956A] space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="System name"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as IntegrationType)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             >
               {Object.entries(integrationTypeLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -562,13 +562,13 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
             value={newPurpose}
             onChange={(e) => setNewPurpose(e.target.value)}
             placeholder="Purpose (what data/functionality does it provide?)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <div className="flex items-center gap-3">
             <select
               value={newAuth}
               onChange={(e) => setNewAuth(e.target.value as AuthMethod)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             >
               {Object.entries(authMethodLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -596,7 +596,7 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
           onClick={() => setIsAdding(true)}
           variant="outline"
           size="sm"
-          className="w-full border-dashed border-violet-200/60 hover:border-violet-300 hover:bg-violet-50/50 mt-1"
+          className="w-full border-dashed border-[#E8D5C4]/60 hover:border-[#D4956A] hover:bg-[#FDF3EC]/50 mt-1"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           Add integration
@@ -785,7 +785,7 @@ const methodColors: Record<string, string> = {
   POST: 'bg-blue-100 text-blue-700',
   PUT: 'bg-amber-100 text-amber-700',
   DELETE: 'bg-red-100 text-red-700',
-  PATCH: 'bg-violet-100 text-violet-700',
+  PATCH: 'bg-[#F5E6DA] text-[#A05A32]',
 }
 
 function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
@@ -947,7 +947,7 @@ const categoryLabels: Record<SecurityRequirement['category'], string> = {
 }
 
 const categoryColors: Record<SecurityRequirement['category'], string> = {
-  authentication: 'bg-violet-100 text-violet-700',
+  authentication: 'bg-[#F5E6DA] text-[#A05A32]',
   authorization: 'bg-blue-100 text-blue-700',
   encryption: 'bg-emerald-100 text-emerald-700',
   compliance: 'bg-amber-100 text-amber-700',
@@ -1215,7 +1215,7 @@ interface MonitoringMetricsListProps {
 const perspectiveLabels: Record<MonitoringMetric['perspective'], { label: string; color: string }> = {
   user_experience: { label: 'User Experience', color: 'bg-blue-100 text-blue-700' },
   operational: { label: 'Operational', color: 'bg-emerald-100 text-emerald-700' },
-  knowledge_quality: { label: 'Knowledge Quality', color: 'bg-violet-100 text-violet-700' },
+  knowledge_quality: { label: 'Knowledge Quality', color: 'bg-[#F5E6DA] text-[#A05A32]' },
   financial: { label: 'Financial', color: 'bg-amber-100 text-amber-700' },
 }
 

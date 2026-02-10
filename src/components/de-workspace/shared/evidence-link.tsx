@@ -70,7 +70,7 @@ export function EvidenceLink({ source, confidence, compact = false, className }:
         <DialogTrigger asChild>
           <button
             className={cn(
-              'inline-flex items-center gap-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors',
+              'inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#C2703E] transition-colors',
               className
             )}
           >
@@ -125,7 +125,7 @@ function EvidenceDialog({
     <DialogContent className="max-w-lg">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-indigo-500" />
+          <FileText className="h-5 w-5 text-[#C2703E]" />
           Evidence Source
         </DialogTitle>
         <DialogDescription>Where this information was captured</DialogDescription>
@@ -157,8 +157,8 @@ function EvidenceDialog({
         {/* Timestamp */}
         {source.timestamp && (
           <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <div className="p-2 bg-indigo-50 rounded-full">
-              <Clock className="h-4 w-4 text-indigo-600" />
+            <div className="p-2 bg-[#FDF3EC] rounded-full">
+              <Clock className="h-4 w-4 text-[#C2703E]" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">Timestamp</p>
@@ -174,8 +174,8 @@ function EvidenceDialog({
         {/* Speaker */}
         {source.speaker && (
           <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <div className="p-2 bg-violet-50 rounded-full">
-              <User className="h-4 w-4 text-violet-600" />
+            <div className="p-2 bg-[#FDF3EC] rounded-full">
+              <User className="h-4 w-4 text-[#C2703E]" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">Speaker</p>
@@ -191,7 +191,7 @@ function EvidenceDialog({
               <Quote className="h-4 w-4 text-gray-400" />
               <p className="text-sm font-medium text-gray-700">Original Quote</p>
             </div>
-            <blockquote className="pl-3 border-l-2 border-indigo-300 text-gray-600 italic">
+            <blockquote className="pl-3 border-l-2 border-[#D4956A] text-gray-600 italic">
               "{source.quote}"
             </blockquote>
           </div>
@@ -219,7 +219,7 @@ export function EvidenceIndicator({ hasEvidence, isManual, className }: Evidence
 
   if (hasEvidence) {
     return (
-      <div className={cn('flex items-center gap-1 text-indigo-500', className)}>
+      <div className={cn('flex items-center gap-1 text-[#C2703E]', className)}>
         <FileText className="h-3 w-3" />
       </div>
     )

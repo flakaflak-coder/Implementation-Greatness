@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, UpdateSessionSchema } from '@/lib/validation'
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +8,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
     const session = await prisma.session.findUnique({
       where: { id },
       include: {
@@ -62,11 +66,15 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const body = await request.json()
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
+    const bodyCheck = await validateBody(request, UpdateSessionSchema)
+    if (!bodyCheck.success) return bodyCheck.response
 
     const session = await prisma.session.update({
       where: { id },
-      data: body,
+      data: bodyCheck.data,
     })
 
     return NextResponse.json(session)

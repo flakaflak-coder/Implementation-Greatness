@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId, validateBody, CreatePrerequisiteSchema } from '@/lib/validation'
 
 /**
  * GET /api/design-weeks/[id]/prerequisites
@@ -10,6 +11,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params
+  const idCheck = validateId(resolvedParams.id)
+  if (!idCheck.success) return idCheck.response
 
   try {
     const prerequisites = await prisma.prerequisite.findMany({
@@ -47,9 +50,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params
+  const idCheck = validateId(resolvedParams.id)
+  if (!idCheck.success) return idCheck.response
 
   try {
-    const body = await request.json()
+    const validation = await validateBody(request, CreatePrerequisiteSchema)
+    if (!validation.success) return validation.response
     const {
       title,
       description,
@@ -61,15 +67,7 @@ export async function POST(
       dueDate,
       blocksPhase,
       integrationId,
-      notes,
-    } = body
-
-    if (!title || !category || !ownerType) {
-      return NextResponse.json(
-        { error: 'Title, category, and ownerType are required' },
-        { status: 400 }
-      )
-    }
+    } = validation.data
 
     const prerequisite = await prisma.prerequisite.create({
       data: {
@@ -84,7 +82,6 @@ export async function POST(
         dueDate: dueDate ? new Date(dueDate) : undefined,
         blocksPhase,
         integrationId,
-        notes,
         status: 'PENDING',
       },
       include: {

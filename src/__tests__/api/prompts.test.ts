@@ -124,6 +124,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'extract_kickoff',
         type: 'EXTRACT_KICKOFF',
         prompt: 'New extraction prompt...',
         description: 'Custom prompt',
@@ -170,6 +171,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'extract_kickoff',
         type: 'EXTRACT_KICKOFF',
         prompt: 'Updated prompt...',
       }),
@@ -200,6 +202,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'test_prompt',
         prompt: 'Some prompt...',
       }),
     })
@@ -208,7 +211,7 @@ describe('POST /api/prompts', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('type and prompt are required')
+    expect(data.error).toBe('Validation failed')
     expect(mockedPrisma.promptTemplate.create).not.toHaveBeenCalled()
   })
 
@@ -216,6 +219,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'test_prompt',
         type: 'EXTRACT_KICKOFF',
       }),
     })
@@ -224,7 +228,7 @@ describe('POST /api/prompts', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('type and prompt are required')
+    expect(data.error).toBe('Validation failed')
   })
 
   it('uses default values for optional fields', async () => {
@@ -244,6 +248,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'extract_kickoff',
         type: 'EXTRACT_KICKOFF',
         prompt: 'Prompt text',
       }),
@@ -304,6 +309,7 @@ describe('POST /api/prompts', () => {
     const request = new NextRequest('http://localhost/api/prompts', {
       method: 'POST',
       body: JSON.stringify({
+        name: 'test_prompt',
         type: 'EXTRACT_KICKOFF',
         prompt: 'Test prompt',
       }),

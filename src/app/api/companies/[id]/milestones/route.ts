@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { z } from 'zod'
+import { validateId } from '@/lib/validation'
 
 const CreateMilestoneSchema = z.object({
   title: z.string().min(1),
@@ -29,6 +30,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     const milestones = await prisma.companyMilestone.findMany({
       where: { companyId: id },
@@ -52,6 +55,9 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
     const parsed = CreateMilestoneSchema.parse(body)
 
@@ -95,7 +101,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await params
+    const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
     const parsed = UpdateMilestoneSchema.parse(body)
 
@@ -140,7 +149,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await params
+    const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
     const { searchParams } = new URL(request.url)
     const milestoneId = searchParams.get('milestoneId')
 

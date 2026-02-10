@@ -231,7 +231,7 @@ export const BUSINESS_SECTION_METADATA: Record<BusinessProfileSection, SectionMe
     description: 'Who is this Digital Employee? Name, role, and stakeholders',
     icon: 'Bot',
     requiredCount: 3,
-    color: 'indigo',
+    color: 'sienna',
   },
   businessContext: {
     title: 'Business Context',
@@ -252,7 +252,7 @@ export const BUSINESS_SECTION_METADATA: Record<BusinessProfileSection, SectionMe
     description: 'What the DE can do, knowledge sources, and tone',
     icon: 'Sparkles',
     requiredCount: 3,
-    color: 'violet',
+    color: 'sienna',
   },
   process: {
     title: 'Process',
@@ -290,7 +290,7 @@ export const TECHNICAL_SECTION_METADATA: Record<TechnicalProfileSection, Section
     description: 'Specific fields needed from each system',
     icon: 'Database',
     requiredCount: 3,
-    color: 'violet',
+    color: 'sienna',
   },
   security: {
     title: 'Security & Compliance',

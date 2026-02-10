@@ -27,7 +27,7 @@ function getStatusBadge(status: string) {
   switch (status) {
     case 'DESIGN':
       return (
-        <Badge className="bg-indigo-100 text-indigo-700 border-0 font-medium">
+        <Badge className="bg-[#F5E6DA] text-[#A05A32] border-0 font-medium">
           In Design
         </Badge>
       )
@@ -98,7 +98,7 @@ export default function CompaniesPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200/50">
+            <div className="w-12 h-12 rounded-xl bg-[#C2703E] flex items-center justify-center shadow-lg shadow-[#C2703E]/15">
               <span className="text-2xl">🏢</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
@@ -120,7 +120,7 @@ export default function CompaniesPage() {
           </Button>
           <Button
             asChild
-            className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50"
+            className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15"
           >
             <Link href="/companies/new">
               <Plus className="w-4 h-4 mr-1" />
@@ -158,7 +158,7 @@ export default function CompaniesPage() {
         </div>
       ) : filteredCompanies.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
             <span className="text-4xl">🏢</span>
           </div>
           {searchQuery ? (
@@ -172,7 +172,7 @@ export default function CompaniesPage() {
               <p className="text-sm text-gray-500 mt-1 mb-4">Add your first company to get started</p>
               <Button
                 asChild
-                className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50"
+                className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15"
               >
                 <Link href="/companies/new">
                   <Plus className="w-4 h-4 mr-1" />
@@ -188,15 +188,15 @@ export default function CompaniesPage() {
           {filteredCompanies.map((company, index) => (
             <div key={company.id} className={cn('animate-fade-in-up', index < 6 && `stagger-${index + 1}`)}>
             <Link href={`/companies/${company.id}`}>
-              <Card className="bg-white border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer group h-full">
+              <Card className="bg-white border-gray-200 hover:border-[#E8D5C4] hover:shadow-lg transition-all cursor-pointer group h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-200/50 group-hover:shadow-lg group-hover:shadow-blue-300/50 transition-shadow">
+                      <div className="w-12 h-12 rounded-xl bg-[#C2703E] flex items-center justify-center shadow-md shadow-[#C2703E]/15 group-hover:shadow-lg group-hover:shadow-[#C2703E]/25 transition-shadow">
                         <span className="text-2xl">🏢</span>
                       </div>
                       <div>
-                        <CardTitle className="text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        <CardTitle className="text-lg text-gray-900 group-hover:text-[#C2703E] transition-colors">
                           {company.name}
                         </CardTitle>
                         {company.industry && (
@@ -204,13 +204,13 @@ export default function CompaniesPage() {
                         )}
                       </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-[#C2703E] group-hover:translate-x-1 transition-all" />
                   </div>
                 </CardHeader>
                 <CardContent>
                   {/* Digital employees summary */}
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                    <div className="w-7 h-7 rounded-lg bg-[#C2703E] flex items-center justify-center shadow-sm">
                       <span className="text-sm">🤖</span>
                     </div>
                     <span className="font-medium">{company.digitalEmployees.length} Digital Employee{company.digitalEmployees.length !== 1 ? 's' : ''}</span>

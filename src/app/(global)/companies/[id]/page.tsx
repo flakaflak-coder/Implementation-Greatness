@@ -102,7 +102,7 @@ interface Company {
 // ============================================
 
 const STATUS_CONFIG = {
-  DESIGN: { label: 'Design', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  DESIGN: { label: 'Design', color: 'bg-[#F5E6DA] text-[#A05A32] border-[#E8D5C4]' },
   ONBOARDING: { label: 'Onboarding', color: 'bg-amber-100 text-amber-700 border-amber-200' },
   LIVE: { label: 'Live', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   PAUSED: { label: 'Paused', color: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -181,10 +181,10 @@ function VisionBanner({
     return (
       <button
         onClick={() => { setDraft(''); setEditing(true) }}
-        className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-300 p-8 text-center transition-colors group"
+        className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-[#E8D5C4] p-8 text-center transition-colors group"
       >
-        <Compass className="w-8 h-8 mx-auto mb-3 text-gray-300 group-hover:text-indigo-400 transition-colors" />
-        <p className="text-sm font-medium text-gray-400 group-hover:text-indigo-500 transition-colors">
+        <Compass className="w-8 h-8 mx-auto mb-3 text-gray-300 group-hover:text-[#C2703E] transition-colors" />
+        <p className="text-sm font-medium text-gray-400 group-hover:text-[#C2703E] transition-colors">
           What do you want to achieve together with {company.name}?
         </p>
         <p className="text-xs text-gray-300 mt-1">Click to add a shared vision</p>
@@ -194,17 +194,17 @@ function VisionBanner({
 
   if (editing) {
     return (
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-6">
+      <div className="rounded-xl border border-[#E8D5C4] bg-[#FDF3EC]/50 p-6">
         <div className="flex items-center gap-2 mb-3">
-          <Compass className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-medium text-indigo-600">Shared Vision</span>
+          <Compass className="w-4 h-4 text-[#C2703E]" />
+          <span className="text-sm font-medium text-[#C2703E]">Shared Vision</span>
         </div>
         <Textarea
           ref={textareaRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="e.g., Reduce call volume by 30% through a phased AI assistant rollout, starting with internal support (L1) and growing to autonomous task handling (L3) within 12 months."
-          className="min-h-[80px] bg-white border-indigo-200 focus:border-indigo-400 resize-none"
+          className="min-h-[80px] bg-white border-[#E8D5C4] focus:border-[#C2703E] resize-none"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && e.metaKey) handleSave()
             if (e.key === 'Escape') setEditing(false)
@@ -226,7 +226,7 @@ function VisionBanner({
   }
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-slate-50 to-indigo-50/30 p-6 group relative">
+    <div className="rounded-xl border border-gray-100 bg-[#FAF9F6] p-6 group relative">
       <button
         onClick={() => { setDraft(company.vision || ''); setEditing(true) }}
         className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-white/80"
@@ -234,8 +234,8 @@ function VisionBanner({
         <Pencil className="w-3.5 h-3.5 text-gray-400" />
       </button>
       <div className="flex items-center gap-2 mb-2">
-        <Compass className="w-4 h-4 text-indigo-500" />
-        <span className="text-xs font-medium text-indigo-500 uppercase tracking-wide">Shared Vision</span>
+        <Compass className="w-4 h-4 text-[#C2703E]" />
+        <span className="text-xs font-medium text-[#C2703E] uppercase tracking-wide">Shared Vision</span>
       </div>
       <p className="text-gray-700 leading-relaxed">{company.vision}</p>
     </div>
@@ -297,15 +297,15 @@ function DEJourneyRow({
   return (
     <Link
       href={`/companies/${companyId}/digital-employees/${de.id}`}
-      className="block rounded-lg border border-gray-100 hover:border-indigo-200 bg-white hover:bg-indigo-50/30 p-4 transition-all group"
+      className="block rounded-lg border border-gray-100 hover:border-[#E8D5C4] bg-white hover:bg-[#FDF3EC]/30 p-4 transition-all group"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-xs font-semibold text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-xs font-semibold text-gray-500 group-hover:bg-[#F5E6DA] group-hover:text-[#C2703E] transition-colors">
             {index + 1}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">
+            <h3 className="font-semibold text-gray-900 group-hover:text-[#A05A32] transition-colors">
               {de.name}
             </h3>
             {de.description && (
@@ -317,7 +317,7 @@ function DEJourneyRow({
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusConfig.color}`}>
             {statusConfig.label}
           </span>
-          <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors" />
+          <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#C2703E] transition-colors" />
         </div>
       </div>
 
@@ -328,7 +328,7 @@ function DEJourneyRow({
           const isCurrent = de.currentJourneyPhase === phase
           let bgColor = 'bg-gray-100' // not started
           if (status === 'COMPLETE') bgColor = 'bg-emerald-400'
-          else if (status === 'IN_PROGRESS' || isCurrent) bgColor = 'bg-indigo-400'
+          else if (status === 'IN_PROGRESS' || isCurrent) bgColor = 'bg-[#C2703E]'
           else if (status === 'BLOCKED') bgColor = 'bg-red-400'
 
           return (
@@ -336,7 +336,7 @@ function DEJourneyRow({
               <div className={`h-1.5 rounded-full ${bgColor} transition-colors`} />
               {isCurrent && (
                 <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <span className="text-[10px] font-medium text-indigo-500">
+                  <span className="text-[10px] font-medium text-[#C2703E]">
                     {JOURNEY_PHASE_LABELS[phase]}
                   </span>
                 </div>
@@ -408,7 +408,7 @@ function MilestonesSection({
       </div>
 
       {adding && (
-        <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 space-y-3">
+        <div className="mb-4 rounded-lg border border-[#E8D5C4] bg-[#FDF3EC]/50 p-4 space-y-3">
           <Input
             placeholder="Milestone title, e.g. 'Level 1 proven stable'"
             value={newTitle}
@@ -438,10 +438,10 @@ function MilestonesSection({
       {milestones.length === 0 && !adding ? (
         <button
           onClick={() => setAdding(true)}
-          className="w-full rounded-lg border-2 border-dashed border-gray-200 hover:border-indigo-300 p-6 text-center transition-colors group"
+          className="w-full rounded-lg border-2 border-dashed border-gray-200 hover:border-[#E8D5C4] p-6 text-center transition-colors group"
         >
-          <Flag className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-indigo-400 transition-colors" />
-          <p className="text-sm text-gray-400 group-hover:text-indigo-500 transition-colors">
+          <Flag className="w-6 h-6 mx-auto mb-2 text-gray-300 group-hover:text-[#C2703E] transition-colors" />
+          <p className="text-sm text-gray-400 group-hover:text-[#C2703E] transition-colors">
             Add gating milestones
           </p>
           <p className="text-xs text-gray-300 mt-0.5">Define what needs to be proven before moving to the next step</p>
@@ -575,9 +575,9 @@ function ProgressSummary({ digitalEmployees, milestones }: { digitalEmployees: D
         <div className="text-2xl font-bold text-emerald-700">{liveDEs}</div>
         <div className="text-xs text-emerald-600">Live</div>
       </div>
-      <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-center">
-        <div className="text-2xl font-bold text-indigo-700">{designDEs + onboardingDEs}</div>
-        <div className="text-xs text-indigo-600">In Progress</div>
+      <div className="rounded-lg bg-[#FDF3EC] border border-[#F5E6DA] p-3 text-center">
+        <div className="text-2xl font-bold text-[#A05A32]">{designDEs + onboardingDEs}</div>
+        <div className="text-xs text-[#C2703E]">In Progress</div>
       </div>
       <div className="rounded-lg bg-amber-50 border border-amber-100 p-3 text-center">
         <div className="text-2xl font-bold text-amber-700">{achievedMilestones}/{milestones.length || 0}</div>
@@ -784,8 +784,8 @@ export default function CompanyDetailPage({
       {/* Company header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-            <Building2 className="w-7 h-7 text-indigo-600" />
+          <div className="w-14 h-14 rounded-xl bg-[#FDF3EC] flex items-center justify-center">
+            <Building2 className="w-7 h-7 text-[#C2703E]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{company.name}</h1>

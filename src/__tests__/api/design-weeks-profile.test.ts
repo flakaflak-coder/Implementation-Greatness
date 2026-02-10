@@ -112,7 +112,7 @@ describe('GET /api/design-weeks/[id]/profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Database error')
+    expect(data.error).toBe('Failed to load profile')
   })
 })
 
@@ -158,7 +158,7 @@ describe('PUT /api/design-weeks/[id]/profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Profile is required')
+    expect(data.error).toBe('Validation failed')
   })
 
   it('returns 404 when design week not found', async () => {
@@ -302,6 +302,6 @@ describe('POST /api/design-weeks/[id]/profile', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('DB Error')
+    expect(data.error).toBe('Failed to recalculate profile')
   })
 })

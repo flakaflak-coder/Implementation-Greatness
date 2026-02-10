@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { PipelineStage } from '@prisma/client'
 import { retryPipeline } from '@/lib/pipeline'
+import { validateId } from '@/lib/validation'
 
 /**
  * POST /api/upload/[jobId]/retry
@@ -14,6 +15,8 @@ export async function POST(
 ) {
   try {
     const { jobId } = await params
+    const idCheck = validateId(jobId)
+    if (!idCheck.success) return idCheck.response
 
     // Get request body
     let fromStage: PipelineStage | undefined
@@ -57,9 +60,8 @@ export async function POST(
     })
   } catch (error) {
     console.error('Retry error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: `Retry failed: ${message}` },
+      { error: 'Retry failed. Please try again.' },
       { status: 500 }
     )
   }

@@ -25,7 +25,7 @@ export const JOURNEY_PHASES = [
     shortLabel: 'Kickoff',
     description: 'Initial customer meeting to align on goals and timeline',
     icon: 'Rocket',
-    color: 'indigo',
+    color: 'terracotta',
     defaultChecklist: [
       'Kickoff meeting scheduled',
       'Agenda sent to customer',
@@ -41,7 +41,7 @@ export const JOURNEY_PHASES = [
     shortLabel: 'Design',
     description: 'The 4-phase design process to define scope and requirements',
     icon: 'Palette',
-    color: 'purple',
+    color: 'terracotta',
     hasSubPhases: true,
     subPhases: [
       { order: 1, label: 'Kickoff', description: 'Initial alignment and goal setting' },
@@ -185,8 +185,7 @@ export function calculateJourneyProgress(
 // Color mappings for Tailwind classes
 export const PHASE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-200' },
-  indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-200' },
-  purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200' },
+  terracotta: { bg: 'bg-[#F5E6DA]', text: 'text-[#C2703E]', border: 'border-[#E8D5C4]' },
   orange: { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-200' },
   yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600', border: 'border-yellow-200' },
   green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-200' },

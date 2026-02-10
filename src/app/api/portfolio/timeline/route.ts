@@ -47,6 +47,7 @@ export async function GET() {
             currentPhase: true,
             startedAt: true,
             completedAt: true,
+            manualPhaseCompletions: true,
             prerequisites: {
               select: {
                 id: true,
@@ -65,6 +66,11 @@ export async function GET() {
             scopeItems: {
               select: {
                 classification: true,
+              },
+            },
+            rawExtractions: {
+              select: {
+                contentType: true,
               },
             },
           },
@@ -98,6 +104,8 @@ export async function GET() {
       // Calculate Design Week progress
       const sessions = de.designWeek?.sessions || []
       const scopeItems = de.designWeek?.scopeItems || []
+      const rawExtractions = de.designWeek?.rawExtractions || []
+      const manualCompletions = (de.designWeek?.manualPhaseCompletions as number[]) || []
       const totalExpectedSessions = 8 // 1 + 3 + 3 + 1
       const completedSessions = sessions.filter(s => s.processingStatus === 'COMPLETE').length
       const sessionProgress = Math.round((completedSessions / totalExpectedSessions) * 100)
@@ -107,9 +115,37 @@ export async function GET() {
         ? Math.round((resolvedScope / scopeItems.length) * 100)
         : 0
 
-      // Calculate overall Design Week phase (1-4 as percentage progress through DW)
-      const designWeekPhase = de.designWeek?.currentPhase || 1
-      const designWeekProgress = Math.round(((designWeekPhase - 1) / 4) * 100) +
+      // Calculate auto-detected phases from sessions and extractions
+      const autoPhases = new Set<number>()
+      for (const session of sessions) {
+        if (session.processingStatus === 'COMPLETE') {
+          autoPhases.add(session.phase)
+        }
+      }
+      const CLASSIFICATION_TO_PHASE: Record<string, number> = {
+        KICKOFF_SESSION: 1, PROCESS_DESIGN_SESSION: 2, SKILLS_GUARDRAILS_SESSION: 2,
+        PERSONA_DESIGN_SESSION: 2, TECHNICAL_SESSION: 3, SIGNOFF_SESSION: 4,
+        REQUIREMENTS_DOCUMENT: 1, TECHNICAL_SPEC: 3, PROCESS_DOCUMENT: 2,
+      }
+      for (const extraction of rawExtractions) {
+        const phase = CLASSIFICATION_TO_PHASE[extraction.contentType]
+        if (phase) autoPhases.add(phase)
+      }
+
+      // Build per-phase completion status
+      const phaseCompletions = [1, 2, 3, 4].map(phase => ({
+        phase,
+        autoCompleted: autoPhases.has(phase),
+        manuallyCompleted: manualCompletions.includes(phase),
+        completed: autoPhases.has(phase) || manualCompletions.includes(phase),
+      }))
+
+      // Calculate overall Design Week phase considering manual completions
+      const allCompletedPhases = phaseCompletions.filter(p => p.completed).map(p => p.phase)
+      const effectivePhase = allCompletedPhases.length > 0
+        ? Math.max(...allCompletedPhases)
+        : (de.designWeek?.currentPhase || 1)
+      const designWeekProgress = Math.round(((effectivePhase - 1) / 4) * 100) +
         (sessionProgress / 4) // Add partial progress within current phase
 
       // Find assigned lead from DESIGN_WEEK journey phase
@@ -236,12 +272,14 @@ export async function GET() {
         designWeek: de.designWeek ? {
           id: de.designWeek.id,
           status: de.designWeek.status,
-          currentPhase: de.designWeek.currentPhase,
+          currentPhase: effectivePhase,
           startedAt: de.designWeek.startedAt?.toISOString() || null,
           completedAt: de.designWeek.completedAt?.toISOString() || null,
           progress: designWeekProgress,
           sessionProgress,
           scopeProgress,
+          phaseCompletions,
+          manualCompletions,
         } : null,
         prerequisites: prereqSummary,
         phases,

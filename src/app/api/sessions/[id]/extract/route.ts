@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { extractFromTranscript, saveExtractedItems } from '@/lib/claude'
+import { validateId } from '@/lib/validation'
 
 export async function POST(
   request: NextRequest,
@@ -8,6 +9,9 @@ export async function POST(
 ) {
   try {
     const { id: sessionId } = await params
+    const idCheck = validateId(sessionId)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
     const { transcript, sessionType } = body as {
       transcript: string
@@ -119,7 +123,7 @@ export async function POST(
   } catch (error) {
     console.error('Extraction error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Extraction failed' },
+      { error: 'Extraction failed. Please try again.' },
       { status: 500 }
     )
   }
@@ -132,6 +136,8 @@ export async function GET(
 ) {
   try {
     const { id: sessionId } = await params
+    const idCheck = validateId(sessionId)
+    if (!idCheck.success) return idCheck.response
 
     const items = await prisma.extractedItem.findMany({
       where: { sessionId },

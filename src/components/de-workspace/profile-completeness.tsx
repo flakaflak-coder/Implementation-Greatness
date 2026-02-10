@@ -38,11 +38,11 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 const colorConfig: Record<string, { ring: string; bg: string; text: string; track: string; fill: string }> = {
-  indigo: { ring: 'stroke-indigo-500', bg: 'bg-indigo-50', text: 'text-indigo-600', track: 'stroke-indigo-100', fill: 'stroke-indigo-500' },
+  indigo: { ring: 'stroke-[#C2703E]', bg: 'bg-[#FDF3EC]', text: 'text-[#C2703E]', track: 'stroke-[#F5E6DA]', fill: 'stroke-[#C2703E]' },
   blue: { ring: 'stroke-blue-500', bg: 'bg-blue-50', text: 'text-blue-600', track: 'stroke-blue-100', fill: 'stroke-blue-500' },
   emerald: { ring: 'stroke-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-600', track: 'stroke-emerald-100', fill: 'stroke-emerald-500' },
   cyan: { ring: 'stroke-cyan-500', bg: 'bg-cyan-50', text: 'text-cyan-600', track: 'stroke-cyan-100', fill: 'stroke-cyan-500' },
-  violet: { ring: 'stroke-violet-500', bg: 'bg-violet-50', text: 'text-violet-600', track: 'stroke-violet-100', fill: 'stroke-violet-500' },
+  violet: { ring: 'stroke-[#C2703E]', bg: 'bg-[#FDF3EC]', text: 'text-[#C2703E]', track: 'stroke-[#F5E6DA]', fill: 'stroke-[#C2703E]' },
   amber: { ring: 'stroke-amber-500', bg: 'bg-amber-50', text: 'text-amber-600', track: 'stroke-amber-100', fill: 'stroke-amber-500' },
   rose: { ring: 'stroke-rose-500', bg: 'bg-rose-50', text: 'text-rose-600', track: 'stroke-rose-100', fill: 'stroke-rose-500' },
   pink: { ring: 'stroke-pink-500', bg: 'bg-pink-50', text: 'text-pink-600', track: 'stroke-pink-100', fill: 'stroke-pink-500' },
@@ -103,7 +103,7 @@ function calculateBusinessCompleteness(profile: BusinessProfile) {
       key: 'identity',
       title: 'Identity',
       icon: 'Bot',
-      color: 'indigo',
+      color: 'sienna',
       filled: [
         profile.identity.name,
         profile.identity.description,
@@ -145,7 +145,7 @@ function calculateBusinessCompleteness(profile: BusinessProfile) {
       key: 'skills',
       title: 'Skills',
       icon: 'Sparkles',
-      color: 'violet',
+      color: 'sienna',
       filled: [
         profile.skills.skills.length > 0,
         profile.skills.communicationStyle.tone.length > 0,
@@ -199,7 +199,7 @@ function calculateTechnicalCompleteness(profile: TechnicalProfile) {
       key: 'integrations',
       title: 'Integrations',
       icon: 'Plug',
-      color: 'violet',
+      color: 'sienna',
       filled: Math.min(profile.integrations.length, 2),
       total: 2,
     },
@@ -278,7 +278,7 @@ export function ProfileCompleteness({ profile, type, onSectionClick, className }
               'h-full rounded-full transition-all duration-700 ease-out',
               overallPercentage === 100
                 ? 'bg-gradient-to-r from-emerald-500 to-green-500'
-                : 'bg-gradient-to-r from-indigo-500 to-violet-500'
+                : 'bg-[#C2703E]'
             )}
             style={{ width: `${overallPercentage}%` }}
           />

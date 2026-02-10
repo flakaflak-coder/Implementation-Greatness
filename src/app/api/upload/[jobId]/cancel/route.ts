@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 /**
  * POST /api/upload/[jobId]/cancel
@@ -12,6 +13,8 @@ export async function POST(
 ) {
   try {
     const { jobId } = await params
+    const idCheck = validateId(jobId)
+    if (!idCheck.success) return idCheck.response
 
     // Get the current job status
     const job = await prisma.uploadJob.findUnique({
@@ -50,9 +53,8 @@ export async function POST(
     })
   } catch (error) {
     console.error('Cancel job error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { success: false, error: `Cancel failed: ${message}` },
+      { success: false, error: 'Cancel failed. Please try again.' },
       { status: 500 }
     )
   }

@@ -53,7 +53,7 @@ export function RocketProgress({
             {label}
           </span>
           {showPercentage && (
-            <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-600">
+            <span className="text-sm font-bold text-[#C2703E]">
               {Math.round(clampedProgress)}%
             </span>
           )}
@@ -65,7 +65,7 @@ export function RocketProgress({
         'relative h-14 rounded-full border overflow-hidden',
         isDark
           ? 'bg-space-700/50 border-space-500/50'
-          : 'bg-gradient-to-r from-slate-900 via-indigo-950 to-violet-950 border-indigo-500/20'
+          : 'bg-gradient-to-r from-slate-900 via-stone-900 to-stone-950 border-[#C2703E]/20'
       )}>
         {/* Stars background */}
         <div className="absolute inset-0 overflow-hidden">
@@ -85,13 +85,13 @@ export function RocketProgress({
 
         {/* Progress fill - gradient trail */}
         <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-600/30 via-violet-500/40 to-transparent transition-all duration-1000 ease-out"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#C2703E]/30 via-[#D4956A]/40 to-transparent transition-all duration-1000 ease-out"
           style={{ width: `${rocketPosition}%` }}
         />
 
         {/* Glowing trail behind rocket */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-transparent via-violet-400 to-pink-400 rounded-full blur-sm transition-all duration-1000 ease-out"
+          className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-transparent via-[#D4956A] to-[#C2703E] rounded-full blur-sm transition-all duration-1000 ease-out"
           style={{
             left: `${Math.max(0, rocketPosition - 20)}%`,
             width: '20%',
@@ -140,13 +140,13 @@ export function RocketProgress({
           <div className="relative">
             {/* Orbit rings */}
             <div className="absolute inset-0 -m-1 flex items-center justify-center">
-              <div className="w-10 h-10 border border-violet-400/40 rounded-full animate-spin" style={{ animationDuration: '10s' }} />
+              <div className="w-10 h-10 border border-[#D4956A]/40 rounded-full animate-spin" style={{ animationDuration: '10s' }} />
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-7 h-7 border border-pink-400/30 rounded-full animate-spin" style={{ animationDuration: '7s', animationDirection: 'reverse' }} />
             </div>
             {/* Destination planet/star */}
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-400 via-purple-500 to-pink-500 shadow-[0_0_20px_rgba(139,92,246,0.6)] flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#D4956A] via-[#C2703E] to-[#A05A32] shadow-[0_0_20px_rgba(194,112,62,0.6)] flex items-center justify-center">
               {/* Planet shine */}
               <div className="w-2 h-2 bg-white/70 rounded-full -translate-x-0.5 -translate-y-0.5 blur-[1px]" />
             </div>
@@ -165,7 +165,7 @@ export function RocketProgress({
             key={milestone}
             className={cn(
               'absolute top-1/2 -translate-y-1/2 w-0.5 h-5 transition-colors',
-              clampedProgress >= milestone ? 'bg-violet-400/50' : 'bg-white/10'
+              clampedProgress >= milestone ? 'bg-[#D4956A]/50' : 'bg-white/10'
             )}
             style={{ left: `${8 + (milestone / 100) * 84}%` }}
           />

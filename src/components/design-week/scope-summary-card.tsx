@@ -38,10 +38,10 @@ export function ScopeSummaryCard({
       )}
     >
       {/* Header with gradient */}
-      <div className="relative p-5 border-b border-gray-100 bg-gradient-to-r from-indigo-50 via-violet-50 to-purple-50">
+      <div className="relative p-5 border-b border-gray-100 bg-[#FDF3EC]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
+            <div className="w-11 h-11 rounded-xl bg-[#C2703E] flex items-center justify-center shadow-lg shadow-[#C2703E]/15">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -51,7 +51,7 @@ export function ScopeSummaryCard({
           </div>
           <button
             onClick={onViewDetails}
-            className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+            className="flex items-center gap-1 text-sm font-semibold text-[#C2703E] hover:text-[#A05A32] transition-colors"
           >
             View all
             <ChevronRight className="w-4 h-4" />
@@ -87,8 +87,8 @@ export function ScopeSummaryCard({
               />
               <defs>
                 <linearGradient id="scope-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
+                  <stop offset="0%" stopColor="#C2703E" />
+                  <stop offset="50%" stopColor="#A05A32" />
                   <stop offset="100%" stopColor="#22c55e" />
                 </linearGradient>
               </defs>

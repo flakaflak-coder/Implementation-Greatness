@@ -141,7 +141,7 @@ Return a JSON response with EXACTLY this format:
 Respond ONLY with valid JSON, no markdown code blocks.`
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         temperature: 0.2,
@@ -189,7 +189,7 @@ Respond ONLY with valid JSON, no markdown code blocks.`
     return NextResponse.json({
       success: false,
       changes: [],
-      explanation: error instanceof Error ? error.message : 'Unknown error',
+      explanation: 'An error occurred processing your feedback. Please try again.',
     }, { status: 500 })
   }
 }

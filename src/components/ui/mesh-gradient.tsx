@@ -11,15 +11,15 @@ interface MeshGradientProps {
 
 const GRADIENT_VARIANTS = {
   // Soft variants (original)
-  'pink-blue': 'bg-gradient-to-br from-pink-200 via-purple-200 to-blue-300',
-  'purple-pink': 'bg-gradient-to-br from-purple-300 via-pink-200 to-rose-200',
-  'blue-purple': 'bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-300',
+  'pink-blue': 'bg-gradient-to-br from-pink-200 via-[#E8D5C4] to-blue-300',
+  'purple-pink': 'bg-gradient-to-br from-[#E8D5C4] via-pink-200 to-rose-200',
+  'blue-purple': 'bg-[#C2703E]',
   'warm': 'bg-gradient-to-br from-amber-100 via-rose-200 to-pink-200',
-  'cool': 'bg-gradient-to-br from-cyan-100 via-blue-200 to-indigo-200',
+  'cool': 'bg-gradient-to-br from-cyan-100 via-blue-200 to-[#E8D5C4]',
   // Vibrant variants (new)
   'vibrant-pink': 'bg-gradient-to-br from-pink-400 via-rose-400 to-fuchsia-500',
-  'vibrant-blue': 'bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500',
-  'vibrant-purple': 'bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-500',
+  'vibrant-blue': 'bg-[#C2703E]',
+  'vibrant-purple': 'bg-[#C2703E]',
 }
 
 export function MeshGradient({ variant = 'pink-blue', className, children, intensity = 'soft' }: MeshGradientProps) {
@@ -59,22 +59,22 @@ export function AnimatedMeshGradient({
         style={{
           background: vibrant
             ? `
-              radial-gradient(at 40% 20%, hsla(320, 85%, 60%, 0.9) 0px, transparent 50%),
-              radial-gradient(at 80% 0%, hsla(240, 85%, 65%, 0.8) 0px, transparent 50%),
-              radial-gradient(at 0% 50%, hsla(340, 90%, 65%, 0.85) 0px, transparent 50%),
-              radial-gradient(at 80% 50%, hsla(200, 85%, 60%, 0.7) 0px, transparent 50%),
-              radial-gradient(at 0% 100%, hsla(280, 85%, 65%, 0.8) 0px, transparent 50%),
-              radial-gradient(at 80% 100%, hsla(350, 85%, 60%, 0.7) 0px, transparent 50%),
-              linear-gradient(to bottom right, hsl(320, 80%, 70%), hsl(240, 80%, 70%))
+              radial-gradient(at 40% 20%, hsla(24, 52%, 50%, 0.9) 0px, transparent 50%),
+              radial-gradient(at 80% 0%, hsla(30, 40%, 55%, 0.8) 0px, transparent 50%),
+              radial-gradient(at 0% 50%, hsla(18, 55%, 55%, 0.85) 0px, transparent 50%),
+              radial-gradient(at 80% 50%, hsla(35, 45%, 50%, 0.7) 0px, transparent 50%),
+              radial-gradient(at 0% 100%, hsla(20, 50%, 50%, 0.8) 0px, transparent 50%),
+              radial-gradient(at 80% 100%, hsla(15, 55%, 50%, 0.7) 0px, transparent 50%),
+              linear-gradient(to bottom right, hsl(24, 52%, 60%), hsl(30, 40%, 55%))
             `
             : `
-              radial-gradient(at 40% 20%, hsla(280, 80%, 75%, 0.8) 0px, transparent 50%),
-              radial-gradient(at 80% 0%, hsla(220, 80%, 70%, 0.6) 0px, transparent 50%),
-              radial-gradient(at 0% 50%, hsla(340, 80%, 75%, 0.7) 0px, transparent 50%),
-              radial-gradient(at 80% 50%, hsla(200, 80%, 70%, 0.5) 0px, transparent 50%),
-              radial-gradient(at 0% 100%, hsla(260, 80%, 75%, 0.6) 0px, transparent 50%),
-              radial-gradient(at 80% 100%, hsla(320, 80%, 70%, 0.5) 0px, transparent 50%),
-              linear-gradient(to bottom right, hsl(280, 70%, 90%), hsl(220, 70%, 90%))
+              radial-gradient(at 40% 20%, hsla(24, 45%, 70%, 0.8) 0px, transparent 50%),
+              radial-gradient(at 80% 0%, hsla(35, 40%, 65%, 0.6) 0px, transparent 50%),
+              radial-gradient(at 0% 50%, hsla(18, 50%, 70%, 0.7) 0px, transparent 50%),
+              radial-gradient(at 80% 50%, hsla(40, 40%, 65%, 0.5) 0px, transparent 50%),
+              radial-gradient(at 0% 100%, hsla(20, 45%, 70%, 0.6) 0px, transparent 50%),
+              radial-gradient(at 80% 100%, hsla(15, 50%, 65%, 0.5) 0px, transparent 50%),
+              linear-gradient(to bottom right, hsl(24, 40%, 85%), hsl(35, 35%, 85%))
             `,
         }}
       />

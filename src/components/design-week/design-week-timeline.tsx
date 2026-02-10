@@ -40,14 +40,14 @@ export function DesignWeekTimeline({
             onClick={() => onPhaseSelect(phase.number)}
             className={cn(
               'group flex flex-col items-center flex-1 transition-all duration-200',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-xl p-2',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2703E] focus-visible:ring-offset-2 rounded-xl p-2',
             )}
           >
             {/* Topic circle */}
             <div className="relative mb-2">
               {/* Selection ring */}
               {isSelected && (
-                <div className="absolute inset-0 -m-1.5 rounded-full border-2 border-indigo-400 bg-indigo-50" />
+                <div className="absolute inset-0 -m-1.5 rounded-full border-2 border-[#C2703E] bg-[#FDF3EC]" />
               )}
 
               <div
@@ -57,7 +57,7 @@ export function DesignWeekTimeline({
                   hasData
                     ? 'bg-emerald-500 border-emerald-500 text-white'
                     : isSelected
-                    ? 'bg-indigo-500 border-indigo-500 text-white'
+                    ? 'bg-[#C2703E] border-[#C2703E] text-white'
                     : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400',
                 )}
               >

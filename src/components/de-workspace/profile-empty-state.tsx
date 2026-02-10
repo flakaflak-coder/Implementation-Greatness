@@ -5,11 +5,11 @@ import { Plus, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const bgColors: Record<string, string> = {
-  indigo: 'bg-indigo-50/60',
+  indigo: 'bg-[#FDF3EC]/60',
   blue: 'bg-blue-50/60',
   emerald: 'bg-emerald-50/60',
   cyan: 'bg-cyan-50/60',
-  violet: 'bg-violet-50/60',
+  violet: 'bg-[#FDF3EC]/60',
   amber: 'bg-amber-50/60',
   rose: 'bg-rose-50/60',
   pink: 'bg-pink-50/60',
@@ -17,11 +17,11 @@ const bgColors: Record<string, string> = {
 }
 
 const borderColors: Record<string, string> = {
-  indigo: 'border-indigo-200/60',
+  indigo: 'border-[#E8D5C4]/60',
   blue: 'border-blue-200/60',
   emerald: 'border-emerald-200/60',
   cyan: 'border-cyan-200/60',
-  violet: 'border-violet-200/60',
+  violet: 'border-[#E8D5C4]/60',
   amber: 'border-amber-200/60',
   rose: 'border-rose-200/60',
   pink: 'border-pink-200/60',
@@ -29,11 +29,11 @@ const borderColors: Record<string, string> = {
 }
 
 const iconBgColors: Record<string, string> = {
-  indigo: 'bg-indigo-100',
+  indigo: 'bg-[#F5E6DA]',
   blue: 'bg-blue-100',
   emerald: 'bg-emerald-100',
   cyan: 'bg-cyan-100',
-  violet: 'bg-violet-100',
+  violet: 'bg-[#F5E6DA]',
   amber: 'bg-amber-100',
   rose: 'bg-rose-100',
   pink: 'bg-pink-100',
@@ -41,11 +41,11 @@ const iconBgColors: Record<string, string> = {
 }
 
 const iconTextColors: Record<string, string> = {
-  indigo: 'text-indigo-500',
+  indigo: 'text-[#C2703E]',
   blue: 'text-blue-500',
   emerald: 'text-emerald-500',
   cyan: 'text-cyan-500',
-  violet: 'text-violet-500',
+  violet: 'text-[#C2703E]',
   amber: 'text-amber-500',
   rose: 'text-rose-500',
   pink: 'text-pink-500',
@@ -53,11 +53,11 @@ const iconTextColors: Record<string, string> = {
 }
 
 const hoverBorderColors: Record<string, string> = {
-  indigo: 'hover:border-indigo-300',
+  indigo: 'hover:border-[#D4956A]',
   blue: 'hover:border-blue-300',
   emerald: 'hover:border-emerald-300',
   cyan: 'hover:border-cyan-300',
-  violet: 'hover:border-violet-300',
+  violet: 'hover:border-[#D4956A]',
   amber: 'hover:border-amber-300',
   rose: 'hover:border-rose-300',
   pink: 'hover:border-pink-300',
@@ -65,11 +65,11 @@ const hoverBorderColors: Record<string, string> = {
 }
 
 const hoverBgColors: Record<string, string> = {
-  indigo: 'hover:bg-indigo-50/80',
+  indigo: 'hover:bg-[#FDF3EC]/80',
   blue: 'hover:bg-blue-50/80',
   emerald: 'hover:bg-emerald-50/80',
   cyan: 'hover:bg-cyan-50/80',
-  violet: 'hover:bg-violet-50/80',
+  violet: 'hover:bg-[#FDF3EC]/80',
   amber: 'hover:bg-amber-50/80',
   rose: 'hover:bg-rose-50/80',
   pink: 'hover:bg-pink-50/80',

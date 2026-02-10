@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 // PATCH /api/scope-items/[id]/exclude - Toggle exclude from document flag
 export async function PATCH(
@@ -8,6 +9,9 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
+
     const body = await request.json()
     const { excludeFromDocument } = body
 

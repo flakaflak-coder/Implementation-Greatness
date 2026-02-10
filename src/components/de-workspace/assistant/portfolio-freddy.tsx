@@ -34,7 +34,7 @@ export function PortfolioFreddy({ onChangesApplied, className }: PortfolioFreddy
               onClick={() => setIsOpen(true)}
               className={cn(
                 'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg',
-                'bg-gradient-to-br from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700',
+                'bg-[#C2703E] hover:bg-[#A05A32]',
                 'transition-all hover:scale-105',
                 className
               )}

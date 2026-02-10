@@ -36,7 +36,7 @@ const TYPE_CONFIG: Record<TestCase['type'], { label: string; color: string; icon
   },
   boundary: {
     label: 'Boundary',
-    color: 'violet',
+    color: 'sienna',
     icon: HelpCircle,
   },
 }
@@ -79,11 +79,11 @@ export function TestCaseCard({ testCase, onEdit, className }: TestCaseCardProps)
       text: 'text-blue-700',
       iconBg: 'bg-blue-100',
     },
-    violet: {
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
-      text: 'text-violet-700',
-      iconBg: 'bg-violet-100',
+    sienna: {
+      bg: 'bg-[#FDF3EC]',
+      border: 'border-[#E8D5C4]',
+      text: 'text-[#A05A32]',
+      iconBg: 'bg-[#F5E6DA]',
     },
   }
 

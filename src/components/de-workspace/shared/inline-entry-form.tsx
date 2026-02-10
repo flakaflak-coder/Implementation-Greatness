@@ -165,7 +165,7 @@ export function InlineEntryForm({
   return (
     <div
       className={cn(
-        'p-3 rounded-lg border-2 border-indigo-200 bg-indigo-50/30 space-y-3',
+        'p-3 rounded-lg border-2 border-[#E8D5C4] bg-[#FDF3EC]/30 space-y-3',
         className
       )}
     >
@@ -222,7 +222,7 @@ export function InlineEntryForm({
             size="sm"
             onClick={handleSave}
             disabled={saving || !content.trim()}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white"
+            className="bg-[#C2703E] hover:bg-[#A05A32] text-white"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 mr-1 animate-spin" />

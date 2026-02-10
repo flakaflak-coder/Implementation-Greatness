@@ -45,7 +45,7 @@ export interface Integration {
 // Connection type config
 const CONNECTION_TYPES = {
   rest_api: { label: 'REST API', icon: Globe, color: 'text-blue-600 bg-blue-50' },
-  graphql: { label: 'GraphQL', icon: FileJson, color: 'text-purple-600 bg-purple-50' },
+  graphql: { label: 'GraphQL', icon: FileJson, color: 'text-[#C2703E] bg-[#FDF3EC]' },
   database: { label: 'Database', icon: Database, color: 'text-emerald-600 bg-emerald-50' },
   file: { label: 'File/SFTP', icon: Server, color: 'text-amber-600 bg-amber-50' },
   webhook: { label: 'Webhook', icon: Webhook, color: 'text-pink-600 bg-pink-50' },

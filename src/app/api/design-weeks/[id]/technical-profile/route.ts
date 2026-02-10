@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import type { TechnicalProfile } from '@/components/de-workspace/profile-types'
 import { createEmptyTechnicalProfile } from '@/components/de-workspace/profile-types'
+import { validateId, validateBody, ProfileUpdateSchema } from '@/lib/validation'
 
 /**
  * GET /api/design-weeks/[id]/technical-profile
@@ -14,6 +15,8 @@ export async function GET(
 ) {
   try {
     const { id: designWeekId } = await params
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
 
     const designWeek = await prisma.designWeek.findUnique({
       where: { id: designWeekId },
@@ -60,7 +63,7 @@ export async function GET(
   } catch (error) {
     console.error('Error loading technical profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load profile' },
+      { error: 'Failed to load technical profile' },
       { status: 500 }
     )
   }
@@ -77,8 +80,12 @@ export async function PUT(
 ) {
   try {
     const { id: designWeekId } = await params
-    const body = await request.json()
-    const { profile } = body as { profile: TechnicalProfile }
+    const idCheck = validateId(designWeekId)
+    if (!idCheck.success) return idCheck.response
+
+    const validation = await validateBody(request, ProfileUpdateSchema)
+    if (!validation.success) return validation.response
+    const { profile } = validation.data as unknown as { profile: TechnicalProfile }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile is required' }, { status: 400 })
@@ -104,7 +111,7 @@ export async function PUT(
   } catch (error) {
     console.error('Error saving technical profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save profile' },
+      { error: 'Failed to save technical profile' },
       { status: 500 }
     )
   }

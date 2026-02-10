@@ -9,7 +9,7 @@ interface TagListProps {
   onChange: (tags: string[]) => void
   label?: string
   placeholder?: string
-  color?: 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'
+  color?: 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'sienna'
   maxTags?: number
   className?: string
 }
@@ -20,7 +20,7 @@ const colorClasses = {
   green: 'bg-green-100 text-green-700 hover:bg-green-200',
   amber: 'bg-amber-100 text-amber-700 hover:bg-amber-200',
   red: 'bg-red-100 text-red-700 hover:bg-red-200',
-  violet: 'bg-violet-100 text-violet-700 hover:bg-violet-200',
+  sienna: 'bg-[#F5E6DA] text-[#A05A32] hover:bg-[#E8D5C4]',
 }
 
 export function TagList({

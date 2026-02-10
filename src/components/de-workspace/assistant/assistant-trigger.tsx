@@ -24,7 +24,7 @@ export function AssistantTrigger({ onClick, hasHints, className }: AssistantTrig
           <Button
             onClick={onClick}
             className={cn(
-              'relative bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50',
+              'relative bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15',
               className
             )}
           >
@@ -37,7 +37,7 @@ export function AssistantTrigger({ onClick, hasHints, className }: AssistantTrig
         </TooltipTrigger>
         <TooltipContent side="left">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-500" />
+            <Sparkles className="w-4 h-4 text-[#C2703E]" />
             <span>Ask Freddy for help</span>
             <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded border">⌘J</kbd>
           </div>

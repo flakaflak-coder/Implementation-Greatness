@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 // POST /api/scope-items/[id]/unresolve - Undo a scope resolution (set back to AMBIGUOUS)
 export async function POST(
@@ -8,6 +9,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     // Get the current scope item
     const currentItem = await prisma.scopeItem.findUnique({

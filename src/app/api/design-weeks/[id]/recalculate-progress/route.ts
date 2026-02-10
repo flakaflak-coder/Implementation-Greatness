@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { ContentClassification, DesignWeekStatus } from '@prisma/client'
 import { calculateDesignWeekEndDate } from '@/lib/phase-durations'
+import { validateId } from '@/lib/validation'
 
 /**
  * Map content classification to Design Week phase
@@ -32,6 +33,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     // Get the Design Week with related data
     const designWeek = await prisma.designWeek.findUnique({

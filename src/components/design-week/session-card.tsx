@@ -42,9 +42,9 @@ const statusConfig = {
   processing: {
     icon: Loader2,
     label: 'Processing',
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
+    color: 'text-[#C2703E]',
+    bg: 'bg-[#FDF3EC]',
+    border: 'border-[#E8D5C4]',
   },
   complete: {
     icon: CheckCircle2,
@@ -86,13 +86,13 @@ export function SessionCard({
         'group relative rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white',
         'hover:shadow-lg hover:shadow-gray-200/50',
         isSelected
-          ? 'border-indigo-500 shadow-lg shadow-indigo-100 ring-4 ring-indigo-50'
+          ? 'border-[#C2703E] shadow-lg shadow-[#FDF3EC] ring-4 ring-[#FDF3EC]'
           : 'border-gray-200 hover:border-gray-300'
       )}
     >
       {/* Top accent bar for selected */}
       {isSelected && (
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 rounded-t-lg" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-[#C2703E] rounded-t-lg" />
       )}
 
       <div className="p-5">
@@ -103,7 +103,7 @@ export function SessionCard({
               className={cn(
                 'w-12 h-12 rounded-xl flex items-center justify-center shadow-sm',
                 isSelected
-                  ? 'bg-gradient-to-br from-indigo-500 to-violet-600'
+                  ? 'bg-[#C2703E]'
                   : 'bg-gradient-to-br from-gray-100 to-gray-200'
               )}
             >
@@ -155,8 +155,8 @@ export function SessionCard({
         {status === 'complete' && (
           <div className="flex items-center gap-4 mb-4 px-4 py-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-lg bg-[#F5E6DA] flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-[#C2703E]" />
               </div>
               <div>
                 <span className="text-lg font-bold text-gray-900">{extractedCount}</span>
@@ -227,7 +227,7 @@ export function SessionCard({
                 'flex-1 h-9',
                 status === 'complete'
                   ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  : 'text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50'
+                  : 'text-[#C2703E] hover:text-[#A05A32] hover:bg-[#FDF3EC]'
               )}
             >
               <Wand2 className="w-4 h-4 mr-1.5" />

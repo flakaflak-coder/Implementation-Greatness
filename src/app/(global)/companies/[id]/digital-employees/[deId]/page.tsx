@@ -369,7 +369,7 @@ export default function DigitalEmployeeDetailPage({
       {/* DE Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-xl bg-[#C2703E] flex items-center justify-center">
             <Bot className="w-8 h-8 text-white" />
           </div>
           <div>

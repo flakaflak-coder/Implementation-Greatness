@@ -293,11 +293,11 @@ export function DesignWeekFlow({
             <div
               className={cn(
                 'border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer',
-                'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50'
+                'border-gray-300 hover:border-[#C2703E] hover:bg-[#FDF3EC]/50'
               )}
             >
-              <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-                <Upload className="w-7 h-7 text-indigo-600" />
+              <div className="w-14 h-14 rounded-full bg-[#F5E6DA] flex items-center justify-center mx-auto mb-4">
+                <Upload className="w-7 h-7 text-[#C2703E]" />
               </div>
               <p className="font-semibold text-gray-900 mb-1">
                 Drop recording here or click to browse
@@ -336,7 +336,7 @@ export function DesignWeekFlow({
             </Button>
             <Button
               onClick={handleUpload}
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50"
+              className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15"
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload & Process
@@ -350,7 +350,7 @@ export function DesignWeekFlow({
         <DialogContent className="bg-white border-gray-200 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-gray-900 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#C2703E] flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               AI Extraction
@@ -364,7 +364,7 @@ export function DesignWeekFlow({
           <div className="py-4">
             <Textarea
               placeholder="Paste transcript here..."
-              className="min-h-[300px] font-mono text-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-400 focus:ring-indigo-400"
+              className="min-h-[300px] font-mono text-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#C2703E] focus:ring-[#C2703E]"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
             />
@@ -385,7 +385,7 @@ export function DesignWeekFlow({
             <Button
               onClick={handleExtract}
               disabled={isExtracting || !transcript.trim()}
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-200/50 disabled:opacity-50"
+              className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15 disabled:opacity-50"
             >
               {isExtracting ? (
                 <>

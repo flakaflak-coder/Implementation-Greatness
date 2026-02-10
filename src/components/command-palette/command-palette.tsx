@@ -169,7 +169,7 @@ export function CommandPalette() {
               className="border-0 focus-visible:ring-0 text-base py-4 px-3"
             />
             {loading && (
-              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-[#C2703E] border-t-transparent rounded-full animate-spin" />
             )}
           </div>
 
@@ -207,12 +207,12 @@ export function CommandPalette() {
                             onMouseEnter={() => setSelectedIndex(index)}
                             className={cn(
                               'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
-                              isSelected ? 'bg-indigo-50 text-indigo-900' : 'hover:bg-gray-50'
+                              isSelected ? 'bg-[#FDF3EC] text-[#1A1816]' : 'hover:bg-gray-50'
                             )}
                           >
                             <div className={cn(
                               'w-8 h-8 rounded-lg flex items-center justify-center',
-                              isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'
+                              isSelected ? 'bg-[#F5E6DA] text-[#C2703E]' : 'bg-gray-100 text-gray-500'
                             )}>
                               {result.icon}
                             </div>
@@ -223,7 +223,7 @@ export function CommandPalette() {
                               )}
                             </div>
                             {isSelected && (
-                              <ArrowRight className="w-4 h-4 text-indigo-500" />
+                              <ArrowRight className="w-4 h-4 text-[#C2703E]" />
                             )}
                           </button>
                         )

@@ -140,7 +140,7 @@ export function StakeholderCard({ stakeholder, onEdit }: StakeholderCardProps) {
       className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all"
     >
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+        <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
           <User className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
@@ -289,12 +289,12 @@ export function SkillCard({ skill, onEdit }: SkillCardProps) {
       className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all"
     >
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-violet-100 text-violet-600 rounded-lg">
+        <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
           {skillIcons[skill.type] || skillIcons.other}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs px-2 py-0.5 bg-violet-100 text-violet-600 rounded font-medium">
+            <span className="text-xs px-2 py-0.5 bg-[#F5E6DA] text-[#C2703E] rounded font-medium">
               {skillLabels[skill.type] || skill.type}
             </span>
           </div>

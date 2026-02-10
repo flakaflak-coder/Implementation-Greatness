@@ -29,10 +29,10 @@ export default function SettingsPage() {
           className="absolute inset-0 -z-10"
           style={{
             background: [
-              'radial-gradient(ellipse at 20% 50%, hsla(265, 83%, 55%, 0.5) 0%, transparent 60%)',
-              'radial-gradient(ellipse at 80% 20%, hsla(230, 80%, 60%, 0.4) 0%, transparent 50%)',
-              'radial-gradient(ellipse at 50% 80%, hsla(280, 75%, 45%, 0.3) 0%, transparent 50%)',
-              'linear-gradient(135deg, hsl(250, 60%, 30%) 0%, hsl(270, 50%, 25%) 100%)',
+              'radial-gradient(ellipse at 20% 50%, hsla(24, 52%, 50%, 0.5) 0%, transparent 60%)',
+              'radial-gradient(ellipse at 80% 20%, hsla(30, 40%, 55%, 0.4) 0%, transparent 50%)',
+              'radial-gradient(ellipse at 50% 80%, hsla(20, 45%, 45%, 0.3) 0%, transparent 50%)',
+              'linear-gradient(135deg, hsl(24, 40%, 30%) 0%, hsl(20, 35%, 25%) 100%)',
             ].join(', '),
           }}
         />
@@ -82,7 +82,7 @@ export default function SettingsPage() {
             <div className="grid gap-6 max-w-2xl">
               {/* Profile card with gradient banner */}
               <Card className="overflow-hidden animate-fade-in-up">
-                <div className="h-28 bg-gradient-to-br from-indigo-500 to-violet-600 relative">
+                <div className="h-28 bg-[#C2703E] relative">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.15),transparent_50%)]" />
                 </div>
                 <CardContent className="relative pt-0 pb-6">
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                       <Label htmlFor="email">Email</Label>
                       <Input id="email" type="email" placeholder="your@email.com" defaultValue="consultant@freeday.ai" />
                     </div>
-                    <Button className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-sm">
+                    <Button className="bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-sm">
                       Save Changes
                     </Button>
                   </div>
@@ -181,8 +181,8 @@ export default function SettingsPage() {
               <Card className="animate-fade-in-up stagger-3 hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                      <Cpu className="w-5 h-5 text-violet-600" />
+                    <div className="w-10 h-10 rounded-lg bg-[#F5E6DA] flex items-center justify-center">
+                      <Cpu className="w-5 h-5 text-[#C2703E]" />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">AI Model</p>
@@ -190,7 +190,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-violet-100 text-violet-700 border-0 text-xs">Anthropic</Badge>
+                    <Badge className="bg-[#F5E6DA] text-[#A05A32] border-0 text-xs">Anthropic</Badge>
                     <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">Gemini</Badge>
                   </div>
                 </CardContent>

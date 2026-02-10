@@ -302,7 +302,7 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Clipboard className="h-4 w-4 text-indigo-500" />
+            <Clipboard className="h-4 w-4 text-[#C2703E]" />
             Test Coverage Summary
           </CardTitle>
         </CardHeader>
@@ -324,9 +324,9 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
               <p className="text-2xl font-bold text-gray-600">{stats.notRun}</p>
               <p className="text-sm text-gray-500">Not Run</p>
             </div>
-            <div className="text-center p-3 bg-indigo-50 rounded-lg">
-              <p className="text-2xl font-bold text-indigo-600">{stats.coveragePercent}%</p>
-              <p className="text-sm text-indigo-700">Pass Rate</p>
+            <div className="text-center p-3 bg-[#FDF3EC] rounded-lg">
+              <p className="text-2xl font-bold text-[#C2703E]">{stats.coveragePercent}%</p>
+              <p className="text-sm text-[#A05A32]">Pass Rate</p>
             </div>
           </div>
 
@@ -472,10 +472,10 @@ function TestCaseSection({
       headerBg: 'bg-blue-500',
     },
     violet: {
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
-      text: 'text-violet-700',
-      headerBg: 'bg-violet-500',
+      bg: 'bg-[#FDF3EC]',
+      border: 'border-[#E8D5C4]',
+      text: 'text-[#A05A32]',
+      headerBg: 'bg-[#C2703E]',
     },
   }
 
@@ -899,7 +899,7 @@ interface LaunchReadinessSectionProps {
 const launchPhaseLabels: Record<LaunchCriterion['phase'], { label: string; color: string }> = {
   soft_launch: { label: 'Soft Launch', color: 'bg-blue-100 text-blue-700' },
   full_launch: { label: 'Full Launch', color: 'bg-emerald-100 text-emerald-700' },
-  hypercare: { label: 'Hypercare', color: 'bg-violet-100 text-violet-700' },
+  hypercare: { label: 'Hypercare', color: 'bg-[#F5E6DA] text-[#A05A32]' },
 }
 
 const launchCategoryLabels: Record<LaunchCriterion['category'], string> = {

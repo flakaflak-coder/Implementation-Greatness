@@ -156,26 +156,44 @@ export const DE_QUICK_ACTIONS: QuickAction[] = [
     id: 'client-update',
     label: 'Draft update',
     icon: <FileText className="w-4 h-4" />,
-    prompt: `Draft a client status update email. Assess the current state and write accordingly.
+    prompt: `Draft a consultative client status update email — the kind a senior implementation consultant would personally send after reviewing the project.
 
-First, determine the status:
-🟢 ON TRACK - Good progress, no blockers, client just needs a positive update
-🟡 ATTENTION NEEDED - Progress is good but we need specific input/decisions from client
-🔴 BLOCKED - Cannot continue without client action
+Think like a consultant writing to a client stakeholder, NOT like a system generating a status report. Follow this mental model:
 
-Then write the update with these sections:
-1. **Status** - One line: Are we on track for go-live? (use 🟢/🟡/🔴 indicator)
-2. **Progress** - What's been done/configured (2-3 bullets, plain language)
-3. **Open Items** - Only if 🟡 or 🔴: specific decisions needed, be concrete
-4. **Blockers** - Only if 🔴: what's stopped and what we need
+1. **Reflect**: What changed since our last interaction? What decisions were made? What did we accomplish together?
+2. **Assess timeline**: Are we on track for the target go-live date? Any shifts or risks to the timeline?
+3. **Highlight wins**: What's going well? Reinforce confidence and momentum — people engage more when they feel progress.
+4. **Flag what needs attention**: Any open questions or decisions that need client input? Be specific about what you need and propose options or a short meeting where possible.
+5. **Propose next step**: End with a clear, concrete call-to-action — a meeting, a decision to make, a document to review. Always suggest a specific day or timeframe.
 
-Rules:
-- Assess based on: current phase, profile completeness, ambiguous items, missing data
-- Translate to business language (no phases, profiles, extracted items, scope items)
-- Under 150 words
-- If 🟢, keep it brief and positive
-- If 🟡 or 🔴, be clear about what's needed and from whom`,
-    color: 'text-violet-600 bg-violet-50 hover:bg-violet-100 border-violet-200',
+Tone & style:
+- Write as a person, not a system. Warm, professional, direct.
+- Lead with progress and wins before any asks
+- Frame asks as collaboration: "I'd love your input on..." not "We need you to provide..."
+- Reference the DE by name — make it feel like a real project, not a ticket
+- No internal jargon whatsoever (no phases, profiles, scope items, extracted items, completeness percentages)
+- 300-400 words — a proper consultative email that feels personal and substantive
+- Use short paragraphs and the occasional bullet for scannability, but write in flowing prose — not a mechanical checklist
+- Sign off warmly and personally
+
+Example of the right tone and structure:
+---
+Hi Sarah,
+
+Hope your week is off to a good start! Quick update on where we are with Claims Assistant.
+
+Since our session on Tuesday, we've made really solid progress. We've now fully mapped out how Claims Assistant will handle all four main claim types — from initial intake through to resolution. We also locked in the escalation paths, so it's clear when Claims Assistant loops in your team versus handling things autonomously. That was a big milestone.
+
+The process design is in great shape overall. One area I'd love your input on: for complaints that span multiple departments (we saw a couple of examples in Tuesday's session), we've identified two approaches. I can walk you through both in about 15 minutes — would Thursday afternoon work for a quick call?
+
+Timeline-wise, we're tracking well for the March 15th go-live. Next week we move into the technical setup phase where we'll work with your IT team on the system integrations. I'll send a calendar invite for that session today.
+
+Looking forward to Thursday — talk soon!
+
+Best,
+Sophie
+---`,
+    color: 'text-[#C2703E] bg-[#FDF3EC] hover:bg-[#F5E6DA] border-[#E8D5C4]',
   },
 ]
 
@@ -207,7 +225,7 @@ export const PORTFOLIO_QUICK_ACTIONS: QuickAction[] = [
     label: 'Resource conflicts',
     icon: <ListChecks className="w-4 h-4" />,
     prompt: 'Are there any resource conflicts or overlapping go-lives in the next 4 weeks that I should plan around?',
-    color: 'text-violet-600 bg-violet-50 hover:bg-violet-100 border-violet-200',
+    color: 'text-[#C2703E] bg-[#FDF3EC] hover:bg-[#F5E6DA] border-[#E8D5C4]',
   },
 ]
 
@@ -588,11 +606,11 @@ export function AIAssistantPanel({
         "fixed sm:relative inset-0 sm:inset-auto z-50 sm:z-auto"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-violet-50">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-[#FDF3EC]">
           <div className="flex items-center gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg cursor-help">
+                <div className="w-10 h-10 rounded-xl bg-[#C2703E] flex items-center justify-center shadow-lg cursor-help">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
               </TooltipTrigger>
@@ -663,15 +681,15 @@ export function AIAssistantPanel({
 
         {/* Help panel */}
         {showHelp && (
-          <div className="p-4 bg-indigo-50 border-b border-indigo-100">
+          <div className="p-4 bg-[#FDF3EC] border-b border-[#F5E6DA]">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-sm font-semibold text-indigo-900">What can Freddy do?</h3>
-              <button onClick={() => setShowHelp(false)} className="text-indigo-400 hover:text-indigo-600">
+              <h3 className="text-sm font-semibold text-[#6B3A1F]">What can Freddy do?</h3>
+              <button onClick={() => setShowHelp(false)} className="text-[#D4956A] hover:text-[#C2703E]">
                 <X className="w-4 h-4" />
               </button>
             </div>
             {isPortfolio ? (
-              <ul className="text-xs text-indigo-800 space-y-1">
+              <ul className="text-xs text-[#7D4526] space-y-1">
                 <li>• Give you a portfolio health overview</li>
                 <li>• Highlight blockers and projects needing attention</li>
                 <li>• Suggest weekly priorities</li>
@@ -679,7 +697,7 @@ export function AIAssistantPanel({
                 <li>• Flag resource conflicts and timeline issues</li>
               </ul>
             ) : (
-              <ul className="text-xs text-indigo-800 space-y-1">
+              <ul className="text-xs text-[#7D4526] space-y-1">
                 <li>• Analyze implementation progress and gaps</li>
                 <li>• Draft client-ready status updates</li>
                 <li>• Suggest next steps based on current phase</li>
@@ -687,9 +705,9 @@ export function AIAssistantPanel({
                 <li>• Navigate you to relevant sections</li>
               </ul>
             )}
-            <div className="mt-3 pt-2 border-t border-indigo-200 flex items-center gap-2 text-xs text-indigo-600">
+            <div className="mt-3 pt-2 border-t border-[#E8D5C4] flex items-center gap-2 text-xs text-[#C2703E]">
               <Keyboard className="w-3 h-3" />
-              <span><kbd className="px-1 bg-indigo-100 rounded">⌘</kbd>+<kbd className="px-1 bg-indigo-100 rounded">J</kbd> to toggle</span>
+              <span><kbd className="px-1 bg-[#F5E6DA] rounded">⌘</kbd>+<kbd className="px-1 bg-[#F5E6DA] rounded">J</kbd> to toggle</span>
             </div>
           </div>
         )}
@@ -789,7 +807,7 @@ export function AIAssistantPanel({
                     <button
                       key={i}
                       onClick={() => handleSend(q)}
-                      className="block mx-auto text-xs text-indigo-500 hover:text-indigo-700 hover:underline"
+                      className="block mx-auto text-xs text-[#C2703E] hover:text-[#A05A32] hover:underline"
                     >
                       "{q}"
                     </button>
@@ -812,7 +830,7 @@ export function AIAssistantPanel({
                       className={cn(
                         'rounded-2xl px-3 py-2',
                         message.role === 'user'
-                          ? 'max-w-[80%] bg-indigo-600 text-white rounded-br-sm'
+                          ? 'max-w-[80%] bg-[#C2703E] text-white rounded-br-sm'
                           : message.isError
                             ? 'max-w-[95%] bg-red-50 text-red-900 rounded-bl-sm border border-red-200'
                             : 'max-w-[95%] bg-gray-100 text-gray-900 rounded-bl-sm'
@@ -844,7 +862,7 @@ export function AIAssistantPanel({
                                 <button
                                   key={idx}
                                   onClick={() => executeAction(action)}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-[#FDF3EC] text-[#A05A32] hover:bg-[#F5E6DA] border border-[#E8D5C4] transition-colors"
                                 >
                                   {action.type === 'navigate' && tabIcons[action.tab]}
                                   {action.type === 'upload' && <Upload className="w-3 h-3" />}
@@ -960,7 +978,7 @@ export function AIAssistantPanel({
               <div className="flex justify-start">
                 <div className="bg-gray-100 rounded-2xl rounded-bl-md p-3">
                   <div className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#C2703E]" />
                     <span className="text-sm text-gray-500">Thinking...</span>
                     <button
                       onClick={handleStop}
@@ -998,7 +1016,7 @@ export function AIAssistantPanel({
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700"
+              className="bg-[#C2703E] hover:bg-[#A05A32]"
               aria-label={isLoading ? "Sending..." : "Send message"}
             >
               {isLoading ? (

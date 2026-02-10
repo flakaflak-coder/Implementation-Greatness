@@ -162,7 +162,7 @@ export async function evaluateExtraction(
   // Track in observatory
   trackLLMOperationServer({
     pipelineName: 'extraction_evaluation',
-    model: 'claude-haiku',
+    model: 'claude-haiku-4-20250514',
     inputTokens: 0, // Judge operations don't track tokens individually
     outputTokens: 0,
     latencyMs: Date.now() - startTime,
@@ -250,7 +250,7 @@ export async function evaluateDocumentGeneration(
 
   trackLLMOperationServer({
     pipelineName: 'document_evaluation',
-    model: 'claude-sonnet',
+    model: 'claude-sonnet-4-20250514',
     inputTokens: 0,
     outputTokens: 0,
     latencyMs: Date.now() - startTime,
@@ -288,7 +288,7 @@ export async function evaluateAvatarGeneration(
 
   trackLLMOperationServer({
     pipelineName: 'avatar_evaluation',
-    model: 'claude-sonnet',
+    model: 'claude-sonnet-4-20250514',
     inputTokens: 0,
     outputTokens: 0,
     latencyMs: Date.now() - startTime,
@@ -326,7 +326,7 @@ export async function evaluatePromptChange(
 
   trackLLMOperationServer({
     pipelineName: 'prompt_evaluation',
-    model: 'claude-haiku',
+    model: 'claude-haiku-4-20250514',
     inputTokens: 0,
     outputTokens: 0,
     latencyMs: Date.now() - startTime,
@@ -423,7 +423,7 @@ export async function quickEvaluate(
 
   trackLLMOperationServer({
     pipelineName: 'quick_evaluation',
-    model: 'claude-haiku',
+    model: 'claude-haiku-4-20250514',
     inputTokens: 0,
     outputTokens: 0,
     latencyMs: Date.now() - startTime,

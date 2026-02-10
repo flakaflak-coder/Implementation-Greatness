@@ -43,8 +43,8 @@ export function PipelineProgress({ stages, className }: PipelineProgressProps) {
               )}
               {stage.status === 'running' && (
                 <div className="relative">
-                  <Circle className="h-6 w-6 text-indigo-200" />
-                  <Loader2 className="h-6 w-6 text-indigo-500 absolute top-0 left-0 animate-spin" />
+                  <Circle className="h-6 w-6 text-[#F5E6DA]" />
+                  <Loader2 className="h-6 w-6 text-[#C2703E] absolute top-0 left-0 animate-spin" />
                 </div>
               )}
               {stage.status === 'pending' && (
@@ -62,7 +62,7 @@ export function PipelineProgress({ stages, className }: PipelineProgressProps) {
                   className={cn(
                     'font-medium text-sm',
                     stage.status === 'complete' && 'text-emerald-700',
-                    stage.status === 'running' && 'text-indigo-700',
+                    stage.status === 'running' && 'text-[#A05A32]',
                     stage.status === 'pending' && 'text-gray-500',
                     stage.status === 'error' && 'text-red-700'
                   )}
@@ -70,7 +70,7 @@ export function PipelineProgress({ stages, className }: PipelineProgressProps) {
                   {stage.name}
                 </span>
                 {stage.status === 'running' && stage.percent !== undefined && (
-                  <span className="text-xs text-indigo-600 font-medium">
+                  <span className="text-xs text-[#C2703E] font-medium">
                     {stage.percent}%
                   </span>
                 )}
@@ -84,7 +84,7 @@ export function PipelineProgress({ stages, className }: PipelineProgressProps) {
                     </p>
                   )}
                   {stage.details?.entityCount !== undefined && (stage.details.entityCount as number) > 0 && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-[#F5E6DA] text-[#A05A32]">
                       {stage.details.entityCount as number} entities
                     </span>
                   )}
@@ -107,7 +107,7 @@ export function PipelineProgress({ stages, className }: PipelineProgressProps) {
               {stage.status === 'running' && stage.percent !== undefined && (
                 <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                    className="h-full bg-[#C2703E] rounded-full transition-all duration-300"
                     style={{ width: `${stage.percent}%` }}
                   />
                 </div>

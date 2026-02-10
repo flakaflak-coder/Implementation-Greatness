@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import { validateId } from '@/lib/validation'
 
 // POST /api/digital-employees/[id]/reset - Reset all Design Week data for testing
 export async function POST(
@@ -9,6 +10,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    const idCheck = validateId(id)
+    if (!idCheck.success) return idCheck.response
 
     // Find the digital employee and its design week
     const digitalEmployee = await prisma.digitalEmployee.findUnique({

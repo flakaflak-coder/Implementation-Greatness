@@ -39,10 +39,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const adminUsername = process.env.ADMIN_USERNAME || process.env.ADMIN_EMAIL
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
 
-        console.error('[Auth] Checking credentials for:', username)
-        console.error('[Auth] Admin username from env:', adminUsername)
-        console.error('[Auth] Hash exists:', !!adminPasswordHash, 'Length:', adminPasswordHash?.length)
-
         if (!adminUsername || !adminPasswordHash) {
           console.error('[Auth] ADMIN_USERNAME and ADMIN_PASSWORD_HASH must be set')
           return null
@@ -50,13 +46,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Check username matches (case-insensitive)
         if (username.toLowerCase() !== adminUsername.toLowerCase()) {
-          console.error('[Auth] Username mismatch')
           return null
         }
 
         // Verify password
         const isValid = await compare(password, adminPasswordHash)
-        console.error('[Auth] Password valid:', isValid)
         if (!isValid) {
           return null
         }

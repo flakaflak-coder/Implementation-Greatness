@@ -92,10 +92,10 @@ const PHASE_CONFIG = [
       'What are the exact escalation scripts?',
     ],
     icon: MessageSquare,
-    gradient: 'from-violet-500 to-purple-600',
-    bg: 'bg-violet-50',
-    text: 'text-violet-600',
-    border: 'border-violet-200',
+    gradient: 'from-[#C2703E] to-[#A05A32]',
+    bg: 'bg-[#FDF3EC]',
+    text: 'text-[#C2703E]',
+    border: 'border-[#E8D5C4]',
   },
   {
     number: 3,
@@ -578,13 +578,13 @@ export function ProgressTab({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Business Profile Card */}
         <Card
-          className="cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all"
+          className="cursor-pointer hover:border-[#D4956A] hover:shadow-md transition-all"
           onClick={() => onTabChange('business')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-indigo-500" />
+                <FileText className="h-4 w-4 text-[#C2703E]" />
                 Business Profile
               </CardTitle>
               <CircularProgress percentage={profileCompleteness.business.overall} size={44} />
@@ -640,13 +640,13 @@ export function ProgressTab({
 
         {/* Technical Profile Card */}
         <Card
-          className="cursor-pointer hover:border-violet-300 hover:shadow-md transition-all"
+          className="cursor-pointer hover:border-[#D4956A] hover:shadow-md transition-all"
           onClick={() => onTabChange('technical')}
         >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-violet-500" />
+                <FileText className="h-4 w-4 text-[#C2703E]" />
                 Technical Profile
               </CardTitle>
               <CircularProgress percentage={profileCompleteness.technical.overall} size={44} />
@@ -781,7 +781,7 @@ export function ProgressTab({
                 </span>
               )}
               {prereqSummary.inProgress > 0 && (
-                <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full">
+                <span className="px-2 py-1 bg-[#F5E6DA] text-[#A05A32] rounded-full">
                   ⏳ {prereqSummary.inProgress} in progress
                 </span>
               )}

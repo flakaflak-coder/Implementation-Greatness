@@ -342,8 +342,8 @@ export default function ObservatoryPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Zap className="w-6 h-6 text-purple-600" />
+                <div className="p-3 bg-[#F5E6DA] rounded-lg">
+                  <Zap className="w-6 h-6 text-[#C2703E]" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">LLM Operations</p>
@@ -475,7 +475,7 @@ export default function ObservatoryPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3">
-                      <Cpu className="w-5 h-5 text-purple-600" />
+                      <Cpu className="w-5 h-5 text-[#C2703E]" />
                       <div>
                         <p className="text-sm text-gray-500">Total Operations</p>
                         <p className="text-xl font-bold">{data?.llm.totalOperations || 0}</p>
@@ -531,7 +531,7 @@ export default function ObservatoryPage() {
                       {Object.entries(data.llm.operationsByPipeline).map(([pipeline, stats]) => (
                         <div key={pipeline} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center gap-3">
-                            <Cpu className="w-4 h-4 text-purple-500" />
+                            <Cpu className="w-4 h-4 text-[#C2703E]" />
                             <div>
                               <p className="font-medium">{pipeline}</p>
                               <p className="text-xs text-gray-500">
@@ -838,9 +838,9 @@ export default function ObservatoryPage() {
                   <span className="text-amber-700">Planned</span>
                   <span className="font-bold text-amber-700">{summary?.planned || 0}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <span className="text-purple-700">LLM Pipelines Active</span>
-                  <span className="font-bold text-purple-700">
+                <div className="flex items-center justify-between p-3 bg-[#FDF3EC] rounded-lg">
+                  <span className="text-[#A05A32]">LLM Pipelines Active</span>
+                  <span className="font-bold text-[#A05A32]">
                     {data?.llm.operationsByPipeline ? Object.keys(data.llm.operationsByPipeline).length : 0}
                   </span>
                 </div>
