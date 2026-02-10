@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import type { SalesHandoverProfile } from '@/components/de-workspace/profile-types'
 import { createEmptySalesHandoverProfile } from '@/components/de-workspace/profile-types'
+import { getPhaseLabel } from '@/lib/utils'
+
+// Zod schema for status transitions
+const StatusTransitionSchema = z.object({
+  action: z.enum(['submit', 'accept', 'request_changes']),
+  comment: z.string().max(2000).optional(),
+})
 
 /**
  * GET /api/design-weeks/[id]/sales-handover
  *
- * Returns the sales handover profile for a design week.
- * Falls back to generating from extracted items if no saved profile exists.
+ * Returns the sales handover profile, checklist, and implementation pulse data.
  */
 export async function GET(
   request: NextRequest,
@@ -43,10 +50,13 @@ export async function GET(
         digitalEmployee: {
           include: {
             journeyPhases: {
-              where: { phaseType: 'SALES_HANDOVER' },
               include: { checklistItems: { orderBy: { order: 'asc' } } },
+              orderBy: { order: 'asc' },
             },
           },
+        },
+        _count: {
+          select: { sessions: true },
         },
       },
     })
@@ -66,14 +76,53 @@ export async function GET(
     }
 
     // Include checklist items for the sales handover journey phase
-    const journeyPhase = designWeek.digitalEmployee.journeyPhases[0] ?? null
-    const checklist = journeyPhase?.checklistItems ?? []
+    const salesHandoverPhase = designWeek.digitalEmployee.journeyPhases.find(
+      (p) => p.phaseType === 'SALES_HANDOVER'
+    )
+    const checklist = salesHandoverPhase?.checklistItems ?? []
+
+    // Build implementation pulse (only when handover is submitted or accepted)
+    const handoverStatus = profile.handoverStatus || 'draft'
+    const isPostHandover = handoverStatus === 'accepted' || handoverStatus === 'submitted'
+
+    let implementationPulse = null
+    if (isPostHandover) {
+      // Check for blocked/pending prerequisites
+      const prerequisites = await prisma.prerequisite.findMany({
+        where: {
+          designWeekId,
+          status: { in: ['PENDING', 'REQUESTED', 'BLOCKED'] },
+        },
+        select: { id: true, status: true, dueDate: true },
+      })
+
+      const overdueDeadlines = (profile.deadlines ?? []).filter((d) => {
+        if (!d.date) return false
+        return new Date(d.date) < new Date() && d.isHard
+      }).length
+
+      implementationPulse = {
+        designWeekStatus: designWeek.status,
+        currentPhase: designWeek.currentPhase,
+        phaseName: getPhaseLabel(designWeek.currentPhase),
+        sessionsProcessed: designWeek._count.sessions,
+        daysSinceAccepted: profile.reviewedAt
+          ? Math.floor((Date.now() - new Date(profile.reviewedAt).getTime()) / (1000 * 60 * 60 * 24))
+          : null,
+        blockedPrerequisites: prerequisites.filter((p) => p.status === 'BLOCKED').length,
+        pendingPrerequisites: prerequisites.length,
+        overdueDeadlines,
+        hasBusinessProfile: !!designWeek.businessProfile,
+        hasTechnicalProfile: !!designWeek.technicalProfile,
+      }
+    }
 
     return NextResponse.json({
       profile,
       checklist,
-      journeyPhaseId: journeyPhase?.id ?? null,
-      journeyPhaseStatus: journeyPhase?.status ?? 'NOT_STARTED',
+      journeyPhaseId: salesHandoverPhase?.id ?? null,
+      journeyPhaseStatus: salesHandoverPhase?.status ?? 'NOT_STARTED',
+      implementationPulse,
     })
   } catch (error) {
     console.error('Error loading sales handover profile:', error)
@@ -87,7 +136,9 @@ export async function GET(
 /**
  * PUT /api/design-weeks/[id]/sales-handover
  *
- * Saves the sales handover profile for a design week.
+ * Handles two types of requests:
+ * 1. Regular auto-save: { profile: SalesHandoverProfile }
+ * 2. Status transition: { action: 'submit' | 'accept' | 'request_changes', comment?: string }
  */
 export async function PUT(
   request: NextRequest,
@@ -96,6 +147,13 @@ export async function PUT(
   try {
     const { id: designWeekId } = await params
     const body = await request.json()
+
+    // Check if this is a status transition
+    if (body.action) {
+      return handleStatusTransition(designWeekId, body)
+    }
+
+    // Regular auto-save
     const { profile } = body as { profile: SalesHandoverProfile }
 
     if (!profile) {
@@ -129,6 +187,92 @@ export async function PUT(
       { status: 500 }
     )
   }
+}
+
+/**
+ * Handle status transitions for the handover workflow
+ */
+async function handleStatusTransition(designWeekId: string, body: unknown) {
+  const parsed = StatusTransitionSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid action', details: parsed.error.flatten() },
+      { status: 400 }
+    )
+  }
+
+  const { action, comment } = parsed.data
+
+  const designWeek = await prisma.designWeek.findUnique({
+    where: { id: designWeekId },
+  })
+
+  if (!designWeek) {
+    return NextResponse.json({ error: 'Design week not found' }, { status: 404 })
+  }
+
+  const profile = {
+    ...createEmptySalesHandoverProfile(),
+    ...(designWeek.salesHandoverProfile as object ?? {}),
+  } as SalesHandoverProfile
+
+  const currentStatus = profile.handoverStatus || 'draft'
+  const now = new Date().toISOString()
+
+  switch (action) {
+    case 'submit': {
+      if (currentStatus !== 'draft' && currentStatus !== 'changes_requested') {
+        return NextResponse.json(
+          { error: 'Can only submit from draft or changes_requested state' },
+          { status: 400 }
+        )
+      }
+      profile.handoverStatus = 'submitted'
+      profile.submittedAt = now
+      profile.submittedBy = profile.context.salesOwner || 'Sales'
+      break
+    }
+
+    case 'accept': {
+      if (currentStatus !== 'submitted') {
+        return NextResponse.json(
+          { error: 'Can only accept a submitted handover' },
+          { status: 400 }
+        )
+      }
+      profile.handoverStatus = 'accepted'
+      profile.reviewedAt = now
+      profile.reviewedBy = 'Sophie' // Placeholder until auth is implemented
+      profile.reviewComment = comment || ''
+      break
+    }
+
+    case 'request_changes': {
+      if (currentStatus !== 'submitted') {
+        return NextResponse.json(
+          { error: 'Can only request changes on a submitted handover' },
+          { status: 400 }
+        )
+      }
+      profile.handoverStatus = 'changes_requested'
+      profile.reviewedAt = now
+      profile.reviewedBy = 'Sophie'
+      profile.reviewComment = comment || ''
+      break
+    }
+  }
+
+  profile.lastUpdatedAt = now
+
+  await prisma.designWeek.update({
+    where: { id: designWeekId },
+    data: {
+      salesHandoverProfile: profile as object,
+      updatedAt: new Date(),
+    },
+  })
+
+  return NextResponse.json({ success: true, profile })
 }
 
 /**
