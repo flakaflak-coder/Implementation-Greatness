@@ -27,6 +27,8 @@ import {
   Image,
   FileCode,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { SkeletonCard } from '@/components/ui/skeleton'
 
 interface PromptTemplate {
   id: string
@@ -426,16 +428,28 @@ export function PromptManager() {
 
     return (
       <Collapsible key={template.id}>
-        <Card className="mb-4">
+        <Card className="mb-4 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200">
+          {/* Gradient accent bar */}
+          <div className={cn(
+            'h-1 bg-gradient-to-r',
+            info?.icon === 'extract'
+              ? 'from-violet-500 to-purple-500'
+              : 'from-blue-500 to-cyan-500'
+          )} />
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {info?.icon === 'extract' ? (
-                    <Sparkles className="w-5 h-5 text-purple-500" />
-                  ) : (
-                    <FileText className="w-5 h-5 text-blue-500" />
-                  )}
+                  <div className={cn(
+                    'w-9 h-9 rounded-lg flex items-center justify-center',
+                    info?.icon === 'extract' ? 'bg-violet-100' : 'bg-blue-100'
+                  )}>
+                    {info?.icon === 'extract' ? (
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                    ) : (
+                      <FileText className="w-4 h-4 text-blue-600" />
+                    )}
+                  </div>
                   <div>
                     <CardTitle className="text-lg">{info?.label || template.type}</CardTitle>
                     <CardDescription>{info?.description}</CardDescription>
@@ -443,7 +457,14 @@ export function PromptManager() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">v{template.version}</Badge>
-                  <Badge variant="secondary">{template.model}</Badge>
+                  <Badge className={cn(
+                    'border-0 text-xs',
+                    info?.icon === 'extract'
+                      ? 'bg-violet-100 text-violet-700'
+                      : 'bg-blue-100 text-blue-700'
+                  )}>
+                    {template.model}
+                  </Badge>
                   <ChevronDown className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
@@ -546,11 +567,11 @@ export function PromptManager() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-gray-500">
-          Loading prompts...
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <SkeletonCard key={i} className={cn('animate-fade-in-up', `stagger-${i + 1}`)} />
+        ))}
+      </div>
     )
   }
 

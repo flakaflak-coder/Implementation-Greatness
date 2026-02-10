@@ -22,6 +22,10 @@ import {
   ThumbsDown,
 } from 'lucide-react'
 import { EditableField, TagList, GuardrailsList } from '../profile-fields'
+import { ProfileCompleteness } from '../profile-completeness'
+import { ProfileEmptyState } from '../profile-empty-state'
+import { SkeletonSection } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import {
   BusinessProfile,
   Stakeholder,
@@ -163,9 +167,10 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading profile...</span>
+      <div className="space-y-3 py-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonSection key={i} className={cn('animate-fade-in-up', `stagger-${i + 1}`)} />
+        ))}
       </div>
     )
   }
@@ -179,6 +184,16 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
     )
   }
 
+  const handleSectionClick = (sectionKey: string) => {
+    const el = document.getElementById(`section-${sectionKey}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!expandedSections.has(sectionKey)) {
+        toggleSection(sectionKey)
+      }
+    }
+  }
+
   return (
     <div className={cn('space-y-4', className)}>
       {/* Saving indicator */}
@@ -188,6 +203,13 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           Saving...
         </div>
       )}
+
+      {/* Profile completeness overview */}
+      <ProfileCompleteness
+        profile={profile}
+        type="business"
+        onSectionClick={handleSectionClick}
+      />
 
       {/* Identity Section */}
       <ProfileSection
@@ -656,16 +678,37 @@ interface ProfileSectionProps {
   children: React.ReactNode
 }
 
+const accentGradients: Record<string, string> = {
+  indigo: 'from-indigo-400 to-indigo-600',
+  blue: 'from-blue-400 to-blue-600',
+  emerald: 'from-emerald-400 to-emerald-600',
+  cyan: 'from-cyan-400 to-cyan-600',
+  violet: 'from-violet-400 to-violet-600',
+  amber: 'from-amber-400 to-amber-600',
+  rose: 'from-rose-400 to-rose-600',
+  pink: 'from-pink-400 to-pink-600',
+}
+
 function ProfileSection({ sectionKey, config, expanded, onToggle, children }: ProfileSectionProps) {
   const colorClass = sectionColors[config.color] || sectionColors.indigo
   const iconColor = iconColors[config.color] || iconColors.indigo
+  const gradient = accentGradients[config.color] || accentGradients.indigo
 
   return (
-    <div className={cn('rounded-lg border', colorClass)}>
+    <div
+      id={`section-${sectionKey}`}
+      className={cn(
+        'rounded-lg border overflow-hidden transition-all duration-200',
+        colorClass,
+        expanded ? 'shadow-sm' : 'hover:shadow-sm',
+      )}
+    >
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/30 transition-colors"
       >
+        {/* Gradient accent bar */}
+        <div className={cn('w-1 self-stretch -ml-4 mr-3 rounded-r-full bg-gradient-to-b', gradient)} />
         <div className={iconColor}>
           <SectionIcon name={config.icon} className="h-5 w-5" />
         </div>
@@ -673,13 +716,16 @@ function ProfileSection({ sectionKey, config, expanded, onToggle, children }: Pr
           <h3 className="font-semibold text-gray-900">{config.title}</h3>
           <p className="text-sm text-gray-500">{config.description}</p>
         </div>
-        {expanded ? (
-          <ChevronDown className="h-5 w-5 text-gray-400" />
-        ) : (
-          <ChevronRight className="h-5 w-5 text-gray-400" />
-        )}
+        <ChevronDown className={cn(
+          'h-5 w-5 text-gray-400 transition-transform duration-200',
+          !expanded && '-rotate-90'
+        )} />
       </button>
-      {expanded && <div className="px-4 pb-4 pt-2 border-t border-white/50">{children}</div>}
+      {expanded && (
+        <div className="px-4 pb-4 pt-2 border-t border-white/50 animate-accordion-down">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -720,13 +766,23 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
   return (
     <div className="space-y-2">
       {stakeholders.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No stakeholders defined</p>
+        <ProfileEmptyState
+          icon={User}
+          color="indigo"
+          title="No stakeholders yet"
+          description="Add key people involved in this Digital Employee"
+          actionLabel="Add stakeholder"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {stakeholders.map((s) => (
+        {stakeholders.map((s, index) => (
           <div
             key={s.id}
-            className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              'flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              index < 6 && `stagger-${index + 1}`,
+            )}
           >
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
               <User className="h-4 w-4" />
@@ -777,15 +833,17 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : stakeholders.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-indigo-200/60 hover:border-indigo-300 hover:bg-indigo-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add stakeholder
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -829,13 +887,23 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
   return (
     <div className="space-y-2">
       {kpis.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No KPIs defined</p>
+        <ProfileEmptyState
+          icon={TrendingUp}
+          color="emerald"
+          title="No KPIs yet"
+          description="Define success metrics for this Digital Employee"
+          actionLabel="Add KPI"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {kpis.map((kpi) => (
+        {kpis.map((kpi, index) => (
           <div
             key={kpi.id}
-            className="p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              index < 6 && `stagger-${index + 1}`
+            )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
@@ -911,15 +979,17 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : kpis.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-emerald-200/60 hover:border-emerald-300 hover:bg-emerald-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add KPI
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -964,13 +1034,23 @@ function ChannelsList({ channels, onUpdate }: ChannelsListProps) {
   return (
     <div className="space-y-2">
       {channels.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No channels defined</p>
+        <ProfileEmptyState
+          icon={MessageSquare}
+          color="cyan"
+          title="No channels yet"
+          description="Add input channels and their SLAs"
+          actionLabel="Add channel"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {channels.map((channel) => (
+        {channels.map((channel, index) => (
           <div
             key={channel.id}
-            className="p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              index < 6 && `stagger-${index + 1}`
+            )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
@@ -1036,15 +1116,17 @@ function ChannelsList({ channels, onUpdate }: ChannelsListProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : channels.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-cyan-200/60 hover:border-cyan-300 hover:bg-cyan-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add channel
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1097,13 +1179,23 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
   return (
     <div className="space-y-2">
       {skills.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No skills defined</p>
+        <ProfileEmptyState
+          icon={Sparkles}
+          color="violet"
+          title="No skills yet"
+          description="Define what this Digital Employee can do"
+          actionLabel="Add skill"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {skills.map((skill) => (
+        {skills.map((skill, index) => (
           <div
             key={skill.id}
-            className="p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              index < 6 && `stagger-${index + 1}`
+            )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
@@ -1175,15 +1267,17 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : skills.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-violet-200/60 hover:border-violet-300 hover:bg-violet-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add skill
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1228,7 +1322,14 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
   return (
     <div className="space-y-2">
       {steps.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No process steps defined</p>
+        <ProfileEmptyState
+          icon={GitBranch}
+          color="amber"
+          title="No process steps yet"
+          description="Map out the happy path for this Digital Employee"
+          actionLabel="Add step"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       {steps.length > 0 && (
         <div className="flex items-start gap-2 overflow-x-auto pb-2">
@@ -1297,15 +1398,17 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : steps.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-amber-200/60 hover:border-amber-300 hover:bg-amber-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add step
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1346,12 +1449,22 @@ function ExceptionsList({ exceptions, onUpdate }: ExceptionsListProps) {
   return (
     <div className="space-y-2">
       {exceptions.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No exceptions defined</p>
+        <ProfileEmptyState
+          icon={AlertCircle}
+          color="amber"
+          title="No exceptions yet"
+          description="Define what happens when things don't follow the happy path"
+          actionLabel="Add exception"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {exceptions.map((exception) => (
+      {exceptions.map((exception, index) => (
         <div
           key={exception.id}
-          className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200 group"
+          className={cn(
+            'flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200 group animate-fade-in-up',
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <span className="text-amber-600 font-medium">!</span>
           <div className="flex-1">
@@ -1403,15 +1516,17 @@ function ExceptionsList({ exceptions, onUpdate }: ExceptionsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : exceptions.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-amber-200/60 hover:border-amber-300 hover:bg-amber-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add exception
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1455,13 +1570,23 @@ function PersonaTraitsList({ traits, onUpdate }: PersonaTraitsListProps) {
   return (
     <div className="space-y-2">
       {traits.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No persona traits defined</p>
+        <ProfileEmptyState
+          icon={MessageCircle}
+          color="pink"
+          title="No persona traits yet"
+          description="Define the personality of this Digital Employee"
+          actionLabel="Add trait"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {traits.map((trait) => (
+        {traits.map((trait, index) => (
           <div
             key={trait.id}
-            className="p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              index < 6 && `stagger-${index + 1}`
+            )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
@@ -1529,15 +1654,17 @@ function PersonaTraitsList({ traits, onUpdate }: PersonaTraitsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : traits.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-pink-200/60 hover:border-pink-300 hover:bg-pink-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
-          Add persona trait
-        </button>
-      )}
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add trait
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1586,12 +1713,22 @@ function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
   return (
     <div className="space-y-2">
       {rules.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No tone rules defined</p>
+        <ProfileEmptyState
+          icon={MessageCircle}
+          color="pink"
+          title="No tone rules yet"
+          description="Set tone and language guidelines"
+          actionLabel="Add rule"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {rules.map((rule) => (
+      {rules.map((rule, index) => (
         <div
           key={rule.id}
-          className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+          className={cn(
+            'flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700 rounded whitespace-nowrap">
             {toneRuleCategoryLabels[rule.category]}
@@ -1638,15 +1775,17 @@ function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : rules.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-pink-200/60 hover:border-pink-300 hover:bg-pink-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
-          Add tone rule
-        </button>
-      )}
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add rule
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1687,7 +1826,14 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
   return (
     <div className="space-y-2">
       {items.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No do&apos;s & don&apos;ts defined</p>
+        <ProfileEmptyState
+          icon={ThumbsUp}
+          color="pink"
+          title="No do's and don'ts yet"
+          description="Define correct and incorrect responses"
+          actionLabel="Add example"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       {items.length > 0 && (
         <div className="overflow-x-auto">
@@ -1761,15 +1907,17 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : items.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-pink-200/60 hover:border-pink-300 hover:bg-pink-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
-          Add do/don&apos;t pair
-        </button>
-      )}
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add example
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1830,12 +1978,22 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
   return (
     <div className="space-y-3">
       {scripts.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No escalation scripts defined</p>
+        <ProfileEmptyState
+          icon={MessageCircle}
+          color="pink"
+          title="No escalation scripts yet"
+          description="Define how the DE hands off to humans"
+          actionLabel="Add script"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {scripts.map((script) => (
+      {scripts.map((script, index) => (
         <div
           key={script.id}
-          className="p-3 bg-white rounded-lg border border-gray-200 group"
+          className={cn(
+            'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -1903,15 +2061,17 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : scripts.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-pink-200/60 hover:border-pink-300 hover:bg-pink-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
-          Add escalation script
-        </button>
-      )}
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add script
+        </Button>
+      ) : null}
     </div>
   )
 }

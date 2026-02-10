@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 interface DigitalEmployee {
   id: string
@@ -149,8 +151,10 @@ export default function CompaniesPage() {
 
       {/* Loading state */}
       {loading && companies.length === 0 ? (
-        <div className="flex items-center justify-center py-16">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} className={cn('animate-fade-in-up', `stagger-${Math.min(i + 1, 6)}`)} />
+          ))}
         </div>
       ) : filteredCompanies.length === 0 ? (
         <div className="text-center py-16">
@@ -181,8 +185,9 @@ export default function CompaniesPage() {
       ) : (
         /* Companies grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCompanies.map((company) => (
-            <Link key={company.id} href={`/companies/${company.id}`}>
+          {filteredCompanies.map((company, index) => (
+            <div key={company.id} className={cn('animate-fade-in-up', index < 6 && `stagger-${index + 1}`)}>
+            <Link href={`/companies/${company.id}`}>
               <Card className="bg-white border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer group h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -235,6 +240,7 @@ export default function CompaniesPage() {
                 </CardContent>
               </Card>
             </Link>
+            </div>
           ))}
         </div>
       )}

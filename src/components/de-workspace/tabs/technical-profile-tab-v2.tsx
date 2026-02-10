@@ -20,6 +20,10 @@ import {
   Activity,
 } from 'lucide-react'
 import { TagList } from '../profile-fields'
+import { ProfileCompleteness } from '../profile-completeness'
+import { ProfileEmptyState } from '../profile-empty-state'
+import { SkeletonSection } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import {
   TechnicalProfile,
   Integration,
@@ -155,9 +159,10 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading technical profile...</span>
+      <div className="space-y-3 py-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonSection key={i} className={cn('animate-fade-in-up', `stagger-${i + 1}`)} />
+        ))}
       </div>
     )
   }
@@ -171,6 +176,16 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
     )
   }
 
+  const handleSectionClick = (sectionKey: string) => {
+    const el = document.getElementById(`section-${sectionKey}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!expandedSections.has(sectionKey)) {
+        toggleSection(sectionKey)
+      }
+    }
+  }
+
   return (
     <div className={cn('space-y-4', className)}>
       {/* Saving indicator */}
@@ -180,6 +195,13 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
           Saving...
         </div>
       )}
+
+      {/* Profile completeness overview */}
+      <ProfileCompleteness
+        profile={profile}
+        type="technical"
+        onSectionClick={handleSectionClick}
+      />
 
       {/* Info banner */}
       <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
@@ -293,16 +315,35 @@ interface TechnicalSectionProps {
   children: React.ReactNode
 }
 
+const accentGradients: Record<string, string> = {
+  violet: 'from-violet-400 to-violet-600',
+  blue: 'from-blue-400 to-blue-600',
+  cyan: 'from-cyan-400 to-cyan-600',
+  rose: 'from-rose-400 to-rose-600',
+  emerald: 'from-emerald-400 to-emerald-600',
+  orange: 'from-orange-400 to-orange-600',
+}
+
 function TechnicalSection({ sectionKey, config, expanded, onToggle, children }: TechnicalSectionProps) {
   const colorClass = sectionColors[config.color] || sectionColors.violet
   const iconColor = iconColors[config.color] || iconColors.violet
+  const gradient = accentGradients[config.color] || accentGradients.violet
 
   return (
-    <div className={cn('rounded-lg border', colorClass)}>
+    <div
+      id={`section-${sectionKey}`}
+      className={cn(
+        'rounded-lg border overflow-hidden transition-all duration-200',
+        colorClass,
+        expanded ? 'shadow-sm' : 'hover:shadow-sm',
+      )}
+    >
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/30 transition-colors"
       >
+        {/* Gradient accent bar */}
+        <div className={cn('w-1 self-stretch -ml-4 mr-3 rounded-r-full bg-gradient-to-b', gradient)} />
         <div className={iconColor}>
           <SectionIcon name={config.icon} className="h-5 w-5" />
         </div>
@@ -310,13 +351,16 @@ function TechnicalSection({ sectionKey, config, expanded, onToggle, children }: 
           <h3 className="font-semibold text-gray-900">{config.title}</h3>
           <p className="text-sm text-gray-500">{config.description}</p>
         </div>
-        {expanded ? (
-          <ChevronDown className="h-5 w-5 text-gray-400" />
-        ) : (
-          <ChevronRight className="h-5 w-5 text-gray-400" />
-        )}
+        <ChevronDown className={cn(
+          'h-5 w-5 text-gray-400 transition-transform duration-200',
+          !expanded && '-rotate-90'
+        )} />
       </button>
-      {expanded && <div className="px-4 pb-4 pt-2 border-t border-white/50">{children}</div>}
+      {expanded && (
+        <div className="px-4 pb-4 pt-2 border-t border-white/50 animate-accordion-down">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -394,12 +438,23 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
   return (
     <div className="space-y-3">
       {integrations.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No integrations defined</p>
+        <ProfileEmptyState
+          icon={Plug}
+          color="violet"
+          title="No integrations yet"
+          description="Add systems this Digital Employee connects to"
+          actionLabel="Add integration"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {integrations.map((integration) => (
+      {integrations.map((integration, index) => (
         <div
           key={integration.id}
-          className="p-4 bg-white rounded-lg border border-gray-200 group"
+          className={cn(
+            "p-4 bg-white rounded-lg border border-gray-200 group",
+            "animate-fade-in-up",
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -536,15 +591,17 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : integrations.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-violet-200/60 hover:border-violet-300 hover:bg-violet-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add integration
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -591,7 +648,14 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
   return (
     <div className="space-y-2">
       {dataFields.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No data fields defined</p>
+        <ProfileEmptyState
+          icon={Database}
+          color="blue"
+          title="No data fields yet"
+          description="Define the data elements this DE needs to process"
+          actionLabel="Add field"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       {dataFields.length > 0 && (
         <div className="overflow-x-auto">
@@ -606,8 +670,15 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
               </tr>
             </thead>
             <tbody>
-              {dataFields.map((field) => (
-                <tr key={field.id} className="border-b border-gray-100 group">
+              {dataFields.map((field, index) => (
+                <tr
+                  key={field.id}
+                  className={cn(
+                    "border-b border-gray-100 group",
+                    "animate-fade-in-up",
+                    index < 6 && `stagger-${index + 1}`
+                  )}
+                >
                   <td className="py-2 px-3 font-medium text-gray-900">{field.name}</td>
                   <td className="py-2 px-3 text-gray-600">{field.source || '-'}</td>
                   <td className="py-2 px-3">
@@ -686,15 +757,17 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : dataFields.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-blue-200/60 hover:border-blue-300 hover:bg-blue-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add data field
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -749,12 +822,23 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
   return (
     <div className="space-y-2">
       {endpoints.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No API endpoints defined</p>
+        <ProfileEmptyState
+          icon={Globe}
+          color="cyan"
+          title="No API endpoints yet"
+          description="Specify API endpoints for system integrations"
+          actionLabel="Add endpoint"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {endpoints.map((endpoint) => (
+      {endpoints.map((endpoint, index) => (
         <div
           key={endpoint.id}
-          className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+          className={cn(
+            "flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+            "animate-fade-in-up",
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
             <FileCode className="h-4 w-4" />
@@ -830,15 +914,17 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : endpoints.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-cyan-200/60 hover:border-cyan-300 hover:bg-cyan-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add endpoint
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -898,12 +984,23 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
   return (
     <div className="space-y-2">
       {requirements.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No security requirements defined</p>
+        <ProfileEmptyState
+          icon={ShieldCheck}
+          color="rose"
+          title="No security requirements yet"
+          description="Define security and compliance requirements"
+          actionLabel="Add requirement"
+          onAction={() => setIsAdding(true)}
+        />
       )}
-      {requirements.map((req) => (
+      {requirements.map((req, index) => (
         <div
           key={req.id}
-          className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+          className={cn(
+            "flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+            "animate-fade-in-up",
+            index < 6 && `stagger-${index + 1}`
+          )}
         >
           <span className={cn('text-xs px-2 py-0.5 rounded', categoryColors[req.category])}>
             {categoryLabels[req.category]}
@@ -950,15 +1047,17 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
             <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <button
+      ) : requirements.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-rose-200/60 hover:border-rose-300 hover:bg-rose-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add requirement
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1005,13 +1104,24 @@ function TechnicalContactsList({ contacts, onUpdate }: TechnicalContactsListProp
   return (
     <div className="space-y-2">
       {contacts.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No technical contacts defined</p>
+        <ProfileEmptyState
+          icon={Users}
+          color="emerald"
+          title="No technical contacts yet"
+          description="Add system owners and technical contacts"
+          actionLabel="Add contact"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {contacts.map((contact) => (
+        {contacts.map((contact, index) => (
           <div
             key={contact.id}
-            className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+            className={cn(
+              "flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+              "animate-fade-in-up",
+              index < 6 && `stagger-${index + 1}`
+            )}
           >
             <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
               <Users className="h-4 w-4" />
@@ -1079,15 +1189,17 @@ function TechnicalContactsList({ contacts, onUpdate }: TechnicalContactsListProp
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : contacts.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-emerald-200/60 hover:border-emerald-300 hover:bg-emerald-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add contact
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -1167,7 +1279,14 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
   return (
     <div className="space-y-4">
       {metrics.length === 0 && !isAdding && (
-        <p className="text-gray-500 text-sm">No monitoring metrics defined</p>
+        <ProfileEmptyState
+          icon={BarChart3}
+          color="orange"
+          title="No monitoring metrics yet"
+          description="Define KPIs with owners and alert thresholds"
+          actionLabel="Add metric"
+          onAction={() => setIsAdding(true)}
+        />
       )}
       {metrics.length > 0 && (
         <div className="space-y-4">
@@ -1191,8 +1310,15 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
                       </tr>
                     </thead>
                     <tbody>
-                      {perspectiveMetrics.map((metric) => (
-                        <tr key={metric.id} className="border-b border-gray-100 group">
+                      {perspectiveMetrics.map((metric, index) => (
+                        <tr
+                          key={metric.id}
+                          className={cn(
+                            "border-b border-gray-100 group",
+                            "animate-fade-in-up",
+                            index < 6 && `stagger-${index + 1}`
+                          )}
+                        >
                           <td className="py-2 px-3 font-medium text-gray-900">{metric.name}</td>
                           <td className="py-2 px-3 text-emerald-600 font-medium">{metric.target || '-'}</td>
                           <td className="py-2 px-3 text-gray-600">{metric.owner || '-'}</td>
@@ -1295,15 +1421,17 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
             </button>
           </div>
         </div>
-      ) : (
-        <button
+      ) : metrics.length > 0 ? (
+        <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          variant="outline"
+          size="sm"
+          className="w-full border-dashed border-orange-200/60 hover:border-orange-300 hover:bg-orange-50/50 mt-1"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1.5" />
           Add monitoring metric
-        </button>
-      )}
+        </Button>
+      ) : null}
     </div>
   )
 }

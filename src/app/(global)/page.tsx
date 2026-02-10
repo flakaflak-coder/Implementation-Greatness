@@ -39,6 +39,7 @@ import {
 import { getDEAvatar } from '@/lib/avatar'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { SkeletonCard, SkeletonStatCard } from '@/components/ui/skeleton'
 
 // Types
 interface WorkforceDE {
@@ -439,58 +440,66 @@ export default function DashboardPage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Card className="bg-gradient-to-br from-indigo-500 to-violet-600 border-0 text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{stats.totalDigitalEmployees}</p>
-                <p className="text-sm text-indigo-100">Digital Employees</p>
+        <div className="animate-fade-in-up stagger-1">
+          <Card className="bg-gradient-to-br from-indigo-500 to-violet-600 border-0 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{stats.totalDigitalEmployees}</p>
+                  <p className="text-sm text-indigo-100">Digital Employees</p>
+                </div>
+                <Bot className="w-8 h-8 text-indigo-200" />
               </div>
-              <Bot className="w-8 h-8 text-indigo-200" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{stats.liveAgents}</p>
-                <p className="text-sm text-emerald-100">Live & Working</p>
+        <div className="animate-fade-in-up stagger-2">
+          <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 border-0 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{stats.liveAgents}</p>
+                  <p className="text-sm text-emerald-100">Live & Working</p>
+                </div>
+                <Rocket className="w-8 h-8 text-emerald-200" />
               </div>
-              <Rocket className="w-8 h-8 text-emerald-200" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{stats.activeDesignWeeks}</p>
-                <p className="text-sm text-amber-100">In Design</p>
+        <div className="animate-fade-in-up stagger-3">
+          <Card className="bg-gradient-to-br from-amber-500 to-orange-600 border-0 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{stats.activeDesignWeeks}</p>
+                  <p className="text-sm text-amber-100">In Design</p>
+                </div>
+                <Sparkles className="w-8 h-8 text-amber-200" />
               </div>
-              <Sparkles className="w-8 h-8 text-amber-200" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className={cn(
-          'border-0 text-white',
-          stats.itemsNeedResolution > 0
-            ? 'bg-gradient-to-br from-rose-500 to-pink-600'
-            : 'bg-gradient-to-br from-gray-400 to-gray-500'
-        )}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{stats.itemsNeedResolution}</p>
-                <p className="text-sm text-rose-100">Need Attention</p>
+        <div className="animate-fade-in-up stagger-4">
+          <Card className={cn(
+            'border-0 text-white',
+            stats.itemsNeedResolution > 0
+              ? 'bg-gradient-to-br from-rose-500 to-pink-600'
+              : 'bg-gradient-to-br from-gray-400 to-gray-500'
+          )}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">{stats.itemsNeedResolution}</p>
+                  <p className="text-sm text-rose-100">Need Attention</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-rose-200" />
               </div>
-              <AlertTriangle className="w-8 h-8 text-rose-200" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -518,8 +527,10 @@ export default function DashboardPage() {
 
           {/* Workforce Grid */}
           {loading && !data ? (
-            <div className="flex items-center justify-center py-20" role="status" aria-live="polite">
-              <RefreshCw className="w-8 h-8 animate-spin text-indigo-500" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4" role="status" aria-live="polite">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonCard key={i} className={`animate-fade-in-up stagger-${Math.min(i + 1, 6)}`} />
+              ))}
               <span className="sr-only">Loading dashboard...</span>
             </div>
           ) : filteredWorkforce.length === 0 ? (
@@ -548,8 +559,10 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredWorkforce.map((de) => (
-                <DECard key={de.id} de={de} />
+              {filteredWorkforce.map((de, index) => (
+                <div key={de.id} className={cn('animate-fade-in-up', index < 6 && `stagger-${index + 1}`)}>
+                  <DECard de={de} />
+                </div>
               ))}
               {/* Add new DE card */}
               <Link href="/companies" className="group">
