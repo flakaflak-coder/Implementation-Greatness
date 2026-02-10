@@ -25,10 +25,16 @@ export async function GET(
                 },
               },
             },
+            journeyPhases: {
+              orderBy: { order: 'asc' },
+            },
           },
           orderBy: {
-            createdAt: 'desc',
+            sortOrder: 'asc',
           },
+        },
+        milestones: {
+          orderBy: { order: 'asc' },
         },
       },
     })
@@ -58,7 +64,10 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, industry, contactName, contactEmail, contactPhone, logoUrl } = body
+    const {
+      name, industry, contactName, contactEmail, contactPhone, logoUrl,
+      vision, journeyStartDate, journeyTargetDate,
+    } = body
 
     const company = await prisma.company.update({
       where: { id },
@@ -69,6 +78,9 @@ export async function PATCH(
         ...(contactEmail !== undefined && { contactEmail }),
         ...(contactPhone !== undefined && { contactPhone }),
         ...(logoUrl !== undefined && { logoUrl }),
+        ...(vision !== undefined && { vision }),
+        ...(journeyStartDate !== undefined && { journeyStartDate: journeyStartDate ? new Date(journeyStartDate) : null }),
+        ...(journeyTargetDate !== undefined && { journeyTargetDate: journeyTargetDate ? new Date(journeyTargetDate) : null }),
       },
       include: {
         digitalEmployees: true,

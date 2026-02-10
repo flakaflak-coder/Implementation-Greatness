@@ -288,6 +288,84 @@ His company pays Freeday - he'd see this as part of the service expectation.
 
 ---
 
+## Persona: Lisa Jansen
+
+### Demographics
+- **Name:** Lisa Jansen
+- **Age:** 29
+- **Location:** Rotterdam, Netherlands
+- **Occupation:** Account Executive at Freeday
+- **Income:** €55,000 base + €20,000-€40,000 commission
+- **Education:** BSc International Business, Erasmus University Rotterdam
+
+### Profile Picture Description
+Confident young Dutch woman with shoulder-length blonde hair, sharp dresser who adapts her style to the client - blazer for corporates, smart-casual for startups. Always has her phone in hand and a pitch-ready smile.
+
+### Bio
+Lisa is one of Freeday's top-performing Account Executives. She's the one who convinces companies to bet on Digital Employees - she gets the meetings, builds the relationships, handles objections, and closes the deals. She's great at painting the vision of what a DE can do for a client's operations.
+
+Her biggest frustration? The moment after the deal is signed. She's spent weeks building trust with the client, understanding their pain points, documenting their requirements in proposals and SOWs - and then the handover to implementation feels like throwing a package over a wall. She writes a handover email, schedules an intro call, and hopes for the best. Half the time, the implementation lead asks questions she's already answered in the proposal. The other half, important context about client politics or verbal promises gets lost entirely.
+
+Lisa knows that bad handovers create unhappy clients, and unhappy clients don't renew. But she doesn't have time to sit through Design Week sessions - she has the next deal to close. She needs a way to transfer everything she knows about a client in a structured, reliable way that doesn't eat into her selling time.
+
+### Goals
+1. **Primary goal:** Close deals and hit quarterly targets without post-sale headaches
+2. **Secondary goal:** Ensure smooth handovers so clients stay happy and renew (affects her long-term commission)
+3. **Hidden goal:** Be seen as a strategic seller, not just a closer - she wants to eventually become Head of Sales
+
+### Frustrations
+1. Spending 2-3 hours per deal manually writing handover documents that nobody reads completely
+2. Getting pinged by implementation leads weeks later asking for context she already provided somewhere
+3. Client complaints about "we already told the sales person this" during Design Week
+4. No feedback loop - she never knows if her handovers were actually useful
+5. Verbal promises she made during sales calls that aren't documented anywhere formal
+
+### Tech Profile
+- **Tech savviness:** 3/5 - Comfortable with sales tools, doesn't go deep into configuration
+- **Devices:** MacBook Air, iPhone 15 Pro (always), AirPods for constant calls
+- **Apps they love:** HubSpot (her CRM home), Gong (reviews her own calls), Notion (quick deal notes), WhatsApp (client relationships)
+- **Apps they hate:** Complex tools that require training, anything with more than 3 clicks to do a simple task, systems that feel "engineered for engineers"
+
+### A Day in Their Life
+**Morning:**
+Reviews pipeline in HubSpot. Preps for 2-3 prospect calls or demos. Checks LinkedIn for engagement on posts she made. Responds to client WhatsApp messages from the night before.
+
+**Workday:**
+Discovery calls, demos, proposal reviews, and negotiation meetings. Between calls, she's updating CRM records, writing follow-up emails, and coordinating internally with solutions consultants. When a deal closes, she scrambles to write a handover document before the celebration dinner.
+
+**Evening:**
+Networking events once or twice a week. Otherwise, she's either prepping proposals or genuinely disconnected - she believes in hard work/hard rest. Weekend brunches with friends where she inevitably talks about her latest deal.
+
+### Quotes
+> "I close the deal in 6 weeks, then spend 3 hours writing a handover doc that captures maybe 60% of what I know. The other 40% lives in my head and in 14 different email threads."
+
+> "When a client calls me 3 months later saying 'we told your sales team about this requirement' and it wasn't captured - that's my reputation on the line, not just implementation's problem."
+
+> "I don't want to attend Design Week. I just want to make sure everything I know ends up in the right hands without me having to be there."
+
+### How They'd Find Your App
+Would be introduced by Priya or Sophie when the handover process is formalized. Initial reaction: "Another system?" but would quickly adopt if it saves her handover writing time.
+
+### What Would Make Them Love It
+- Upload a proposal/SOW and have the system extract deal context automatically
+- Quick handover form that takes 15 minutes instead of 2 hours
+- AI that pulls context from her CRM notes and call recordings
+- Confirmation that the implementation team has reviewed her handover
+- Notification when the implementation is going well (or badly) - feedback loop
+- Being able to tag verbal promises during calls and have them tracked through implementation
+
+### What Would Make Them Leave
+- Takes longer than her current handover process
+- Requires her to learn complex workflows
+- No visibility into whether her input was actually used
+- System feels "internal/technical" rather than sales-friendly
+- Has to manually re-enter data that already exists in HubSpot or Gong
+
+### Willingness to Pay
+N/A - Internal tool, but would champion it if it reduces post-sale friction and client churn
+
+---
+
 ## Persona Summary
 
 | Persona | Type | Primary Goal | Key Frustration | Tech Level |
@@ -296,6 +374,7 @@ His company pays Freeday - he'd see this as part of the service expectation.
 | Priya Sharma | Executive User | 95% on-time delivery across portfolio | Learning about issues too late | 3/5 |
 | Thomas Bakker | Technical User | Resolve tickets quickly with accurate info | No centralized scope documentation | 5/5 |
 | Marcus Chen | External Client | 30% reduction in processing time | Black box implementations | 2/5 |
+| Lisa Jansen | Sales Handover User | Close deals without post-sale headaches | Handover docs capture only 60% of context | 3/5 |
 
 ### Coverage Analysis
 
@@ -304,21 +383,23 @@ His company pays Freeday - he'd see this as part of the service expectation.
 - Portfolio oversight and resource planning (Priya)
 - Post-live support and troubleshooting (Thomas)
 - Client visibility and stakeholder management (Marcus)
+- Sales-to-implementation handoff (Lisa)
 
 **Use cases NOT covered:**
-- Sales handoff (pre-implementation)
 - Engineering/configuration specialists
 - Executive sponsors at Freeday (CEO, etc.)
 
 ### Key Insights Across Personas
 
-1. **Everyone wants visibility** - Sophie wants scope visibility, Priya wants portfolio visibility, Thomas wants DE capability visibility, Marcus wants progress visibility. Visibility is the core value proposition.
+1. **Everyone wants visibility** - Sophie wants scope visibility, Priya wants portfolio visibility, Thomas wants DE capability visibility, Marcus wants progress visibility, Lisa wants handover confirmation visibility. Visibility is the core value proposition.
 
-2. **Nobody wants more admin work** - Every persona mentioned frustration with manual processes. Any feature that adds steps will be rejected.
+2. **Nobody wants more admin work** - Every persona mentioned frustration with manual processes. Any feature that adds steps will be rejected. Lisa especially won't adopt anything slower than her current email+doc approach.
 
-3. **Evidence matters** - Sophie needs evidence for scope discussions, Thomas needs evidence for support, Priya needs evidence for escalations, Marcus needs evidence for his board.
+3. **Evidence matters** - Sophie needs evidence for scope discussions, Thomas needs evidence for support, Priya needs evidence for escalations, Marcus needs evidence for his board, Lisa needs evidence that promises were captured and tracked.
 
-4. **Tension: Detail vs. Summary** - Sophie needs granular extraction data. Priya needs executive dashboards. Marcus needs even simpler views. The same underlying data must be surfaced at different altitudes.
+4. **Tension: Detail vs. Summary** - Sophie needs granular extraction data. Priya needs executive dashboards. Marcus needs even simpler views. Lisa needs a quick input, rich output experience. The same underlying data must be surfaced at different altitudes.
+
+5. **The handover gap is a chain reaction** - Lisa's lost context becomes Sophie's missing information, which becomes Thomas's unsearchable scope, which becomes Marcus's "we already told you this" complaint. Fixing the handover fixes downstream problems for everyone.
 
 ### Design Implications
 
@@ -326,4 +407,6 @@ His company pays Freeday - he'd see this as part of the service expectation.
 - **Priya's view is aggregated Sophie views** - Don't build separate systems; aggregate upward
 - **Thomas needs search, not navigation** - He arrives with a question, not a workflow
 - **Marcus gets the simplest possible view** - Hide internal complexity, show milestones and blockers
-- **All personas benefit from AI extraction** - It reduces Sophie's admin, gives Priya real-time data, gives Thomas searchable scope, and keeps Marcus informed without meetings
+- **Lisa needs speed and confirmation** - Quick input (upload + 15min form), clear confirmation that implementation received it, and a feedback loop on how the deal is progressing
+- **All personas benefit from AI extraction** - It reduces Sophie's admin, gives Priya real-time data, gives Thomas searchable scope, keeps Marcus informed without meetings, and lets Lisa hand over context without writing a novel
+- **The Sales Handover tab is Lisa's primary touchpoint** - It should feel sales-friendly, not implementation-technical. Consider a separate entry point or simplified view for sales users

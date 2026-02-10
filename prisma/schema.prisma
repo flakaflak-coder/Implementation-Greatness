@@ -26,10 +26,49 @@ model Company {
   contactEmail String?
   contactPhone String?
 
+  // Client Journey - strategic partnership view
+  vision            String?   @db.Text  // "What do we want to achieve together?"
+  journeyStartDate  DateTime?           // When the partnership started
+  journeyTargetDate DateTime?           // Overall target completion
+
   // Relations
   digitalEmployees DigitalEmployee[]
+  milestones       CompanyMilestone[]
 
   @@map("companies")
+}
+
+// ============================================
+// CLIENT JOURNEY MODELS
+// ============================================
+
+model CompanyMilestone {
+  id          String          @id @default(cuid())
+  companyId   String
+  title       String          // e.g., "Level 1 proven stable"
+  description String?         @db.Text
+  status      MilestoneStatus @default(UPCOMING)
+  targetDate  DateTime?
+  completedAt DateTime?
+  order       Int             @default(0)
+
+  // Gating criteria - what needs to be true to achieve this
+  gatingCriteria String?      @db.Text  // e.g., "Correctheid ≥95%, coverage ≥80%"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_milestones")
+}
+
+enum MilestoneStatus {
+  UPCOMING
+  IN_PROGRESS
+  ACHIEVED
+  BLOCKED
 }
 
 model DigitalEmployee {

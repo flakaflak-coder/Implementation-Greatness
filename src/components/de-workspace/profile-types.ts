@@ -478,6 +478,8 @@ export interface SalesSpecialNotes {
   knownConstraints: string[]
 }
 
+export type HandoverStatus = 'draft' | 'submitted' | 'accepted' | 'changes_requested'
+
 export interface SalesHandoverProfile {
   context: SalesHandoverContext
   watchOuts: SalesWatchOut[]
@@ -487,6 +489,11 @@ export interface SalesHandoverProfile {
   submittedBy: string
   submittedAt: string
   lastUpdatedAt: string
+  // Handover status flow
+  handoverStatus: HandoverStatus
+  reviewedBy: string
+  reviewedAt: string
+  reviewComment: string
 }
 
 export const SALES_HANDOVER_SECTION_CONFIG = {
@@ -543,7 +550,139 @@ export function createEmptySalesHandoverProfile(): SalesHandoverProfile {
     submittedBy: '',
     submittedAt: '',
     lastUpdatedAt: '',
+    handoverStatus: 'draft',
+    reviewedBy: '',
+    reviewedAt: '',
+    reviewComment: '',
   }
+}
+
+// ============================================
+// HANDOVER COMPLETENESS CALCULATION
+// ============================================
+
+export interface HandoverSectionScore {
+  section: string
+  label: string
+  percentage: number
+  maxWeight: number
+  weightedScore: number
+}
+
+export interface HandoverCompleteness {
+  overall: number // 0-100
+  sections: HandoverSectionScore[]
+}
+
+export interface QualityCheckResult {
+  rating: 'excellent' | 'good' | 'needs_work' | 'insufficient'
+  summary: string
+  missingItems: string[]
+  suggestions: string[]
+}
+
+export function calculateHandoverCompleteness(
+  profile: SalesHandoverProfile,
+  checklistItems?: { isCompleted: boolean }[]
+): HandoverCompleteness {
+  const sections: HandoverSectionScore[] = []
+
+  // Context section (25%): 5 fields × 5% each
+  const contextFields = [
+    profile.context.dealSummary,
+    profile.context.clientMotivation,
+    profile.context.contractType,
+    profile.context.contractValue,
+    profile.context.salesOwner,
+  ]
+  const contextFilled = contextFields.filter((f) => f && f.trim().length > 0).length
+  const contextPct = Math.round((contextFilled / 5) * 100)
+  sections.push({
+    section: 'context',
+    label: 'Context & Deal',
+    percentage: contextPct,
+    maxWeight: 25,
+    weightedScore: Math.round(contextPct * 0.25),
+  })
+
+  // Watch-Outs (15%): 50% for ≥1 item, 50% if all have descriptions
+  let watchOutPct = 0
+  if (profile.watchOuts.length > 0) {
+    watchOutPct += 50
+    const allDescribed = profile.watchOuts.every((w) => w.description && w.description.trim().length > 0)
+    if (allDescribed) watchOutPct += 50
+  }
+  sections.push({
+    section: 'watchOuts',
+    label: 'Watch-Outs',
+    percentage: watchOutPct,
+    maxWeight: 15,
+    weightedScore: Math.round(watchOutPct * 0.15),
+  })
+
+  // Deadlines (15%): 50% for ≥1 deadline, 50% if a go_live or contract deadline exists
+  let deadlinePct = 0
+  if (profile.deadlines.length > 0) {
+    deadlinePct += 50
+    const hasKeyDeadline = profile.deadlines.some((d) => d.type === 'go_live' || d.type === 'contract')
+    if (hasKeyDeadline) deadlinePct += 50
+  }
+  sections.push({
+    section: 'deadlines',
+    label: 'Deadlines',
+    percentage: deadlinePct,
+    maxWeight: 15,
+    weightedScore: Math.round(deadlinePct * 0.15),
+  })
+
+  // Special Notes (20%): 25% each for the 4 sub-fields having data
+  const specialParts = [
+    profile.specialNotes.clientPreferences.length > 0,
+    profile.specialNotes.internalNotes.trim().length > 0,
+    profile.specialNotes.promisedCapabilities.length > 0,
+    profile.specialNotes.knownConstraints.length > 0,
+  ]
+  const specialFilled = specialParts.filter(Boolean).length
+  const specialPct = Math.round((specialFilled / 4) * 100)
+  sections.push({
+    section: 'specialNotes',
+    label: 'Special Notes',
+    percentage: specialPct,
+    maxWeight: 20,
+    weightedScore: Math.round(specialPct * 0.2),
+  })
+
+  // Stakeholders (15%): 50% for ≥1, 50% if at least one isDecisionMaker
+  let stakeholderPct = 0
+  if (profile.stakeholders.length > 0) {
+    stakeholderPct += 50
+    if (profile.stakeholders.some((s) => s.isDecisionMaker)) stakeholderPct += 50
+  }
+  sections.push({
+    section: 'stakeholders',
+    label: 'Key Contacts',
+    percentage: stakeholderPct,
+    maxWeight: 15,
+    weightedScore: Math.round(stakeholderPct * 0.15),
+  })
+
+  // Checklist (10%): proportional to completed/total
+  let checklistPct = 0
+  if (checklistItems && checklistItems.length > 0) {
+    const completed = checklistItems.filter((c) => c.isCompleted).length
+    checklistPct = Math.round((completed / checklistItems.length) * 100)
+  }
+  sections.push({
+    section: 'checklist',
+    label: 'Checklist',
+    percentage: checklistPct,
+    maxWeight: 10,
+    weightedScore: Math.round(checklistPct * 0.1),
+  })
+
+  const overall = Math.min(100, sections.reduce((sum, s) => sum + s.weightedScore, 0))
+
+  return { overall, sections }
 }
 
 // ============================================
