@@ -375,6 +375,7 @@ export function DEWorkspace({
       <TabsContent value="progress">
         <ProgressTab
           designWeek={designWeek}
+          digitalEmployeeId={digitalEmployee.id}
           profileCompleteness={profileCompleteness}
           pendingItems={pendingItems}
           ambiguousItems={ambiguousItems}

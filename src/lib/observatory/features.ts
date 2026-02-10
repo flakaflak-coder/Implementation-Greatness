@@ -251,12 +251,14 @@ export const FEATURES: Feature[] = [
   {
     id: 'prerequisites-gate',
     name: 'Prerequisites Gate',
-    description: 'Block Configuration phase until all prerequisites are received',
-    status: 'planned',
+    description: 'Block journey phase transitions when prerequisites are incomplete, with manual override to force-continue',
+    status: 'built',
     category: 'design-week',
     dateAdded: '2026-01-31',
-    healthStatus: 'unknown',
+    dateCompleted: '2026-02-10',
+    healthStatus: 'healthy',
     dependencies: ['prerequisites-tracking'],
+    notes: 'Journey phase transition API with prerequisites check. UI gate on Progress tab shows blocking prerequisites. Manual override with force-continue records audit note. AlertDialog confirmation for overrides.',
   },
 
   // Portfolio & Timeline Features (Priya)
@@ -296,11 +298,13 @@ export const FEATURES: Feature[] = [
     id: 'deadline-prediction',
     name: 'Deadline Prediction',
     description: 'Predict if DE will hit go-live date based on velocity and blockers',
-    status: 'planned',
+    status: 'built',
     category: 'admin',
     dateAdded: '2026-01-31',
-    healthStatus: 'unknown',
+    dateCompleted: '2026-02-10',
+    healthStatus: 'healthy',
     dependencies: ['portfolio-gantt', 'prerequisites-tracking'],
+    notes: 'Velocity-based prediction from completed phases, blocker penalties, risk assessment (on_track/at_risk/likely_delayed/no_target). Collapsible card on Portfolio page.',
   },
 
   // View Templates (Priya)

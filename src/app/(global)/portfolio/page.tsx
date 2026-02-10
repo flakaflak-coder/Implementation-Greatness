@@ -19,19 +19,12 @@ import {
   CalendarDays,
   AlertTriangle,
   BarChart3,
-  ArrowRight,
   TrendingUp,
-  ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import {
   DesignWeekOverviewCard,
   type DesignWeekOverview,
@@ -42,7 +35,32 @@ import {
   type TimelineDE,
 } from '@/components/portfolio/gantt-timeline'
 import { WeekTimeline } from '@/components/portfolio/week-timeline'
+import { DeadlinePredictions } from '@/components/portfolio/deadline-predictions'
 import { PortfolioFreddy } from '@/components/de-workspace/assistant'
+
+interface PredictionData {
+  predictions: {
+    deId: string
+    deName: string
+    companyName: string
+    currentPhase: string
+    targetGoLive: string | null
+    predictedGoLive: string
+    velocityRatio: number
+    blockerCount: number
+    riskStatus: 'on_track' | 'at_risk' | 'likely_delayed' | 'no_target'
+    daysAhead: number
+    completedPhases: number
+    totalPhases: number
+  }[]
+  summary: {
+    total: number
+    onTrack: number
+    atRisk: number
+    likelyDelayed: number
+    noTarget: number
+  }
+}
 
 interface ConsultantWorkload {
   name: string
@@ -96,30 +114,6 @@ interface TimelineData {
   digitalEmployees: TimelineDE[]
   leads: string[]
   currentWeek: number
-}
-
-interface PredictionData {
-  predictions: {
-    deId: string
-    deName: string
-    companyName: string
-    currentPhase: string
-    targetGoLive: string | null
-    predictedGoLive: string
-    velocityRatio: number
-    blockerCount: number
-    riskStatus: 'on_track' | 'at_risk' | 'likely_delayed' | 'no_target'
-    daysAhead: number
-    completedPhases: number
-    totalPhases: number
-  }[]
-  summary: {
-    total: number
-    onTrack: number
-    atRisk: number
-    likelyDelayed: number
-    noTarget: number
-  }
 }
 
 type ViewMode = 'cards' | 'gantt' | 'weeks'
@@ -643,6 +637,16 @@ export default function PortfolioPage() {
             total={summary.total}
           />
         </div>
+
+        {/* Deadline Predictions */}
+        {predictionData && predictionData.predictions.length > 0 && (
+          <div className="mb-8">
+            <DeadlinePredictions
+              predictions={predictionData.predictions}
+              summary={predictionData.summary}
+            />
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
