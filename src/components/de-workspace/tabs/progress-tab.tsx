@@ -228,6 +228,64 @@ export function ProgressTab({
   // Prerequisites summary state
   const [prereqSummary, setPrereqSummary] = useState<PrerequisiteSummary | null>(null)
 
+  // Manual phase completions
+  const [manualCompletions, setManualCompletions] = useState<number[]>([])
+
+  // Fetch manual phase completions
+  useEffect(() => {
+    async function fetchPhaseCompletions() {
+      try {
+        const response = await fetch(`/api/design-weeks/${designWeek.id}/phases`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setManualCompletions(data.data.manualCompletions || [])
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch phase completions:', error)
+      }
+    }
+    fetchPhaseCompletions()
+  }, [designWeek.id])
+
+  // Toggle manual phase completion
+  const togglePhaseCompletion = async (phase: number) => {
+    const isCurrentlyCompleted = manualCompletions.includes(phase)
+    const newCompleted = !isCurrentlyCompleted
+
+    // Optimistic update
+    setManualCompletions(prev =>
+      newCompleted
+        ? [...prev, phase].sort()
+        : prev.filter(p => p !== phase)
+    )
+
+    try {
+      const response = await fetch(`/api/design-weeks/${designWeek.id}/phases`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase, completed: newCompleted }),
+      })
+
+      if (!response.ok) {
+        // Revert on failure
+        setManualCompletions(prev =>
+          isCurrentlyCompleted
+            ? [...prev, phase].sort()
+            : prev.filter(p => p !== phase)
+        )
+      }
+    } catch {
+      // Revert on error
+      setManualCompletions(prev =>
+        isCurrentlyCompleted
+          ? [...prev, phase].sort()
+          : prev.filter(p => p !== phase)
+      )
+    }
+  }
+
   // Fetch prerequisites summary
   useEffect(() => {
     async function fetchPrerequisites() {
@@ -351,6 +409,7 @@ export function ProgressTab({
   const phases: PhaseData[] = PHASE_CONFIG.map((phase) => {
     const phaseSessions = designWeek.sessions.filter((s) => s.phase === phase.number)
     const completedSessions = phaseSessions.filter((s) => s.processingStatus === 'COMPLETE').length
+    const isManuallyCompleted = manualCompletions.includes(phase.number)
     const hasUnresolved = ambiguousItems.some((item) => {
       // Check if any ambiguous items are from sessions in this phase
       return phaseSessions.some(() => {
@@ -360,7 +419,7 @@ export function ProgressTab({
     })
 
     let status: PhaseData['status'] = 'upcoming'
-    if (completedSessions >= phase.expectedSessions) {
+    if (completedSessions >= phase.expectedSessions || isManuallyCompleted) {
       status = 'complete'
     } else if (phaseSessions.length > 0) {
       status = hasUnresolved ? 'blocked' : 'current'
@@ -376,6 +435,7 @@ export function ProgressTab({
       completedSessions,
       status,
       hasUnresolvedItems: hasUnresolved,
+      isManuallyCompleted,
     }
   })
 
@@ -445,6 +505,7 @@ export function ProgressTab({
             phases={phases}
             selectedPhase={selectedPhase}
             onPhaseSelect={setSelectedPhase}
+            onPhaseToggle={togglePhaseCompletion}
           />
 
           {/* Data stats */}
@@ -484,6 +545,48 @@ export function ProgressTab({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Manual completion toggle */}
+          {phaseSessions.length === 0 && (
+            <div className={cn(
+              'flex items-center justify-between p-3 rounded-lg border',
+              manualCompletions.includes(selectedPhase)
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-gray-50 border-gray-200'
+            )}>
+              <div className="flex items-center gap-3">
+                {manualCompletions.includes(selectedPhase) ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <Circle className="w-5 h-5 text-gray-400" />
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {manualCompletions.includes(selectedPhase)
+                      ? 'Session held — marked manually'
+                      : 'No recordings uploaded yet'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {manualCompletions.includes(selectedPhase)
+                      ? 'You can still upload a recording later'
+                      : 'Had the session but no recording? Mark it as held'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={manualCompletions.includes(selectedPhase) ? 'outline' : 'default'}
+                size="sm"
+                onClick={() => togglePhaseCompletion(selectedPhase)}
+                className={cn(
+                  manualCompletions.includes(selectedPhase)
+                    ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                    : ''
+                )}
+              >
+                {manualCompletions.includes(selectedPhase) ? 'Undo' : 'Mark as Held'}
+              </Button>
+            </div>
+          )}
+
           {/* Sessions for this phase */}
           {phaseSessions.length > 0 && (
             <div>

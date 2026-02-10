@@ -13,12 +13,14 @@ export interface PhaseData {
   completedSessions: number
   status: PhaseStatus
   hasUnresolvedItems?: boolean
+  isManuallyCompleted?: boolean
 }
 
 interface DesignWeekTimelineProps {
   phases: PhaseData[]
   selectedPhase: number
   onPhaseSelect: (phase: number) => void
+  onPhaseToggle?: (phase: number) => void
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function DesignWeekTimeline({
   phases,
   selectedPhase,
   onPhaseSelect,
+  onPhaseToggle,
   className,
 }: DesignWeekTimelineProps) {
   return (
@@ -33,6 +36,8 @@ export function DesignWeekTimeline({
       {phases.map((phase) => {
         const isSelected = selectedPhase === phase.number
         const hasData = phase.completedSessions > 0
+        const isManual = phase.isManuallyCompleted && !hasData
+        const isComplete = hasData || phase.isManuallyCompleted
 
         return (
           <button
@@ -56,6 +61,8 @@ export function DesignWeekTimeline({
                   'border-2',
                   hasData
                     ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : isManual
+                    ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
                     : isSelected
                     ? 'bg-[#C2703E] border-[#C2703E] text-white'
                     : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400',
@@ -63,10 +70,19 @@ export function DesignWeekTimeline({
               >
                 {hasData ? (
                   <Check className="w-5 h-5" strokeWidth={3} />
+                ) : isManual ? (
+                  <Check className="w-5 h-5" strokeWidth={2.5} />
                 ) : (
                   <span className="text-lg font-semibold">{phase.number}</span>
                 )}
               </div>
+
+              {/* Manual indicator dot */}
+              {isManual && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                </div>
+              )}
             </div>
 
             {/* Topic name */}
@@ -74,7 +90,7 @@ export function DesignWeekTimeline({
               className={cn(
                 'text-sm font-medium transition-colors text-center',
                 isSelected ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700',
-                hasData && 'text-emerald-600'
+                isComplete && 'text-emerald-600'
               )}
             >
               {phase.name}
