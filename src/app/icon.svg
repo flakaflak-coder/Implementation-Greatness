@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1816"/>
+      <stop offset="100%" stop-color="#2C2824"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Bold F lettermark built from 3 rounded rects -->
+  <!-- Vertical stem -->
+  <rect x="148" y="96" width="76" height="320" rx="12" fill="#C2703E"/>
+  <!-- Top horizontal bar -->
+  <rect x="148" y="96" width="224" height="76" rx="12" fill="#C2703E"/>
+  <!-- Middle horizontal bar -->
+  <rect x="148" y="228" width="176" height="72" rx="12" fill="#C2703E"/>
+</svg>
