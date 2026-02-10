@@ -194,6 +194,22 @@ Respond ONLY with valid JSON, no markdown code blocks.`
   }
 }
 
+// Allowlist of fields that can be mutated via AI feedback
+const MUTABLE_FIELDS = new Set([
+  'trackerStatus',
+  'riskLevel',
+  'percentComplete',
+  'startWeek',
+  'endWeek',
+  'goLiveWeek',
+  'blocker',
+  'thisWeekActions',
+  'ownerClient',
+  'ownerFreedayProject',
+  'ownerFreedayEngineering',
+  'sortOrder',
+])
+
 /**
  * PATCH /api/portfolio/feedback
  * Apply AI-suggested changes to Digital Employees
@@ -210,9 +226,32 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    // Validate fields against allowlist, separating valid from skipped
+    const validChanges = []
+    const skippedFields: string[] = []
+
+    for (const change of changes) {
+      if (!MUTABLE_FIELDS.has(change.field)) {
+        skippedFields.push(change.field)
+        continue
+      }
+      validChanges.push(change)
+    }
+
+    if (validChanges.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No valid changes to apply — all fields were disallowed',
+        skippedFields,
+        warnings: skippedFields.map(
+          (f) => `Field "${f}" is not allowed for feedback updates and was skipped`
+        ),
+      }, { status: 400 })
+    }
+
     // Group changes by DE
     const changesByDE = new Map<string, Record<string, unknown>>()
-    for (const change of changes) {
+    for (const change of validChanges) {
       const deId = change.deId
       if (!changesByDE.has(deId)) {
         changesByDE.set(deId, {})
@@ -234,9 +273,15 @@ export async function PATCH(request: NextRequest) {
 
     await Promise.all(updates)
 
+    const warnings = skippedFields.map(
+      (f) => `Field "${f}" is not allowed for feedback updates and was skipped`
+    )
+
     return NextResponse.json({
       success: true,
-      message: `Applied ${changes.length} change(s) to ${changesByDE.size} Digital Employee(s)`,
+      message: `Applied ${validChanges.length} change(s) to ${changesByDE.size} Digital Employee(s)`,
+      skippedCount: skippedFields.length,
+      ...(skippedFields.length > 0 ? { skippedFields, warnings } : {}),
     })
   } catch (error) {
     console.error('Error applying feedback changes:', error)

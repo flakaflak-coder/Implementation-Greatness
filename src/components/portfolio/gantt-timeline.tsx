@@ -95,10 +95,10 @@ const STAGE_CONFIG: Record<LifecycleStage, { label: string; color: string; bg: s
   live: { label: 'Live', color: 'text-emerald-700', bg: 'bg-emerald-500' },
 }
 
-const TRAFFIC_LIGHT_CONFIG: Record<TrafficLight, { dot: string; border: string }> = {
-  green: { dot: 'bg-emerald-500', border: 'border-l-emerald-500' },
-  yellow: { dot: 'bg-amber-500', border: 'border-l-amber-500' },
-  red: { dot: 'bg-red-500', border: 'border-l-red-500' },
+const TRAFFIC_LIGHT_CONFIG: Record<TrafficLight, { dot: string; border: string; label: string }> = {
+  green: { dot: 'bg-emerald-500', border: 'border-l-emerald-500', label: 'Healthy' },
+  yellow: { dot: 'bg-amber-500', border: 'border-l-amber-500', label: 'Attention' },
+  red: { dot: 'bg-red-500', border: 'border-l-red-500', label: 'Critical' },
 }
 
 // Format date for display
@@ -134,8 +134,14 @@ function StageProgressBar({
   const isCurrent = stage === currentStage
   const isFuture = stageIndex > currentIndex
 
+  const stateLabel = isComplete ? 'Complete' : isCurrent ? `In progress (${progress}%)` : 'Upcoming'
+
   return (
-    <div className="flex-1 h-6 relative">
+    <div
+      className="flex-1 h-6 relative"
+      role="img"
+      aria-label={`${STAGE_CONFIG[stage].label}: ${stateLabel}`}
+    >
       <div
         className={cn(
           'h-full rounded-sm transition-all',
@@ -179,14 +185,35 @@ function DERow({ de, onDEClick }: { de: TimelineDE; onDEClick?: (de: TimelineDE)
       {/* DE Name and Status */}
       <div className="w-48 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className={cn('w-2 h-2 rounded-full flex-shrink-0', config.dot)} />
+          <div
+            className={cn('w-2 h-2 rounded-full flex-shrink-0', config.dot)}
+            role="img"
+            aria-label={`Status: ${config.label}`}
+          />
           <span className="font-medium text-gray-900 text-sm truncate">{de.name}</span>
+          <span className="sr-only">({config.label})</span>
         </div>
         {de.assignedTo && (
           <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5 ml-4">
             <User className="w-3 h-3" />
             <span className="truncate">{de.assignedTo}</span>
           </div>
+        )}
+        {de.blocker && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 mt-1 ml-4 max-w-full">
+                <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full truncate max-w-[160px]">
+                  <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{de.blocker}</span>
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[300px]">
+              <p className="text-xs font-medium mb-1">Blocker:</p>
+              <p className="text-xs">{de.blocker}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -336,19 +363,43 @@ function CompanyGroup({
         </div>
         <div className="flex items-center gap-2">
           {stats.red > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
-              {stats.red}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-medium"
+                  aria-label={`${stats.red} critical`}
+                >
+                  {stats.red}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent><p className="text-xs">{stats.red} Critical</p></TooltipContent>
+            </Tooltip>
           )}
           {stats.yellow > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
-              {stats.yellow}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium"
+                  aria-label={`${stats.yellow} attention`}
+                >
+                  {stats.yellow}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent><p className="text-xs">{stats.yellow} Attention</p></TooltipContent>
+            </Tooltip>
           )}
           {stats.green > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
-              {stats.green}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium"
+                  aria-label={`${stats.green} healthy`}
+                >
+                  {stats.green}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent><p className="text-xs">{stats.green} Healthy</p></TooltipContent>
+            </Tooltip>
           )}
         </div>
       </button>

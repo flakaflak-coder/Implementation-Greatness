@@ -9,11 +9,52 @@ const PHASE_NAMES: Record<number, string> = {
   4: 'Sign-off',
 }
 
-const PHASE_DESCRIPTIONS: Record<number, string> = {
-  1: 'initial discovery and goal alignment',
-  2: 'mapping out processes and workflows',
-  3: 'technical integration planning',
-  4: 'final review and approval',
+const PHASE_FOCUS: Record<number, string> = {
+  1: 'aligning on goals, stakeholders, and success criteria',
+  2: 'mapping out the core workflows and processes',
+  3: 'working through the technical integration details',
+  4: 'finalizing everything for go-live approval',
+}
+
+const PHASE_ACCOMPLISHMENTS: Record<number, string[]> = {
+  1: [
+    'Aligned on project goals and success criteria',
+    'Identified key stakeholders and decision-makers',
+  ],
+  2: [
+    'Completed initial discovery and goal alignment',
+    'Mapped out core processes and workflows',
+    'Identified key decision points and escalation paths',
+  ],
+  3: [
+    'Fully mapped all core processes and edge cases',
+    'Defined escalation paths and handoff points',
+    'Began technical integration planning',
+  ],
+  4: [
+    'Completed process design and technical integration planning',
+    'Finalized all system integration requirements',
+    'Prepared implementation documentation for review',
+  ],
+}
+
+const PHASE_NEXT_STEPS: Record<number, string[]> = {
+  1: [
+    'Begin process discovery sessions to map out core workflows',
+    'Define success metrics and volume expectations',
+  ],
+  2: [
+    'Continue refining process maps and edge cases',
+    'Move into technical integration planning',
+  ],
+  3: [
+    'Finalize integration specifications and data requirements',
+    'Prepare sign-off documentation for your review',
+  ],
+  4: [
+    'Complete final review of all implementation details',
+    'Obtain sign-off and move into the build phase',
+  ],
 }
 
 interface StatusUpdateParams {
@@ -85,109 +126,104 @@ export async function GET(
     // Calculate stats
     const currentPhase = dw.currentPhase
     const phaseName = PHASE_NAMES[currentPhase] || `Phase ${currentPhase}`
-    const phaseDescription = PHASE_DESCRIPTIONS[currentPhase] || 'ongoing work'
+    const phaseFocus = PHASE_FOCUS[currentPhase] || 'ongoing work'
 
     const totalSessions = dw.sessions.length
     const currentPhaseSessions = dw.sessions.filter(s => s.phase === currentPhase).length
 
-    const totalScope = dw.scopeItems.length
-    const confirmedScope = dw.scopeItems.filter(s => s.classification === 'IN_SCOPE').length
-    const outOfScope = dw.scopeItems.filter(s => s.classification === 'OUT_OF_SCOPE').length
     const ambiguousScope = dw.scopeItems.filter(s => s.classification === 'AMBIGUOUS').length
 
     // Check for blockers
-    const blockedPhase = de.journeyPhases?.find(p => p.status === 'BLOCKED')
-    const hasBlocker = !!blockedPhase
+    const blockedPhases = de.journeyPhases?.filter(p => p.status === 'BLOCKED') || []
+    const hasBlocker = blockedPhases.length > 0
 
     // Calculate progress percentage (rough estimate based on phase)
     const phaseProgress = Math.min(100, (currentPhase - 1) * 25 + (currentPhaseSessions > 0 ? 15 : 0))
+
+    // Build accomplishments from completed phases
+    const accomplishments: string[] = []
+    for (let p = 1; p <= currentPhase; p++) {
+      const phaseAccomplishments = PHASE_ACCOMPLISHMENTS[p] || []
+      if (p < currentPhase) {
+        accomplishments.push(...phaseAccomplishments)
+      } else if (currentPhaseSessions > 0) {
+        accomplishments.push(phaseAccomplishments[0])
+      }
+    }
+    // Add session-based accomplishment if we have sessions
+    if (totalSessions > 0 && accomplishments.length < 2) {
+      accomplishments.push(`Completed ${totalSessions} design session${totalSessions !== 1 ? 's' : ''}`)
+    }
+
+    const nextSteps = PHASE_NEXT_STEPS[currentPhase] || []
 
     // Generate the status update text
     const lines: string[] = []
 
     // Header
-    lines.push(`# ${de.name} - Status Update`)
-    lines.push(`**${de.company.name}**`)
-    lines.push(`*Generated: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}*`)
+    lines.push(`# ${de.name} — Status Update`)
+    lines.push(`**${de.company.name}** · ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`)
     lines.push('')
 
-    // Overall Status
+    // Status line
     if (hasBlocker) {
-      lines.push(`## ⚠️ Status: Blocked`)
-      lines.push(`We've encountered a blocker that needs resolution: **${blockedPhase.blockedReason || 'Awaiting information'}**`)
-      lines.push('')
-      lines.push(`Once this is resolved, we'll continue with the implementation.`)
+      lines.push(`**Status: ⚠️ Needs attention** — we're progressing well, with ${blockedPhases.length === 1 ? 'one item' : 'a few items'} that need resolution.`)
     } else {
-      lines.push(`## ✅ Status: On Track`)
-      lines.push(`Implementation is progressing well through the Design Week process.`)
+      lines.push(`**Status: ✅ On track** — implementation is progressing well (~${phaseProgress}% through the design phase).`)
     }
     lines.push('')
 
-    // Current Phase
-    lines.push(`## Current Phase: ${phaseName}`)
-    lines.push(`We're currently in the **${phaseName}** phase, focused on ${phaseDescription}.`)
-    lines.push('')
-
-    // Progress
-    lines.push(`### Progress`)
-    lines.push(`- **Overall Progress:** ~${phaseProgress}% complete`)
-    lines.push(`- **Sessions Completed:** ${totalSessions} session${totalSessions !== 1 ? 's' : ''}`)
-    if (totalScope > 0) {
-      lines.push(`- **Scope Items Identified:** ${totalScope} total`)
-      if (confirmedScope > 0) {
-        lines.push(`  - ${confirmedScope} confirmed in scope`)
+    // Progress - what we've accomplished
+    if (accomplishments.length > 0) {
+      lines.push(`### What we've accomplished`)
+      for (const item of accomplishments.slice(0, 5)) {
+        lines.push(`- ${item}`)
       }
-      if (outOfScope > 0) {
-        lines.push(`  - ${outOfScope} marked out of scope`)
-      }
-      if (ambiguousScope > 0) {
-        lines.push(`  - ${ambiguousScope} requiring clarification`)
-      }
+      lines.push('')
     }
+
+    // Where we are now
+    lines.push(`### Where we are now`)
+    lines.push(`We're currently focused on ${phaseFocus} for ${de.name}. ${currentPhaseSessions > 0 ? `We've completed ${currentPhaseSessions} session${currentPhaseSessions !== 1 ? 's' : ''} in this phase so far.` : 'Sessions for this phase are being scheduled.'}`)
     lines.push('')
 
-    // What's Next
-    lines.push(`### What's Next`)
-    if (currentPhase === 1) {
-      lines.push(`- Complete kickoff session and confirm project goals`)
-      lines.push(`- Begin process discovery sessions`)
-    } else if (currentPhase === 2) {
-      lines.push(`- Continue mapping processes and workflows`)
-      lines.push(`- Identify any edge cases or exceptions`)
-      lines.push(`- Move to technical planning phase`)
-    } else if (currentPhase === 3) {
-      lines.push(`- Finalize technical integration requirements`)
-      lines.push(`- Confirm data fields and API specifications`)
-      lines.push(`- Prepare for sign-off phase`)
-    } else if (currentPhase === 4) {
-      lines.push(`- Complete final review of all scope items`)
-      lines.push(`- Obtain sign-off on implementation plan`)
-      lines.push(`- Begin development phase`)
+    // What's coming next
+    if (nextSteps.length > 0) {
+      lines.push(`### Coming up next`)
+      for (const step of nextSteps) {
+        lines.push(`- ${step}`)
+      }
+      lines.push('')
     }
-    lines.push('')
 
-    // Action Items (if any)
-    if (ambiguousScope > 0 || hasBlocker) {
-      lines.push(`### Action Items`)
-      if (hasBlocker) {
-        lines.push(`- **Priority:** ${blockedPhase.blockedReason || 'Resolve blocking issue'}`)
+    // Input needed (only if applicable)
+    if (ambiguousScope > 0) {
+      lines.push(`### Your input needed`)
+      lines.push(`- We have ${ambiguousScope} item${ambiguousScope !== 1 ? 's' : ''} that would benefit from your clarification — happy to walk through ${ambiguousScope === 1 ? 'it' : 'them'} on a quick call`)
+      lines.push('')
+    }
+
+    // Blockers — always last before footer
+    if (hasBlocker) {
+      lines.push(`### Blockers`)
+      for (const blocked of blockedPhases) {
+        lines.push(`- **${blocked.phaseType}:** ${blocked.blockedReason || 'Awaiting information to proceed'}`)
       }
-      if (ambiguousScope > 0) {
-        lines.push(`- Clarify ${ambiguousScope} scope item${ambiguousScope !== 1 ? 's' : ''} that need${ambiguousScope === 1 ? 's' : ''} input`)
-      }
+      lines.push('')
+      lines.push(`We've identified a path forward for ${blockedPhases.length === 1 ? 'this' : 'each of these'} — let's connect this week to get things moving again.`)
       lines.push('')
     }
 
     // Footer
     lines.push(`---`)
-    lines.push(`*This update was generated by the Implementation Team. For questions, please reach out to your assigned consultant.*`)
+    lines.push(`*For questions, reach out to your assigned consultant directly.*`)
 
     const statusUpdate = lines.join('\n')
 
-    // Also generate a shorter version for quick sharing
+    // Shorter version for quick sharing
     const shortUpdate = hasBlocker
-      ? `${de.name}: ⚠️ Blocked - ${blockedPhase.blockedReason || 'Awaiting resolution'}. Currently in ${phaseName} phase.`
-      : `${de.name}: ✅ On Track - ${phaseName} phase (~${phaseProgress}% complete). ${totalSessions} session${totalSessions !== 1 ? 's' : ''} completed, ${totalScope} scope items identified.`
+      ? `${de.name}: ⚠️ Needs attention — ${blockedPhases[0].blockedReason || 'Awaiting resolution'}. Currently in ${phaseName} phase (~${phaseProgress}%).`
+      : `${de.name}: ✅ On track — ${phaseName} phase (~${phaseProgress}% complete). Making strong progress.`
 
     return NextResponse.json({
       success: true,
@@ -200,7 +236,7 @@ export async function GET(
         currentPhase,
         phaseName,
         isBlocked: hasBlocker,
-        blockedReason: blockedPhase?.blockedReason || null,
+        blockedReason: blockedPhases[0]?.blockedReason || null,
         progress: phaseProgress,
         statusUpdate,
         shortUpdate,

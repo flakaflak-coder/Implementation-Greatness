@@ -108,8 +108,22 @@ export function DesignWeekOverviewCard({ designWeek, className }: DesignWeekOver
         {/* Header: Traffic light + Company/DE name */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3">
-            {/* Traffic light dot */}
-            <div className={cn('w-3 h-3 rounded-full mt-1.5 flex-shrink-0', config.dot)} />
+            {/* Traffic light dot + label */}
+            <div className="flex flex-col items-center gap-0.5 mt-1.5 flex-shrink-0">
+              <div
+                className={cn('w-3 h-3 rounded-full', config.dot)}
+                role="img"
+                aria-label={`Status: ${config.label}`}
+              />
+              <span className={cn(
+                'text-[9px] font-medium leading-none',
+                designWeek.trafficLight === 'green' && 'text-emerald-600',
+                designWeek.trafficLight === 'yellow' && 'text-amber-600',
+                designWeek.trafficLight === 'red' && 'text-red-600',
+              )}>
+                {config.label}
+              </span>
+            </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">{designWeek.company.name}</p>
               <h3 className="font-semibold text-gray-900">{designWeek.digitalEmployee.name}</h3>

@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// Generate a consistent health score based on DE id (deterministic, not random)
+// This will be replaced with real health metrics when live monitoring is built
+function calculateConsistentHealthScore(id: string): number {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    const char = id.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  // Map to range 70-100
+  return 70 + Math.abs(hash % 31)
+}
+
 // Expected sessions per phase for Design Week
 const EXPECTED_SESSIONS_PER_PHASE: Record<number, number> = {
   1: 1, // Kickoff: 1 session
@@ -303,8 +316,8 @@ export async function GET() {
         currentJourneyPhase: de.currentJourneyPhase,
         goLiveDate: de.goLiveDate,
         designWeek: designWeekProgress,
-        // For live DEs, we could add health metrics here later
-        healthScore: de.status === 'LIVE' ? Math.floor(Math.random() * 20) + 80 : null, // Placeholder
+        // Deterministic score from DE id; will be replaced with real health metrics later
+        healthScore: de.status === 'LIVE' ? calculateConsistentHealthScore(de.id) : null,
       }
     })
 
@@ -390,8 +403,29 @@ export async function GET() {
       }
     })
 
-    // Calculate streak (placeholder - would need to track this in DB)
-    const healthyDays = Math.floor(Math.random() * 10) + 1 // Placeholder
+    // Calculate streak from last unresolved observatory error
+    let healthyDays = 0
+    try {
+      const latestError = await prisma.observatoryError.findFirst({
+        where: { status: { in: ['NEW', 'INVESTIGATING'] } },
+        orderBy: { lastSeen: 'desc' },
+        select: { lastSeen: true },
+      })
+      if (latestError) {
+        healthyDays = Math.floor((Date.now() - latestError.lastSeen.getTime()) / (1000 * 60 * 60 * 24))
+      } else {
+        // No unresolved errors - count from first DE creation or 30 days
+        const firstDE = await prisma.digitalEmployee.findFirst({
+          orderBy: { createdAt: 'asc' },
+          select: { createdAt: true },
+        })
+        healthyDays = firstDE
+          ? Math.min(30, Math.floor((Date.now() - firstDE.createdAt.getTime()) / (1000 * 60 * 60 * 24)))
+          : 0
+      }
+    } catch {
+      healthyDays = 0
+    }
 
     return NextResponse.json({
       success: true,

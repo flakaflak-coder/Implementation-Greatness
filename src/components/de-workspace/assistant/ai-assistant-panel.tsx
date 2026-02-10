@@ -156,39 +156,76 @@ export const DE_QUICK_ACTIONS: QuickAction[] = [
     id: 'client-update',
     label: 'Draft update',
     icon: <FileText className="w-4 h-4" />,
-    prompt: `Draft a consultative client status update email — the kind a senior implementation consultant would personally send after reviewing the project.
+    prompt: `Draft a client status update email — the kind a senior implementation consultant sends weekly to keep a client informed and confident.
 
-Think like a consultant writing to a client stakeholder, NOT like a system generating a status report. Follow this mental model:
+You are writing as the consultant, personally. Not a system, not a report generator.
 
-1. **Reflect**: What changed since our last interaction? What decisions were made? What did we accomplish together?
-2. **Assess timeline**: Are we on track for the target go-live date? Any shifts or risks to the timeline?
-3. **Highlight wins**: What's going well? Reinforce confidence and momentum — people engage more when they feel progress.
-4. **Flag what needs attention**: Any open questions or decisions that need client input? Be specific about what you need and propose options or a short meeting where possible.
-5. **Propose next step**: End with a clear, concrete call-to-action — a meeting, a decision to make, a document to review. Always suggest a specific day or timeframe.
+## Email Structure (follow this order exactly)
 
-Tone & style:
-- Write as a person, not a system. Warm, professional, direct.
-- Lead with progress and wins before any asks
-- Frame asks as collaboration: "I'd love your input on..." not "We need you to provide..."
-- Reference the DE by name — make it feel like a real project, not a ticket
-- No internal jargon whatsoever (no phases, profiles, scope items, extracted items, completeness percentages)
-- 300-400 words — a proper consultative email that feels personal and substantive
-- Use short paragraphs and the occasional bullet for scannability, but write in flowing prose — not a mechanical checklist
-- Sign off warmly and personally
+**1. Greeting + status line**
+Open with a warm, personal greeting. Immediately follow with a one-line status:
+- "We're on track for [go-live date]" or "We're making strong progress toward [milestone]"
+- If there are risks: "We're progressing well, with one item that needs your input"
+- Only if truly blocked: "We've hit a blocker that I'd like to resolve with you this week"
 
-Example of the right tone and structure:
+**2. Progress since last update (bullet format)**
+Use 3-5 crisp bullets showing what was accomplished. Each bullet should feel like a tangible step forward. Use past tense — these are wins.
+Example bullets:
+- Mapped out the full claims intake workflow across all four claim types
+- Confirmed escalation paths with your team — clear handoff points now defined
+- Completed technical review of the CRM integration requirements
+
+**3. Where we are now (1-2 sentences)**
+A brief narrative sentence on the current focus area. Reference the DE by name. Frame it as momentum: "We're now focused on..." or "This week we're diving into..."
+
+**4. What's coming next (bullet format)**
+Use 2-3 bullets for upcoming work. Use future tense. Be specific enough that the client knows what to expect without needing to ask.
+
+**5. Anything that needs your input (only if applicable)**
+If there are open questions or decisions needed from the client, list them as bullets. Frame as collaboration: "I'd love your input on..." or "Could you help us confirm..."
+Always propose a way to resolve (quick call, async reply, or a specific option to pick).
+
+**6. Blockers (only if applicable — always last before sign-off)**
+If there are genuine blockers preventing progress, list them clearly:
+- What's blocked
+- What's needed to unblock
+- Proposed resolution or next step
+Keep the tone constructive, not alarming. Frame as "here's how we get past this together."
+
+**7. Sign-off**
+Warm, personal closing. Include a specific next touchpoint if possible ("Talk Thursday!" or "I'll send the next update after our Tuesday session").
+
+## Tone & style rules
+- Consulting-quality: confident, warm, clear. Not corporate-stiff, not overly casual.
+- Reference the DE by name throughout — it's a real project, not a ticket
+- NO internal jargon: no phases, profiles, scope items, extracted items, percentages, completeness scores, session counts
+- Translate technical progress into client-meaningful outcomes
+- Bullets should be scannable in 10 seconds — a busy executive reads this between meetings
+- 250-400 words
+- If data is missing or you can't determine certain progress, skip that section gracefully rather than making things up
+
+## Example
+
 ---
 Hi Sarah,
 
-Hope your week is off to a good start! Quick update on where we are with Claims Assistant.
+Hope you're having a great week! Quick update on Claims Assistant — **we're on track and making strong progress.**
 
-Since our session on Tuesday, we've made really solid progress. We've now fully mapped out how Claims Assistant will handle all four main claim types — from initial intake through to resolution. We also locked in the escalation paths, so it's clear when Claims Assistant loops in your team versus handling things autonomously. That was a big milestone.
+**What we've accomplished:**
+- Fully mapped the claims intake workflow across all four claim types
+- Defined clear escalation paths — Claims Assistant knows exactly when to involve your team
+- Completed the initial technical review for CRM integration
 
-The process design is in great shape overall. One area I'd love your input on: for complaints that span multiple departments (we saw a couple of examples in Tuesday's session), we've identified two approaches. I can walk you through both in about 15 minutes — would Thursday afternoon work for a quick call?
+**Where we are now:**
+We're currently focused on the technical integration details for Claims Assistant, working through the data fields and API specifications with your IT team.
 
-Timeline-wise, we're tracking well for the March 15th go-live. Next week we move into the technical setup phase where we'll work with your IT team on the system integrations. I'll send a calendar invite for that session today.
+**Coming up next:**
+- Finalize the integration spec with your IT team (session scheduled for Tuesday)
+- Begin preparing the sign-off documentation for your review
+- Start outlining the testing plan
 
-Looking forward to Thursday — talk soon!
+**One thing I'd love your input on:**
+- For complaints that span multiple departments, we've identified two routing approaches. Would you have 15 minutes on Thursday for a quick walkthrough? I think we can lock this in quickly.
 
 Best,
 Sophie

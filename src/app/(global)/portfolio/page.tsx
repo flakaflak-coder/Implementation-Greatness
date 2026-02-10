@@ -152,12 +152,16 @@ function StatCard({
   onClick?: () => void
   active?: boolean
 }) {
+  const Component = onClick ? 'button' : 'div'
+
   return (
-    <div
+    <Component
       onClick={onClick}
+      aria-label={onClick ? `Filter by ${label}, ${value} implementations` : undefined}
+      aria-pressed={onClick ? !!active : undefined}
       className={cn(
-        'relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100/50 transition-all duration-300',
-        onClick && 'cursor-pointer hover:scale-[1.02] hover:shadow-md',
+        'relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100/50 transition-all duration-300 text-left w-full',
+        onClick && 'cursor-pointer hover:scale-[1.02] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C2703E]',
         active && 'ring-2 ring-offset-2 ring-[#C2703E]'
       )}
     >
@@ -184,7 +188,7 @@ function StatCard({
         <p className="text-3xl font-bold text-gray-900">{value}</p>
         <p className="text-sm font-medium text-gray-500 mt-0.5">{label}</p>
       </div>
-    </div>
+    </Component>
   )
 }
 
@@ -211,17 +215,26 @@ function HealthCard({ green, yellow, red }: { green: number; yellow: number; red
       {/* Content */}
       <div className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200" />
-            <span className="text-xl font-bold text-gray-900">{green}</span>
+          <div className="flex flex-col items-center gap-0.5" aria-label={`${green} healthy`}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200" />
+              <span className="text-xl font-bold text-gray-900">{green}</span>
+            </div>
+            <span className="text-xs text-gray-500">Healthy</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-200" />
-            <span className="text-xl font-bold text-gray-900">{yellow}</span>
+          <div className="flex flex-col items-center gap-0.5" aria-label={`${yellow} attention`}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-200" />
+              <span className="text-xl font-bold text-gray-900">{yellow}</span>
+            </div>
+            <span className="text-xs text-gray-500">Attention</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm shadow-red-200" />
-            <span className="text-xl font-bold text-gray-900">{red}</span>
+          <div className="flex flex-col items-center gap-0.5" aria-label={`${red} critical`}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm shadow-red-200" />
+              <span className="text-xl font-bold text-gray-900">{red}</span>
+            </div>
+            <span className="text-xs text-gray-500">Critical</span>
           </div>
         </div>
       </div>
@@ -429,8 +442,16 @@ export default function PortfolioPage() {
         </div>
 
         {error && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600">
-            {error}
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 flex items-center justify-between gap-4">
+            <span>{error}</span>
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              Try Again
+            </button>
           </div>
         )}
 
