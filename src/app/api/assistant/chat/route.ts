@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/db'
+import { IdSchema, SafeStringSchema } from '@/lib/validation'
 import {
   BUSINESS_PROFILE_MAPPING,
   TECHNICAL_PROFILE_MAPPING,
@@ -11,9 +13,16 @@ import {
 } from '@/components/de-workspace/types'
 import type { ExtractedItemType } from '@prisma/client'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+// Lazy-initialize to avoid errors during Next.js build (no API key at build time)
+let _anthropic: Anthropic | null = null
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
+    })
+  }
+  return _anthropic
+}
 
 // Field labels for tracker changes
 const trackerFieldLabels: Record<string, string> = {
@@ -104,22 +113,83 @@ function getISOWeek(date: Date = new Date()): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MessageHistorySchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: SafeStringSchema,
+})
+
+const DEContextSchema = z.object({
+  deId: IdSchema,
+  deName: z.string().max(255),
+  companyName: z.string().max(255),
+  designWeekId: IdSchema,
+  currentPhase: z.number().int().min(1).max(6),
+  status: z.string().max(50),
+  ambiguousCount: z.number().int().min(0),
+  sessionsCount: z.number().int().min(0),
+  scopeItemsCount: z.number().int().min(0),
+  completeness: z.object({
+    business: z.number().min(0).max(100),
+    technical: z.number().min(0).max(100),
+  }),
+})
+
+const PortfolioContextSchema = z.object({
+  mode: z.literal('portfolio'),
+  section: z.enum(['timeline', 'dashboard', 'weekplan', 'global']).optional(),
+})
+
+const ContextSchema = z.union([DEContextSchema, PortfolioContextSchema])
+
+const UIContextSchema = z.object({
+  activeTab: z.enum(['progress', 'business', 'technical', 'testplan', 'portfolio']),
+}).optional()
+
+const ChatRequestSchema = z.object({
+  message: SafeStringSchema.min(1).max(10000),
+  context: ContextSchema,
+  uiContext: UIContextSchema,
+  history: z.array(MessageHistorySchema).max(50).optional().default([]),
+})
+
+const ProposedChangeSchema = z.object({
+  deId: IdSchema,
+  deName: z.string().max(255),
+  companyName: z.string().max(255),
+  field: z.string().max(100),
+  fieldLabel: z.string().max(255).optional(),
+  oldValue: z.union([z.string().max(2000), z.number(), z.null()]),
+  newValue: z.union([z.string().max(2000), z.number(), z.null()]),
+})
+
+const ApplyChangesSchema = z.object({
+  changes: z.array(ProposedChangeSchema).min(1).max(50),
+})
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { message, context, uiContext, history } = body as {
-      message: string
-      context: Context
-      uiContext?: UIContext
-      history: Message[]
-    }
-
-    if (!message || !context) {
+    let validatedBody: z.infer<typeof ChatRequestSchema>
+    try {
+      const raw = await request.json()
+      validatedBody = ChatRequestSchema.parse(raw)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid input', details: error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
-        { success: false, error: 'Message and context are required' },
+        { success: false, error: 'Invalid JSON body' },
         { status: 400 }
       )
     }
+
+    const { message, context, uiContext, history } = validatedBody
 
     // Check if this is portfolio mode
     if (isPortfolioContext(context)) {
@@ -717,7 +787,7 @@ Be aware of context:
     ]
 
     // Generate response with Claude
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       system: systemPrompt,
@@ -982,7 +1052,7 @@ If you detect she wants to make changes (e.g., "mark X as blocked", "shift timel
     ]
 
     // Generate response with Claude
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       system: portfolioSystemPrompt,
@@ -1034,15 +1104,24 @@ If you detect she wants to make changes (e.g., "mark X as blocked", "shift timel
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { changes } = body as { changes: ProposedChange[] }
-
-    if (!changes || !Array.isArray(changes) || changes.length === 0) {
+    let validatedBody: z.infer<typeof ApplyChangesSchema>
+    try {
+      const raw = await request.json()
+      validatedBody = ApplyChangesSchema.parse(raw)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid input', details: error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
-        { success: false, error: 'No changes to apply' },
+        { success: false, error: 'Invalid JSON body' },
         { status: 400 }
       )
     }
+
+    const { changes } = validatedBody
 
     // Group changes by DE
     const changesByDE = new Map<string, Record<string, unknown>>()

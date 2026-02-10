@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, Part } from '@google/generative-ai'
+import { GoogleGenAI, type Part } from '@google/genai'
 import {
   buildSafePrompt,
   extractAndValidateJson,
@@ -9,15 +9,15 @@ import {
 } from './prompt-utils'
 import { trackLLMOperationServer } from './observatory/tracking'
 
+const GEMINI_TEXT_MODEL = 'gemini-3-pro-preview'
+
 // Lazy-initialize to avoid errors during Next.js build (no API key at build time)
-let _model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null
-function getModel() {
-  if (!_model) {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
-    // Use Gemini 3 Pro Preview for multimodal processing (audio/video/documents)
-    _model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+let _genAIClient: GoogleGenAI | null = null
+function getGenAIClient() {
+  if (!_genAIClient) {
+    _genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' })
   }
-  return _model
+  return _genAIClient
 }
 
 export interface ExtractionResult {
@@ -587,6 +587,39 @@ function getPromptForSessionType(sessionPhase?: number): string {
   }
 }
 
+/**
+ * Classify a Gemini API error into a user-friendly message.
+ * Never exposes API keys, internal URLs, or raw stack traces.
+ */
+function classifyGeminiError(error: unknown): { userMessage: string; retryable: boolean } {
+  if (!(error instanceof Error)) {
+    return { userMessage: 'An unexpected error occurred during Gemini processing.', retryable: false }
+  }
+
+  const msg = error.message.toLowerCase()
+
+  if (msg.includes('429') || msg.includes('rate limit') || msg.includes('resource exhausted') || msg.includes('quota')) {
+    return { userMessage: 'Gemini rate limit reached. Please wait a moment and try again.', retryable: true }
+  }
+  if (msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('invalid api key')) {
+    return { userMessage: 'Gemini authentication failed. Please verify the API key configuration.', retryable: false }
+  }
+  if (msg.includes('timeout') || msg.includes('deadline exceeded') || msg.includes('econnaborted')) {
+    return { userMessage: 'Gemini request timed out. The file may be too large or the service is under heavy load.', retryable: true }
+  }
+  if (msg.includes('500') || msg.includes('503') || msg.includes('service unavailable')) {
+    return { userMessage: 'Gemini service is temporarily unavailable. Please try again shortly.', retryable: true }
+  }
+
+  // Sanitize: strip potential credentials and URLs
+  let sanitized = error.message
+    .replace(/(?:key|token|api[_-]?key)[=:\s]+\S+/gi, '[redacted]')
+    .replace(/https?:\/\/\S+/gi, '[service-url]')
+  if (sanitized.length > 200) sanitized = sanitized.substring(0, 197) + '...'
+
+  return { userMessage: `Gemini processing error: ${sanitized}`, retryable: false }
+}
+
 export async function processRecording(
   audioBuffer: Buffer,
   mimeType: string,
@@ -603,14 +636,35 @@ export async function processRecording(
   // Use session-type-specific prompt
   const prompt = getPromptForSessionType(sessionPhase)
 
-  const result = await getModel().generateContent([
-    prompt,
-    audioPart,
-  ])
+  let response
+  try {
+    response = await getGenAIClient().models.generateContent({
+      model: GEMINI_TEXT_MODEL,
+      contents: [
+        { role: 'user', parts: [{ text: prompt }, audioPart] },
+      ],
+    })
+  } catch (error) {
+    const latencyMs = Date.now() - startTime
+    const classified = classifyGeminiError(error)
+    console.error(`[Gemini Extraction] API call failed for recording phase ${sessionPhase ?? 'unknown'}: ${classified.userMessage}`)
+
+    await trackLLMOperationServer({
+      pipelineName: `gemini-extract-phase${sessionPhase ?? 0}`,
+      model: GEMINI_TEXT_MODEL,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs,
+      success: false,
+      errorMessage: classified.userMessage,
+      metadata: { sessionPhase, mimeType },
+    })
+
+    throw new Error(classified.userMessage)
+  }
 
   const latencyMs = Date.now() - startTime
-  const response = result.response
-  const text = response.text()
+  const text = response.text ?? ''
 
   // Get token usage from response metadata (if available)
   const usageMetadata = response.usageMetadata
@@ -628,7 +682,7 @@ export async function processRecording(
       // Track failed operation
       await trackLLMOperationServer({
         pipelineName: `gemini-extract-phase${sessionPhase ?? 0}`,
-        model: 'gemini-3-pro-preview',
+        model: GEMINI_TEXT_MODEL,
         inputTokens,
         outputTokens,
         latencyMs,
@@ -644,7 +698,7 @@ export async function processRecording(
     // Track fallback operation
     await trackLLMOperationServer({
       pipelineName: `gemini-extract-phase${sessionPhase ?? 0}`,
-      model: 'gemini-3-pro-preview',
+      model: GEMINI_TEXT_MODEL,
       inputTokens,
       outputTokens,
       latencyMs,
@@ -666,7 +720,7 @@ export async function processRecording(
   // Track successful operation
   await trackLLMOperationServer({
     pipelineName: `gemini-extract-phase${sessionPhase ?? 0}`,
-    model: 'gemini-3-pro-preview',
+    model: GEMINI_TEXT_MODEL,
     inputTokens,
     outputTokens,
     latencyMs,
@@ -695,14 +749,35 @@ export async function processDocument(
     .replace(/recording/g, 'document')
     .replace(/timestamp/g, 'page/paragraph')
 
-  const result = await getModel().generateContent([
-    prompt,
-    docPart,
-  ])
+  let response
+  try {
+    response = await getGenAIClient().models.generateContent({
+      model: GEMINI_TEXT_MODEL,
+      contents: [
+        { role: 'user', parts: [{ text: prompt }, docPart] },
+      ],
+    })
+  } catch (error) {
+    const latencyMs = Date.now() - startTime
+    const classified = classifyGeminiError(error)
+    console.error(`[Gemini Document Extraction] API call failed for phase ${sessionPhase ?? 'unknown'}: ${classified.userMessage}`)
+
+    await trackLLMOperationServer({
+      pipelineName: `gemini-document-phase${sessionPhase ?? 0}`,
+      model: GEMINI_TEXT_MODEL,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs,
+      success: false,
+      errorMessage: classified.userMessage,
+      metadata: { sessionPhase, mimeType, type: 'document' },
+    })
+
+    throw new Error(classified.userMessage)
+  }
 
   const latencyMs = Date.now() - startTime
-  const response = result.response
-  const text = response.text()
+  const text = response.text ?? ''
 
   // Get token usage from response metadata (if available)
   const usageMetadata = response.usageMetadata
@@ -719,7 +794,7 @@ export async function processDocument(
     if (!jsonMatch) {
       await trackLLMOperationServer({
         pipelineName: `gemini-document-phase${sessionPhase ?? 0}`,
-        model: 'gemini-3-pro-preview',
+        model: GEMINI_TEXT_MODEL,
         inputTokens,
         outputTokens,
         latencyMs,
@@ -734,7 +809,7 @@ export async function processDocument(
 
     await trackLLMOperationServer({
       pipelineName: `gemini-document-phase${sessionPhase ?? 0}`,
-      model: 'gemini-3-pro-preview',
+      model: GEMINI_TEXT_MODEL,
       inputTokens,
       outputTokens,
       latencyMs,
@@ -755,7 +830,7 @@ export async function processDocument(
 
   await trackLLMOperationServer({
     pipelineName: `gemini-document-phase${sessionPhase ?? 0}`,
-    model: 'gemini-3-pro-preview',
+    model: GEMINI_TEXT_MODEL,
     inputTokens,
     outputTokens,
     latencyMs,
@@ -770,16 +845,7 @@ export async function processDocument(
 // IMAGE GENERATION - Gemini Imagen 4
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { GoogleGenAI } from '@google/genai'
-
-// Lazy-initialize Imagen client
-let _genAIClient: GoogleGenAI | null = null
-function getGenAIClient() {
-  if (!_genAIClient) {
-    _genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' })
-  }
-  return _genAIClient
-}
+// Re-use the same GoogleGenAI client initialized at the top of this file
 
 /**
  * Generate an avatar for a Digital Employee using Gemini Imagen 4

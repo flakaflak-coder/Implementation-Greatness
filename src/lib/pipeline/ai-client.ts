@@ -5,7 +5,7 @@
  * fallback from Gemini to Claude when rate-limited (429 errors).
  */
 
-import { GoogleGenerativeAI, Part } from '@google/generative-ai'
+import { GoogleGenAI, type Part } from '@google/genai'
 import Anthropic from '@anthropic-ai/sdk'
 import { extractText } from 'unpdf'
 
@@ -17,12 +17,12 @@ const RETRY_DELAY_MS = 1000
 const DEFAULT_MAX_TOKENS = 16384 // Max without requiring streaming
 
 // Lazy-load clients to avoid initialization issues in tests
-let _gemini: GoogleGenerativeAI | null = null
+let _gemini: GoogleGenAI | null = null
 let _anthropic: Anthropic | null = null
 
-function getGeminiClient(): GoogleGenerativeAI {
+function getGeminiClient(): GoogleGenAI {
   if (!_gemini) {
-    _gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+    _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' })
   }
   return _gemini
 }
@@ -104,19 +104,122 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 }
 
 /**
+ * Categorized AI API error with user-friendly messaging
+ */
+interface AIApiError {
+  type: 'rate_limit' | 'auth' | 'timeout' | 'server' | 'unknown'
+  userMessage: string
+  retryable: boolean
+  retryAfterMs?: number
+}
+
+/**
+ * Classify an error from an AI API call into a structured category.
+ * Never exposes raw API keys or internal URLs in the user message.
+ */
+function classifyAIError(error: unknown): AIApiError {
+  if (!(error instanceof Error)) {
+    return {
+      type: 'unknown',
+      userMessage: 'An unexpected error occurred while communicating with the AI service.',
+      retryable: false,
+    }
+  }
+
+  const message = error.message.toLowerCase()
+  const name = error.name.toLowerCase()
+
+  // Rate limit (429)
+  if (
+    message.includes('429') ||
+    message.includes('rate limit') ||
+    message.includes('resource exhausted') ||
+    message.includes('too many requests') ||
+    message.includes('quota')
+  ) {
+    // Try to extract retry-after from the error message
+    const retryAfterMatch = error.message.match(/retry[- ]?after[:\s]*(\d+)/i)
+    const retryAfterMs = retryAfterMatch ? parseInt(retryAfterMatch[1], 10) * 1000 : 60000
+
+    return {
+      type: 'rate_limit',
+      userMessage: `AI service rate limit reached. Please wait ${Math.ceil(retryAfterMs / 1000)} seconds before retrying.`,
+      retryable: true,
+      retryAfterMs,
+    }
+  }
+
+  // Authentication / authorization (401 / 403)
+  if (
+    message.includes('401') ||
+    message.includes('403') ||
+    message.includes('unauthorized') ||
+    message.includes('forbidden') ||
+    message.includes('authentication') ||
+    message.includes('invalid api key') ||
+    message.includes('permission denied')
+  ) {
+    return {
+      type: 'auth',
+      userMessage: 'AI service authentication failed. Please check the API key configuration.',
+      retryable: false,
+    }
+  }
+
+  // Timeout
+  if (
+    message.includes('timeout') ||
+    message.includes('timed out') ||
+    message.includes('deadline exceeded') ||
+    name.includes('timeout') ||
+    message.includes('econnaborted') ||
+    message.includes('socket hang up')
+  ) {
+    return {
+      type: 'timeout',
+      userMessage: 'AI service request timed out. The file may be too large or the service is under heavy load. Please try again.',
+      retryable: true,
+    }
+  }
+
+  // Server errors (5xx)
+  if (
+    message.includes('500') ||
+    message.includes('502') ||
+    message.includes('503') ||
+    message.includes('504') ||
+    message.includes('internal server error') ||
+    message.includes('service unavailable') ||
+    message.includes('bad gateway')
+  ) {
+    return {
+      type: 'server',
+      userMessage: 'The AI service is temporarily unavailable. Please try again in a few minutes.',
+      retryable: true,
+    }
+  }
+
+  // Fallback: strip any potential credentials or URLs from the message
+  let sanitized = error.message
+    .replace(/(?:key|token|api[_-]?key)[=:\s]+\S+/gi, '[redacted]')
+    .replace(/https?:\/\/\S+/gi, '[service-url]')
+
+  if (sanitized.length > 200) {
+    sanitized = sanitized.substring(0, 197) + '...'
+  }
+
+  return {
+    type: 'unknown',
+    userMessage: `AI processing error: ${sanitized}`,
+    retryable: false,
+  }
+}
+
+/**
  * Check if an error is a rate limit error (429)
  */
 function isRateLimitError(error: unknown): boolean {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase()
-    return (
-      message.includes('429') ||
-      message.includes('rate limit') ||
-      message.includes('resource exhausted') ||
-      message.includes('too many requests')
-    )
-  }
-  return false
+  return classifyAIError(error).type === 'rate_limit'
 }
 
 /**
@@ -136,15 +239,9 @@ async function generateWithGemini(options: AIGenerateOptions): Promise<AIGenerat
     throw new Error('GEMINI_API_KEY is not set')
   }
 
-  const genAI = getGeminiClient()
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    generationConfig: {
-      maxOutputTokens: options.maxTokens || DEFAULT_MAX_TOKENS,
-    },
-  })
+  const ai = getGeminiClient()
 
-  const parts: (string | Part)[] = []
+  const parts: Part[] = []
 
   // Handle file content
   if (options.fileBuffer && options.mimeType) {
@@ -155,7 +252,7 @@ async function generateWithGemini(options: AIGenerateOptions): Promise<AIGenerat
       console.log('[Gemini] Extracting text from PDF...')
       const pdfText = await extractTextFromPDF(options.fileBuffer)
       console.log(`[Gemini] Extracted ${pdfText.length} chars from PDF`)
-      parts.push(`PDF DOCUMENT CONTENT:\n${pdfText}\n\n---\n\n`)
+      parts.push({ text: `PDF DOCUMENT CONTENT:\n${pdfText}\n\n---\n\n` })
     } else {
       // For other file types, send as inline data
       parts.push({
@@ -168,14 +265,20 @@ async function generateWithGemini(options: AIGenerateOptions): Promise<AIGenerat
   }
 
   // Add prompt after file content
-  parts.push(options.prompt)
+  parts.push({ text: options.prompt })
   console.log(`[Gemini] Prompt length: ${options.prompt.length} chars`)
 
   try {
     console.log('[Gemini] Calling API...')
-    const result = await model.generateContent(parts)
-    const response = result.response
-    const text = response.text()
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: 'user', parts }],
+      config: {
+        maxOutputTokens: options.maxTokens || DEFAULT_MAX_TOKENS,
+      },
+    })
+
+    const text = response.text ?? ''
 
     // Check for truncation - Gemini uses finishReason
     const finishReason = response.candidates?.[0]?.finishReason
@@ -196,9 +299,12 @@ async function generateWithGemini(options: AIGenerateOptions): Promise<AIGenerat
       truncated,
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error(`[Gemini] API Error: ${errorMsg}`)
-    throw error
+    const classified = classifyAIError(error)
+    console.error(`[Gemini] API Error (${classified.type}): ${classified.userMessage}`)
+    // Throw a new error with the user-safe message but preserve the type for retry logic
+    const wrappedError = new Error(classified.userMessage)
+    wrappedError.name = `GeminiError_${classified.type}`
+    throw wrappedError
   }
 }
 
@@ -286,9 +392,11 @@ async function generateWithClaude(options: AIGenerateOptions): Promise<AIGenerat
       truncated,
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error(`[Claude] API Error: ${errorMsg}`)
-    throw error
+    const classified = classifyAIError(error)
+    console.error(`[Claude] API Error (${classified.type}): ${classified.userMessage}`)
+    const wrappedError = new Error(classified.userMessage)
+    wrappedError.name = `ClaudeError_${classified.type}`
+    throw wrappedError
   }
 }
 
@@ -333,28 +441,51 @@ export async function generateWithFallback(
       return await generateWithGemini(options)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
+      const classified = classifyAIError(error)
 
-      if (isRateLimitError(error)) {
-        console.log(`[AI Client] Gemini rate limited, attempt ${attempt + 1}/${MAX_RETRIES + 1}`)
+      if (classified.type === 'rate_limit') {
+        const delayMs = classified.retryAfterMs
+          ? Math.min(classified.retryAfterMs, RETRY_DELAY_MS * (attempt + 1))
+          : RETRY_DELAY_MS * (attempt + 1)
+
+        console.log(`[AI Client] Gemini rate limited, attempt ${attempt + 1}/${MAX_RETRIES + 1}, retrying in ${delayMs}ms`)
 
         if (attempt < MAX_RETRIES) {
-          await sleep(RETRY_DELAY_MS * (attempt + 1))
+          await sleep(delayMs)
           continue
         }
 
         // Fall back to Claude if it can handle this content
         if (!options.mimeType || claudeCanHandle(options.mimeType)) {
-          console.log('[AI Client] Falling back to Claude')
-          return await generateWithClaude(options)
+          console.log('[AI Client] Falling back to Claude after Gemini rate limit')
+          try {
+            return await generateWithClaude(options)
+          } catch (claudeError) {
+            const claudeClassified = classifyAIError(claudeError)
+            console.error(`[AI Client] Claude fallback also failed (${claudeClassified.type}): ${claudeClassified.userMessage}`)
+            throw new Error(claudeClassified.userMessage)
+          }
         }
       }
 
-      // Non-rate-limit error, throw immediately
-      throw error
+      // Auth errors should fail immediately with a clear message
+      if (classified.type === 'auth') {
+        throw new Error(classified.userMessage)
+      }
+
+      // Timeout errors: retry once before giving up
+      if (classified.type === 'timeout' && attempt < MAX_RETRIES) {
+        console.log(`[AI Client] Gemini timed out, retrying (attempt ${attempt + 1}/${MAX_RETRIES + 1})`)
+        await sleep(RETRY_DELAY_MS * (attempt + 1))
+        continue
+      }
+
+      // Non-retryable or exhausted retries: throw with user-safe message
+      throw new Error(classified.userMessage)
     }
   }
 
-  throw lastError || new Error('AI generation failed')
+  throw lastError || new Error('AI generation failed after all retry attempts.')
 }
 
 /**
@@ -378,7 +509,7 @@ function repairJSON(jsonStr: string): string {
     const lastQuoteIdx = repaired.lastIndexOf('"')
     const afterLastQuote = repaired.substring(lastQuoteIdx + 1)
     // If nothing meaningful after quote, it's likely truncated mid-string
-    if (!/[":,\[\]{}]/.test(afterLastQuote.trim())) {
+    if (!/[":,[\]{}]/.test(afterLastQuote.trim())) {
       repaired = repaired.substring(0, lastQuoteIdx + 1) + '"'
       console.log('[JSON Repair] Fixed unclosed string')
     }

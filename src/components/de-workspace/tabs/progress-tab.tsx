@@ -28,6 +28,7 @@ import { GenerateDocButton } from '../shared/generate-doc-button'
 import { ExportPDFButton } from '../shared/export-pdf-button'
 import { MissingQuestionsCard } from '../shared/missing-questions-card'
 import type { ExtractedItemType } from '@prisma/client'
+import { PrerequisitesGate } from '../prerequisites-gate'
 import type {
   ProfileCompleteness,
   ExtractedItemWithSession,
@@ -40,6 +41,7 @@ import type {
 
 interface ProgressTabProps {
   designWeek: DEWorkspaceDesignWeek
+  digitalEmployeeId: string
   profileCompleteness: ProfileCompleteness
   pendingItems: ExtractedItemWithSession[]
   ambiguousItems: DEWorkspaceScopeItem[]
@@ -210,6 +212,7 @@ interface PrerequisiteSummary {
 
 export function ProgressTab({
   designWeek,
+  digitalEmployeeId,
   profileCompleteness,
   pendingItems,
   ambiguousItems,
@@ -483,8 +486,48 @@ export function ProgressTab({
       topicsCovered: s.topicsCovered as string[],
     }))
 
+  // Check if this is a brand new design week with no data at all
+  const hasNoData = designWeek.sessions.length === 0 &&
+    extractedItems.length === 0 &&
+    (!designWeek.uploadJobs || designWeek.uploadJobs.length === 0)
+
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Getting Started guide -- shown only when no data exists */}
+      {hasNoData && (
+        <Card className="border-[#E8D5C4] bg-[#FDF3EC]/30">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C2703E] to-[#A05A32] flex items-center justify-center shrink-0">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Welcome to Design Week</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  This is where you define the Digital Employee. Start by uploading a session recording or
+                  transcript from your Kickoff call. The AI will automatically extract goals, stakeholders,
+                  KPIs, and more.
+                </p>
+                <div className="flex flex-col gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span className="w-5 h-5 rounded-full bg-[#C2703E] text-white text-xs flex items-center justify-center font-medium">1</span>
+                    Upload your Kickoff session recording or transcript above
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span className="w-5 h-5 rounded-full bg-[#C2703E]/60 text-white text-xs flex items-center justify-center font-medium">2</span>
+                    Review the AI-extracted items in the Business and Technical tabs
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span className="w-5 h-5 rounded-full bg-[#C2703E]/30 text-white text-xs flex items-center justify-center font-medium">3</span>
+                    Continue with Process Design, Technical, and Sign-off sessions
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Overall Progress */}
       <Card>
         <CardHeader>
@@ -520,6 +563,12 @@ export function ProgressTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Prerequisites Gate - blocks phase transitions when prerequisites are incomplete */}
+      <PrerequisitesGate
+        digitalEmployeeId={digitalEmployeeId}
+        onPhaseTransition={onRefresh}
+      />
 
       {/* Session Planning Guide - Helps Sophie know what to ask when */}
       <Card>
@@ -949,7 +998,18 @@ export function ProgressTab({
                     </p>
                   </div>
                 </div>
-                <Badge variant="warning">{pendingItems.length}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="warning">{pendingItems.length}</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTabChange('business')}
+                    className="text-amber-700 border-amber-200 hover:bg-amber-50"
+                  >
+                    Review
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -969,7 +1029,18 @@ export function ProgressTab({
                     </p>
                   </div>
                 </div>
-                <Badge variant="destructive">{ambiguousItems.length}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="destructive">{ambiguousItems.length}</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTabChange('scope')}
+                    className="text-red-700 border-red-200 hover:bg-red-50"
+                  >
+                    Resolve
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

@@ -11,10 +11,19 @@ import {
   UserCircle,
   Rocket,
   AlertCircle,
+  AlertTriangle,
+  TrendingUp,
+  ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // Types matching the timeline API response
 type LifecycleStage = 'design_week' | 'configuration' | 'uat' | 'live'
@@ -84,6 +93,10 @@ interface ConsultantCapacity {
     trafficLight: TrafficLight
   }[]
 }
+
+// Workload thresholds
+const WORKLOAD_THRESHOLD_HIGH = 5
+const WORKLOAD_THRESHOLD_WARNING = 4
 
 const STAGE_CONFIG: Record<LifecycleStage, { label: string; shortLabel: string; bg: string; text: string; pill: string }> = {
   design_week: {
@@ -191,20 +204,32 @@ function SummaryItem({
   label,
   value,
   icon: Icon,
+  warning,
 }: {
   label: string
   value: string | number
   icon: React.ElementType
+  warning?: string
 }) {
   return (
     <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-5 py-4 shadow-sm">
       <div className="w-10 h-10 rounded-xl bg-[#FDF3EC] flex items-center justify-center shrink-0">
         <Icon className="w-5 h-5 text-[#C2703E]" />
       </div>
-      <div>
+      <div className="flex-1 min-w-0">
         <p className="text-2xl font-bold text-gray-900">{value}</p>
         <p className="text-xs font-medium text-gray-500">{label}</p>
       </div>
+      {warning && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">{warning}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
     </div>
   )
 }
@@ -263,17 +288,70 @@ function TrafficLightSummary({ byTrafficLight }: { byTrafficLight: ConsultantCap
   )
 }
 
-// Visual workload bar
+// Visual workload bar with overload indicator
 function WorkloadBar({ count, maxCount }: { count: number; maxCount: number }) {
   const widthPercent = maxCount > 0 ? (count / maxCount) * 100 : 0
+  const isOverloaded = count >= WORKLOAD_THRESHOLD_HIGH
+  const isWarning = count >= WORKLOAD_THRESHOLD_WARNING && count < WORKLOAD_THRESHOLD_HIGH
   return (
     <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
       <div
-        className="h-full rounded-full bg-[#C2703E] transition-all duration-500"
+        className={cn(
+          'h-full rounded-full transition-all duration-500',
+          isOverloaded ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-[#C2703E]'
+        )}
         style={{ width: `${widthPercent}%` }}
       />
     </div>
   )
+}
+
+// Workload status label
+function WorkloadStatus({ count }: { count: number }) {
+  if (count >= WORKLOAD_THRESHOLD_HIGH) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="destructive" className="text-[10px] gap-1">
+            <ShieldAlert className="w-3 h-3" />
+            Overloaded
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">
+            {count} active DEs exceeds recommended maximum of {WORKLOAD_THRESHOLD_HIGH - 1}.
+            Consider reassigning some implementations.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+  if (count >= WORKLOAD_THRESHOLD_WARNING) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="warning" className="text-[10px] gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            High Load
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">
+            {count} active DEs is near the recommended maximum.
+            Monitor workload and consider redistribution.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+  if (count <= 1) {
+    return (
+      <Badge variant="success" className="text-[10px]">
+        Available
+      </Badge>
+    )
+  }
+  return null
 }
 
 // Single DE mini-row within a consultant card
@@ -309,9 +387,15 @@ function ConsultantCard({
   isUnassigned?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
+  const hasIssues = consultant.byTrafficLight.red > 0 || consultant.byTrafficLight.yellow > 0
 
   return (
-    <Card className={cn('overflow-hidden transition-shadow hover:shadow-md', isUnassigned && 'border-dashed')}>
+    <Card className={cn(
+      'overflow-hidden transition-shadow hover:shadow-md',
+      isUnassigned && 'border-dashed',
+      consultant.totalDEs >= WORKLOAD_THRESHOLD_HIGH && 'border-red-200',
+      consultant.totalDEs >= WORKLOAD_THRESHOLD_WARNING && consultant.totalDEs < WORKLOAD_THRESHOLD_HIGH && 'border-amber-200'
+    )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -328,14 +412,23 @@ function ConsultantCard({
               )}
             </div>
             <div className="min-w-0">
-              <CardTitle className="text-base truncate">{consultant.name}</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base truncate">{consultant.name}</CardTitle>
+                <WorkloadStatus count={consultant.totalDEs} />
+              </div>
               <div className="mt-1">
                 <TrafficLightSummary byTrafficLight={consultant.byTrafficLight} />
               </div>
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-3xl font-bold text-gray-900">{consultant.totalDEs}</p>
+            <p className={cn(
+              'text-3xl font-bold',
+              consultant.totalDEs >= WORKLOAD_THRESHOLD_HIGH ? 'text-red-600' :
+              consultant.totalDEs >= WORKLOAD_THRESHOLD_WARNING ? 'text-amber-600' : 'text-gray-900'
+            )}>
+              {consultant.totalDEs}
+            </p>
             <p className="text-xs text-gray-500">
               DE{consultant.totalDEs !== 1 ? 's' : ''}
             </p>
@@ -348,6 +441,18 @@ function ConsultantCard({
 
         {/* Workload bar */}
         <WorkloadBar count={consultant.totalDEs} maxCount={maxCount} />
+
+        {/* Issue warning if consultant has at-risk DEs */}
+        {hasIssues && !isUnassigned && (
+          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="text-xs text-amber-700">
+              {consultant.byTrafficLight.red > 0 && `${consultant.byTrafficLight.red} critical`}
+              {consultant.byTrafficLight.red > 0 && consultant.byTrafficLight.yellow > 0 && ', '}
+              {consultant.byTrafficLight.yellow > 0 && `${consultant.byTrafficLight.yellow} needing attention`}
+            </span>
+          </div>
+        )}
 
         {/* DE list toggle */}
         <button
@@ -409,12 +514,13 @@ export default function CapacityPlanningPage() {
   const avgPerLead = leadCount > 0 ? (totalDEs / leadCount).toFixed(1) : '0'
   const mostLoaded = assigned.length > 0 ? assigned[0] : null
   const maxCount = mostLoaded?.totalDEs ?? 1
+  const overloadedCount = assigned.filter(c => c.totalDEs >= WORKLOAD_THRESHOLD_HIGH).length
 
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link href="/portfolio">
               <Button
@@ -428,7 +534,7 @@ export default function CapacityPlanningPage() {
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">Capacity Planning</h1>
               <p className="text-gray-500 text-sm mt-1">
-                Resource load across implementation leads per week
+                Resource load across implementation leads
               </p>
             </div>
           </div>
@@ -442,6 +548,26 @@ export default function CapacityPlanningPage() {
             <RefreshCw className={cn('w-4 h-4 mr-2', loading && 'animate-spin')} />
             Refresh
           </Button>
+        </div>
+
+        {/* Sub-navigation */}
+        <div className="flex items-center gap-3 mb-6">
+          <Link href="/portfolio">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm font-medium transition-all hover:bg-gray-50">
+              <BarChart3 className="w-4 h-4" />
+              Overview
+            </div>
+          </Link>
+          <Link href="/portfolio/at-risk">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm font-medium transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-700">
+              <AlertTriangle className="w-4 h-4" />
+              At Risk
+            </div>
+          </Link>
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#C2703E] text-white text-sm font-medium">
+            <Users className="w-4 h-4" />
+            Capacity
+          </div>
         </div>
 
         {/* Error state */}
@@ -487,23 +613,61 @@ export default function CapacityPlanningPage() {
         ) : (
           <>
             {/* Summary bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <SummaryItem
                 label="Total DEs"
                 value={totalDEs}
                 icon={BarChart3}
               />
               <SummaryItem
-                label="Avg DEs per Lead"
-                value={avgPerLead}
+                label="Implementation Leads"
+                value={leadCount}
                 icon={Users}
               />
               <SummaryItem
-                label={mostLoaded ? `Most Loaded (${mostLoaded.name})` : 'Most Loaded'}
-                value={mostLoaded?.totalDEs ?? 0}
-                icon={Crown}
+                label="Avg DEs per Lead"
+                value={avgPerLead}
+                icon={TrendingUp}
+                warning={Number(avgPerLead) >= WORKLOAD_THRESHOLD_WARNING ? `Average workload is high (${avgPerLead} per lead)` : undefined}
+              />
+              <SummaryItem
+                label={overloadedCount > 0 ? `Overloaded Leads` : mostLoaded ? `Most Loaded (${mostLoaded.name})` : 'Most Loaded'}
+                value={overloadedCount > 0 ? overloadedCount : mostLoaded?.totalDEs ?? 0}
+                icon={overloadedCount > 0 ? ShieldAlert : Crown}
+                warning={overloadedCount > 0 ? `${overloadedCount} lead${overloadedCount !== 1 ? 's' : ''} with ${WORKLOAD_THRESHOLD_HIGH}+ DEs` : undefined}
               />
             </div>
+
+            {/* Overload alert banner */}
+            {overloadedCount > 0 && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-red-800">
+                    {overloadedCount} lead{overloadedCount !== 1 ? 's are' : ' is'} overloaded
+                  </p>
+                  <p className="text-sm text-red-700 mt-0.5">
+                    {assigned.filter(c => c.totalDEs >= WORKLOAD_THRESHOLD_HIGH).map(c => c.name).join(', ')}{' '}
+                    {overloadedCount === 1 ? 'has' : 'have'} {WORKLOAD_THRESHOLD_HIGH} or more active DEs. Consider reassigning implementations to balance workload.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Unassigned alert */}
+            {unassigned && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">
+                    {unassigned.totalDEs} unassigned DE{unassigned.totalDEs !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-sm text-amber-700 mt-0.5">
+                    These implementations need an assigned lead. Review and assign to balance the team workload.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Consultant cards grid */}
             {assigned.length > 0 && (

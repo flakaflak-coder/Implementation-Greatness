@@ -31,6 +31,7 @@ interface ScopeGuardianProps {
   scopeItems: ScopeItem[]
   skills?: string[]
   onResolve?: (id: string, classification: 'IN_SCOPE' | 'OUT_OF_SCOPE', notes?: string) => void
+  onUnresolve?: (id: string) => void
   onViewEvidence?: (evidence: Evidence) => void
   className?: string
 }
@@ -39,6 +40,7 @@ export function ScopeGuardian({
   scopeItems,
   skills = [],
   onResolve,
+  onUnresolve,
   onViewEvidence,
   className,
 }: ScopeGuardianProps) {
@@ -70,8 +72,40 @@ export function ScopeGuardian({
     ambiguous: scopeItems.filter((i) => i.classification === 'AMBIGUOUS').length,
   }
 
+  const totalItems = scopeItems.length
+
+  // If no scope items exist at all, show an empty state
+  if (totalItems === 0) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-[#D4956A]" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No scope items yet</h3>
+          <p className="text-sm text-gray-500 max-w-md mx-auto mb-2">
+            Scope items are automatically extracted from your session recordings and transcripts.
+            Upload a Process Design or Technical session to start building the scope.
+          </p>
+          <p className="text-xs text-gray-400 max-w-sm mx-auto">
+            The AI identifies what the Digital Employee should handle (in scope), what it should not handle (out of scope),
+            and items that need clarification (ambiguous).
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Introduction text when there are ambiguous items */}
+      {counts.ambiguous > 0 && (
+        <p className="text-sm text-gray-600">
+          The AI extracted {totalItems} scope items from your sessions. <span className="font-medium text-amber-700">{counts.ambiguous} items are ambiguous</span> and
+          need your decision before sign-off. Review each item and mark it as In Scope or Out of Scope.
+        </p>
+      )}
+
       {/* Header with search and filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -165,14 +199,23 @@ export function ScopeGuardian({
 
         <TabsContent value="in-scope" className="mt-4 space-y-3">
           {groupedItems.inScope.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No in-scope items found.</p>
+            <div className="text-center py-10">
+              <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-7 h-7 text-green-300" />
+              </div>
+              <p className="font-medium text-gray-700">No in-scope items yet</p>
+              <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                {searchQuery
+                  ? 'No in-scope items match your search. Try different terms.'
+                  : 'Items will appear here once scope decisions are made from session extractions or resolved from ambiguous items.'}
+              </p>
             </div>
           ) : (
             groupedItems.inScope.map((item) => (
               <ScopeItemCard
                 key={item.id}
                 {...item}
+                onUnresolve={onUnresolve}
                 onViewEvidence={onViewEvidence}
               />
             ))
@@ -181,14 +224,23 @@ export function ScopeGuardian({
 
         <TabsContent value="out-of-scope" className="mt-4 space-y-3">
           {groupedItems.outOfScope.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No out-of-scope items found.</p>
+            <div className="text-center py-10">
+              <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-3">
+                <XCircle className="w-7 h-7 text-red-300" />
+              </div>
+              <p className="font-medium text-gray-700">No out-of-scope items yet</p>
+              <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                {searchQuery
+                  ? 'No out-of-scope items match your search. Try different terms.'
+                  : 'Items explicitly excluded from the implementation will appear here. This helps prevent scope creep.'}
+              </p>
             </div>
           ) : (
             groupedItems.outOfScope.map((item) => (
               <ScopeItemCard
                 key={item.id}
                 {...item}
+                onUnresolve={onUnresolve}
                 onViewEvidence={onViewEvidence}
               />
             ))

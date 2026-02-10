@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { validateId } from '@/lib/validation'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION SCHEMA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ExcludeScopeItemSchema = z.object({
+  excludeFromDocument: z.boolean(),
+})
 
 // PATCH /api/scope-items/[id]/exclude - Toggle exclude from document flag
 export async function PATCH(
@@ -12,19 +21,35 @@ export async function PATCH(
     const idCheck = validateId(id)
     if (!idCheck.success) return idCheck.response
 
-    const body = await request.json()
-    const { excludeFromDocument } = body
-
-    if (typeof excludeFromDocument !== 'boolean') {
+    let body: z.infer<typeof ExcludeScopeItemSchema>
+    try {
+      const raw = await request.json()
+      body = ExcludeScopeItemSchema.parse(raw)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid input', details: error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
-        { success: false, error: 'excludeFromDocument must be a boolean' },
+        { success: false, error: 'Invalid JSON body' },
         { status: 400 }
+      )
+    }
+
+    // Verify the scope item exists before updating
+    const existing = await prisma.scopeItem.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Scope item not found' },
+        { status: 404 }
       )
     }
 
     const scopeItem = await prisma.scopeItem.update({
       where: { id },
-      data: { excludeFromDocument },
+      data: { excludeFromDocument: body.excludeFromDocument },
       include: { evidence: true },
     })
 

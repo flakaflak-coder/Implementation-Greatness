@@ -257,10 +257,17 @@ function JourneyTimeline({
 }) {
   if (!digitalEmployees.length && !milestones.length) {
     return (
-      <div className="text-center py-12 text-gray-400">
-        <Bot className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-        <p className="font-medium text-gray-500">No Digital Employees yet</p>
-        <p className="text-sm">Create your first DE to start the journey</p>
+      <div className="text-center py-12 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50">
+        <div className="w-16 h-16 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+          <Bot className="w-8 h-8 text-[#D4956A]" />
+        </div>
+        <p className="font-semibold text-gray-700 mb-1">No Digital Employees yet</p>
+        <p className="text-sm text-gray-500 mb-4 max-w-xs mx-auto">
+          Create your first Digital Employee to kick off the Design Week process
+        </p>
+        <p className="text-xs text-gray-400">
+          Use the &quot;Add DE&quot; button above to get started
+        </p>
       </div>
     )
   }
@@ -741,8 +748,25 @@ export default function CompanyDetailPage({
   // Loading state
   if (loading && !company) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mb-6" />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-xl bg-gray-200 animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-lg bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-24 rounded-lg bg-gray-50 border border-gray-100 animate-pulse" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -765,14 +789,18 @@ export default function CompanyDetailPage({
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
-      {/* Back link */}
-      <Link
-        href="/companies"
-        className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4 mr-1" />
-        Companies
-      </Link>
+      {/* Breadcrumb navigation */}
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+        <Link href="/" className="hover:text-gray-900 transition-colors">
+          Dashboard
+        </Link>
+        <span>/</span>
+        <Link href="/companies" className="hover:text-gray-900 transition-colors">
+          Companies
+        </Link>
+        <span>/</span>
+        <span className="text-gray-900 font-medium">{company.name}</span>
+      </nav>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

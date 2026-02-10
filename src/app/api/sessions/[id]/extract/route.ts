@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { extractFromTranscript, saveExtractedItems } from '@/lib/claude'
 import { validateId } from '@/lib/validation'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION SCHEMA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ExtractRequestSchema = z.object({
+  transcript: z.string().min(1, 'Transcript is required').max(500000),
+  sessionType: z.enum(['kickoff', 'process', 'technical', 'signoff', 'persona'], {
+    error: 'sessionType must be one of: kickoff, process, technical, signoff, persona',
+  }),
+})
 
 export async function POST(
   request: NextRequest,
@@ -12,18 +24,24 @@ export async function POST(
     const idCheck = validateId(sessionId)
     if (!idCheck.success) return idCheck.response
 
-    const body = await request.json()
-    const { transcript, sessionType } = body as {
-      transcript: string
-      sessionType: 'kickoff' | 'process' | 'technical' | 'signoff'
-    }
-
-    if (!transcript || !sessionType) {
+    let body: z.infer<typeof ExtractRequestSchema>
+    try {
+      const raw = await request.json()
+      body = ExtractRequestSchema.parse(raw)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid input', details: error.issues.map(e => ({ path: e.path.join('.'), message: e.message })) },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
-        { error: 'transcript and sessionType are required' },
+        { success: false, error: 'Invalid JSON body' },
         { status: 400 }
       )
     }
+
+    const { transcript, sessionType } = body
 
     // Verify session exists
     const session = await prisma.session.findUnique({
@@ -31,7 +49,7 @@ export async function POST(
     })
 
     if (!session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
     }
 
     // Update session status
@@ -122,8 +140,13 @@ export async function POST(
     }
   } catch (error) {
     console.error('Extraction error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    // Sanitize error message for user display
+    const safeMessage = message
+      .replace(/(?:key|token|api[_-]?key)[=:\s]+\S+/gi, '[redacted]')
+      .replace(/https?:\/\/\S+/gi, '[service-url]')
     return NextResponse.json(
-      { error: 'Extraction failed. Please try again.' },
+      { success: false, error: `Extraction failed: ${safeMessage.length > 200 ? safeMessage.substring(0, 197) + '...' : safeMessage}` },
       { status: 500 }
     )
   }
@@ -148,7 +171,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching extracted items:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch extracted items' },
+      { success: false, error: 'Failed to fetch extracted items' },
       { status: 500 }
     )
   }

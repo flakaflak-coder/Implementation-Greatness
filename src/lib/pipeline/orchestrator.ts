@@ -15,7 +15,37 @@ import type {
   ExtractedEntity,
   SpecializedItem,
   ExtractionMode,
+  ClassificationResult,
+  PopulationResult,
 } from './types'
+
+/**
+ * Sanitize an error message for user display.
+ * Strips stack traces, internal file paths, and API keys.
+ */
+function sanitizeErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'An unexpected error occurred during processing.'
+  }
+
+  const message = error.message
+
+  // Strip anything that looks like a file path
+  let sanitized = message.replace(/(?:\/[\w.-]+)+/g, '[internal]')
+
+  // Strip anything that looks like an API key or token
+  sanitized = sanitized.replace(/(?:key|token|api[_-]?key)[=:\s]+\S+/gi, '[redacted]')
+
+  // Strip stack trace lines if accidentally included
+  sanitized = sanitized.replace(/\s+at\s+.+/g, '')
+
+  // Trim to a reasonable user-facing length
+  if (sanitized.length > 300) {
+    sanitized = sanitized.substring(0, 297) + '...'
+  }
+
+  return sanitized || 'An unexpected error occurred during processing.'
+}
 
 /**
  * Map content classification to Design Week phase
@@ -57,7 +87,11 @@ function convertEntitiesToItems(entities: ExtractedEntity[]): SpecializedItem[] 
 }
 
 /**
- * Main pipeline orchestrator - coordinates all 3 stages
+ * Main pipeline orchestrator - coordinates all stages.
+ *
+ * Each stage is individually wrapped so that a failure in one stage
+ * produces partial results rather than losing everything. Classification
+ * is the only truly fatal stage (without it the rest cannot proceed).
  */
 export async function runExtractionPipeline(ctx: PipelineContext): Promise<PipelineResult> {
   const { jobId, designWeekId, fileBuffer, filename, mimeType, onProgress, extractionOptions } = ctx
@@ -68,10 +102,18 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
   console.log(`[Pipeline] File: ${filename} (${mimeType}, ${fileBuffer.length} bytes)`)
   console.log(`${'='.repeat(60)}\n`)
 
+  // Accumulated state across stages
+  let classification: ClassificationResult | undefined
+  let rawExtractionId: string | undefined
+  let generalExtraction: GeneralExtractionResult | undefined
+  let itemsForPopulation: SpecializedItem[] | undefined
+  let populationResult: PopulationResult | undefined
+  const stageErrors: Array<{ stage: string; message: string }> = []
+
+  // ============================================
+  // Stage 1: Classification (fatal if fails -- we need it for everything else)
+  // ============================================
   try {
-    // ============================================
-    // Stage 1: Classification
-    // ============================================
     console.log('\n[Pipeline] === STAGE 1: CLASSIFICATION ===')
     await updateJobStatus(jobId, 'CLASSIFYING', 'CLASSIFICATION')
     await onProgress({
@@ -81,7 +123,7 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       message: 'Analyzing content type...',
     })
 
-    const classification = await classifyContent(fileBuffer, mimeType, filename)
+    classification = await classifyContent(fileBuffer, mimeType, filename)
     console.log(`[Pipeline] Classification complete: ${classification.type} (${classification.confidence} confidence)`)
 
     await prisma.uploadJob.update({
@@ -100,10 +142,35 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
         missingQuestions: classification.missingQuestions,
       },
     })
+  } catch (error) {
+    const userMessage = sanitizeErrorMessage(error)
+    const rawMessage = error instanceof Error ? error.message : 'Unknown error'
+    const rawStack = error instanceof Error ? error.stack : undefined
 
-    // ============================================
-    // Stage 2: General Extraction
-    // ============================================
+    console.error(`[Pipeline] FATAL: Classification failed for job ${jobId}`)
+    console.error(`[Pipeline] Stage: CLASSIFICATION, File: ${filename}, MIME: ${mimeType}`)
+    console.error(`[Pipeline] Error: ${rawMessage}`)
+    if (rawStack) console.error(`[Pipeline] Stack: ${rawStack}`)
+
+    await prisma.uploadJob.update({
+      where: { id: jobId },
+      data: { status: 'FAILED', error: userMessage },
+    })
+
+    await onProgress({
+      stage: 'CLASSIFICATION',
+      status: 'error',
+      percent: 0,
+      message: `Classification failed: ${userMessage}`,
+    })
+
+    return { success: false, error: userMessage }
+  }
+
+  // ============================================
+  // Stage 2: General Extraction
+  // ============================================
+  try {
     console.log('\n[Pipeline] === STAGE 2: GENERAL EXTRACTION ===')
     console.log(`[Pipeline] Extraction mode: ${extractionMode}`)
     await updateJobStatus(jobId, 'EXTRACTING_GENERAL', 'GENERAL_EXTRACTION')
@@ -115,7 +182,6 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
     })
 
     // Use enhanced extraction if mode is not standard
-    let generalExtraction: GeneralExtractionResult
     if (extractionOptions && extractionOptions.mode !== 'standard') {
       const result = await extractWithOptions(
         fileBuffer,
@@ -166,6 +232,8 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       },
     })
 
+    rawExtractionId = rawExtraction.id
+
     await prisma.uploadJob.update({
       where: { id: jobId },
       data: { rawExtractionId: rawExtraction.id },
@@ -181,12 +249,41 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
         tokensUsed: generalExtraction.summary.tokensUsed,
       },
     })
+  } catch (error) {
+    const userMessage = sanitizeErrorMessage(error)
+    const rawMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    // ============================================
-    // Stage 3: Specialized Extraction (skipped for enhanced modes)
-    // ============================================
+    console.error(`[Pipeline] Stage 2 failed for job ${jobId}`)
+    console.error(`[Pipeline] Stage: GENERAL_EXTRACTION, Mode: ${extractionMode}`)
+    console.error(`[Pipeline] Error: ${rawMessage}`)
+
+    stageErrors.push({ stage: 'GENERAL_EXTRACTION', message: userMessage })
+
+    await onProgress({
+      stage: 'GENERAL_EXTRACTION',
+      status: 'error',
+      percent: 0,
+      message: `Extraction failed: ${userMessage}`,
+    })
+
+    // Without general extraction we cannot do stages 3 or 4 -- mark as failed
+    await prisma.uploadJob.update({
+      where: { id: jobId },
+      data: { status: 'FAILED', error: userMessage },
+    })
+
+    return {
+      success: false,
+      classification,
+      error: userMessage,
+    }
+  }
+
+  // ============================================
+  // Stage 3: Specialized Extraction (skipped for enhanced modes)
+  // ============================================
+  try {
     const skipStage3 = SKIP_STAGE3_MODES.includes(extractionMode as ExtractionMode)
-    let itemsForPopulation: SpecializedItem[]
 
     if (skipStage3) {
       // Enhanced modes already do comprehensive extraction - skip Stage 3
@@ -235,10 +332,31 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
 
       itemsForPopulation = specializedResult.extractedItems
     }
+  } catch (error) {
+    const userMessage = sanitizeErrorMessage(error)
+    const rawMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    // ============================================
-    // Stage 4: Tab Population
-    // ============================================
+    console.error(`[Pipeline] Stage 3 failed for job ${jobId} (non-fatal, falling back to general entities)`)
+    console.error(`[Pipeline] Stage: SPECIALIZED_EXTRACTION, Classification: ${classification.type}`)
+    console.error(`[Pipeline] Error: ${rawMessage}`)
+
+    stageErrors.push({ stage: 'SPECIALIZED_EXTRACTION', message: userMessage })
+
+    // Fall back to general extraction entities so Stage 4 can still proceed
+    itemsForPopulation = convertEntitiesToItems(generalExtraction.entities)
+
+    await onProgress({
+      stage: 'SPECIALIZED_EXTRACTION',
+      status: 'error',
+      percent: 0,
+      message: `Specialized extraction failed, using general entities as fallback: ${userMessage}`,
+    })
+  }
+
+  // ============================================
+  // Stage 4: Tab Population
+  // ============================================
+  try {
     console.log('\n[Pipeline] === STAGE 4: TAB POPULATION ===')
     await updateJobStatus(jobId, 'POPULATING_TABS', 'TAB_POPULATION')
     await onProgress({
@@ -248,7 +366,7 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       message: 'Populating profile tabs...',
     })
 
-    const populationResult = await populateTabs(
+    populationResult = await populateTabs(
       designWeekId,
       itemsForPopulation,
       classification
@@ -266,16 +384,42 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       message: `Added ${populationResult.extractedItems} items to profiles`,
       details: populationResult as unknown as Record<string, unknown>,
     })
+  } catch (error) {
+    const userMessage = sanitizeErrorMessage(error)
+    const rawMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    // ============================================
-    // Update Design Week Progress
-    // ============================================
-    console.log('\n[Pipeline] === UPDATING DESIGN WEEK PROGRESS ===')
+    console.error(`[Pipeline] Stage 4 failed for job ${jobId}`)
+    console.error(`[Pipeline] Stage: TAB_POPULATION, DesignWeek: ${designWeekId}`)
+    console.error(`[Pipeline] Error: ${rawMessage}`)
+
+    stageErrors.push({ stage: 'TAB_POPULATION', message: userMessage })
+
+    await onProgress({
+      stage: 'TAB_POPULATION',
+      status: 'error',
+      percent: 0,
+      message: `Tab population failed: ${userMessage}`,
+    })
+  }
+
+  // ============================================
+  // Update Design Week Progress (best-effort)
+  // ============================================
+  console.log('\n[Pipeline] === UPDATING DESIGN WEEK PROGRESS ===')
+  try {
     await updateDesignWeekProgress(designWeekId, classification.type)
+  } catch (progressError) {
+    console.error('[Pipeline] Best-effort design week progress update failed:', progressError)
+  }
 
-    // ============================================
-    // Complete
-    // ============================================
+  // ============================================
+  // Determine final result
+  // ============================================
+  const hasPartialResults = rawExtractionId !== undefined
+  const hasCriticalError = stageErrors.length > 0 && !populationResult
+
+  if (stageErrors.length === 0) {
+    // Full success
     console.log(`\n${'='.repeat(60)}`)
     console.log(`[Pipeline] SUCCESS! Job ${jobId} completed`)
     console.log(`[Pipeline] Classification: ${classification.type}`)
@@ -294,40 +438,58 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
     return {
       success: true,
       classification,
-      rawExtractionId: rawExtraction.id,
+      rawExtractionId,
       populationResult,
     }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : undefined
-    const stage = (error as PipelineError)?.stage || 'CLASSIFICATION'
+  } else if (hasPartialResults && !hasCriticalError) {
+    // Partial success -- some stages failed but we got usable results
+    const errorSummary = stageErrors.map((e) => `${e.stage}: ${e.message}`).join('; ')
+
+    console.log(`\n${'='.repeat(60)}`)
+    console.log(`[Pipeline] PARTIAL SUCCESS for job ${jobId}`)
+    console.log(`[Pipeline] Completed with ${stageErrors.length} stage error(s): ${errorSummary}`)
+    console.log(`${'='.repeat(60)}\n`)
+
+    await updateJobStatus(jobId, 'COMPLETE', 'COMPLETE')
+    await onProgress({
+      stage: 'COMPLETE',
+      status: 'complete',
+      percent: 100,
+      message: `Completed with warnings (${stageErrors.length} stage(s) had issues)`,
+    })
+
+    return {
+      success: true,
+      classification,
+      rawExtractionId,
+      populationResult,
+    }
+  } else {
+    // Critical failure -- results are not usable
+    const errorSummary = stageErrors.map((e) => e.message).join('; ')
 
     console.error(`\n${'!'.repeat(60)}`)
-    console.error(`[Pipeline] FAILED at stage: ${stage}`)
-    console.error(`[Pipeline] Error: ${errorMessage}`)
-    if (errorStack) {
-      console.error(`[Pipeline] Stack: ${errorStack}`)
-    }
+    console.error(`[Pipeline] FAILED for job ${jobId}`)
+    console.error(`[Pipeline] Errors: ${errorSummary}`)
     console.error(`${'!'.repeat(60)}\n`)
 
     await prisma.uploadJob.update({
       where: { id: jobId },
-      data: {
-        status: 'FAILED',
-        error: errorMessage,
-      },
+      data: { status: 'FAILED', error: errorSummary },
     })
 
     await onProgress({
-      stage,
+      stage: 'TAB_POPULATION',
       status: 'error',
       percent: 0,
-      message: errorMessage,
+      message: errorSummary,
     })
 
     return {
       success: false,
-      error: errorMessage,
+      classification,
+      rawExtractionId,
+      error: errorSummary,
     }
   }
 }

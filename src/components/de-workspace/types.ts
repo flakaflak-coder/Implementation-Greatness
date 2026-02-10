@@ -399,6 +399,16 @@ export interface DEWorkspaceSession {
   extractedItems?: ExtractedItem[]
 }
 
+export interface DEWorkspaceScopeItemEvidence {
+  id: string
+  sourceType: string
+  timestampStart?: number | null
+  timestampEnd?: number | null
+  page?: number | null
+  quote: string
+  sessionNumber?: number
+}
+
 export interface DEWorkspaceScopeItem {
   id: string
   statement: string
@@ -408,6 +418,7 @@ export interface DEWorkspaceScopeItem {
   notes?: string | null
   status: string
   excludeFromDocument: boolean
+  evidence?: DEWorkspaceScopeItemEvidence[]
 }
 
 export interface DEWorkspaceUploadJob {
@@ -456,7 +467,7 @@ export interface DEWorkspaceProps {
 }
 
 // Tab state
-export type WorkspaceTab = 'handover' | 'progress' | 'business' | 'technical' | 'testplan'
+export type WorkspaceTab = 'handover' | 'progress' | 'scope' | 'business' | 'technical' | 'testplan'
 
 // Helper function to group items by profile section
 export function groupItemsByProfile(items: ExtractedItemWithSession[]): GroupedProfileItems {

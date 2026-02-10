@@ -348,21 +348,43 @@ export default function DigitalEmployeeDetailPage({
       {/* Main content area - shrinks when assistant is open */}
       <div className={`flex-1 overflow-auto transition-all duration-300 ${assistantOpen ? 'mr-0' : ''}`}>
         <div className="container mx-auto px-4 py-8">
-          {/* Back link */}
-          <Link
-            href={`/companies/${companyId}`}
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
-          >
-        <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to {de.company.name}
-      </Link>
+          {/* Breadcrumb navigation */}
+          <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+            <Link href="/" className="hover:text-gray-900 transition-colors">
+              Dashboard
+            </Link>
+            <span>/</span>
+            <Link href="/companies" className="hover:text-gray-900 transition-colors">
+              Companies
+            </Link>
+            <span>/</span>
+            <Link href={`/companies/${companyId}`} className="hover:text-gray-900 transition-colors">
+              {de.company.name}
+            </Link>
+            <span>/</span>
+            <span className="text-gray-900 font-medium">{de.name}</span>
+          </nav>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-          {error}
-          <button onClick={() => setError(null)} className="ml-2 text-red-500 hover:text-red-700">
-            <X className="w-4 h-4 inline" />
-          </button>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="w-5 h-5 text-red-500 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => fetchDE(true)}
+              variant="outline"
+              size="sm"
+              className="border-red-200 text-red-600 hover:bg-red-100"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Retry
+            </Button>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -417,7 +439,7 @@ export default function DigitalEmployeeDetailPage({
       </div>
 
       {/* DE Workspace - Profile-based view with integrated session management */}
-      {dw && (
+      {dw ? (
         <DEWorkspace
           digitalEmployee={{
             ...de,
@@ -440,6 +462,24 @@ export default function DigitalEmployeeDetailPage({
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
+      ) : (
+        /* No Design Week state -- guide Sophie to get started */
+        <div className="mt-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+            <Upload className="w-8 h-8 text-[#D4956A]" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Design Week yet
+          </h3>
+          <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+            A Design Week is automatically created when you add a Digital Employee.
+            If this DE was imported or created differently, you may need to initialize the Design Week.
+          </p>
+          <Button onClick={() => fetchDE(true)} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh to check again
+          </Button>
+        </div>
       )}
 
       {/* Upload Dialog */}

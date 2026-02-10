@@ -94,6 +94,15 @@ export default function CompaniesPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
+        <Link href="/" className="hover:text-gray-900 transition-colors">
+          Dashboard
+        </Link>
+        <span>/</span>
+        <span className="text-gray-900 font-medium">Companies</span>
+      </nav>
+
       {/* Page header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -131,8 +140,23 @@ export default function CompaniesPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
-          {error}
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-2 text-red-600">
+            <span className="text-lg">!</span>
+            <div>
+              <p className="font-medium">{error}</p>
+              <p className="text-sm text-red-500">Check your connection and try again</p>
+            </div>
+          </div>
+          <Button
+            onClick={fetchCompanies}
+            variant="outline"
+            size="sm"
+            className="border-red-200 text-red-600 hover:bg-red-100"
+          >
+            <RefreshCw className="w-4 h-4 mr-1" />
+            Retry
+          </Button>
         </div>
       )}
 

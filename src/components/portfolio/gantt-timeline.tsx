@@ -468,6 +468,57 @@ function GanttHeader() {
   )
 }
 
+// Inline summary bar for quick scanning
+function GanttSummaryBar({ companies }: { companies: TimelineCompany[] }) {
+  const allDEs = companies.flatMap(c => c.digitalEmployees)
+  const total = allDEs.length
+  if (total === 0) return null
+
+  const green = allDEs.filter(de => de.trafficLight === 'green').length
+  const yellow = allDEs.filter(de => de.trafficLight === 'yellow').length
+  const red = allDEs.filter(de => de.trafficLight === 'red').length
+  const blocked = allDEs.filter(de => de.prerequisites.blocked > 0).length
+  const overdue = allDEs.filter(de => {
+    if (!de.goLiveDate) return false
+    return new Date(de.goLiveDate).getTime() < Date.now()
+  }).length
+
+  return (
+    <div className="flex items-center gap-4 text-xs text-gray-600 bg-white px-4 py-2 rounded-lg border border-gray-100">
+      <span className="font-medium text-gray-800">{total} DEs across {companies.length} companies</span>
+      <span className="text-gray-300">|</span>
+      <div className="flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+        <span>{green} on track</span>
+      </div>
+      {yellow > 0 && (
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="font-medium text-amber-700">{yellow} attention</span>
+        </div>
+      )}
+      {red > 0 && (
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="font-medium text-red-700">{red} critical</span>
+        </div>
+      )}
+      {blocked > 0 && (
+        <div className="flex items-center gap-1.5">
+          <Key className="w-3 h-3 text-red-400" />
+          <span className="font-medium text-red-700">{blocked} prereq blocked</span>
+        </div>
+      )}
+      {overdue > 0 && (
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle className="w-3 h-3 text-red-400" />
+          <span className="font-medium text-red-700">{overdue} overdue</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function GanttTimeline({ companies, onDEClick, className }: GanttTimelineProps) {
   if (companies.length === 0) {
     return (
@@ -480,6 +531,7 @@ export function GanttTimeline({ companies, onDEClick, className }: GanttTimeline
 
   return (
     <div className={cn('space-y-4', className)}>
+      <GanttSummaryBar companies={companies} />
       <GanttLegend />
       <GanttHeader />
       <div className="space-y-3">

@@ -656,24 +656,41 @@ function DERow({
         </div>
 
         {/* Status column */}
-        <div className="w-24 flex-shrink-0 px-2 py-2 border-r border-gray-200">
-          <Badge
-            variant="secondary"
-            className={cn('text-[10px] px-1.5', RISK_COLORS[de.riskLevel])}
-          >
-            {de.riskLevel}
-          </Badge>
-          {de.blocker && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertTriangle className="w-3 h-3 text-red-500 ml-1 inline" />
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[200px]">
-                <p className="text-xs font-medium mb-1">Blocker:</p>
-                <p className="text-xs">{de.blocker}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+        <div className="w-24 shrink-0 px-2 py-2 border-r border-gray-200">
+          <div className="flex items-center gap-1">
+            <Badge
+              variant="secondary"
+              className={cn('text-[10px] px-1.5', RISK_COLORS[de.riskLevel])}
+            >
+              {de.riskLevel}
+            </Badge>
+            {de.blocker && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[200px]">
+                  <p className="text-xs font-medium mb-1">Blocker:</p>
+                  <p className="text-xs">{de.blocker}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          {/* Completion percentage */}
+          <div className="mt-1 flex items-center gap-1">
+            <div className="flex-1 h-1 rounded-full bg-gray-200 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all',
+                  de.percentComplete >= 75 ? 'bg-emerald-500' :
+                  de.percentComplete >= 40 ? 'bg-amber-500' :
+                  'bg-gray-400'
+                )}
+                style={{ width: `${de.percentComplete}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-medium text-gray-500 w-7 text-right">{de.percentComplete}%</span>
+          </div>
         </div>
 
         {/* Timeline column */}
@@ -732,6 +749,11 @@ function CompanyGroup({
     onTrack: company.digitalEmployees.filter(de => de.trackerStatus === 'ON_TRACK').length,
   }
 
+  // Average completion across all DEs in this company
+  const avgCompletion = company.digitalEmployees.length > 0
+    ? Math.round(company.digitalEmployees.reduce((sum, de) => sum + de.percentComplete, 0) / company.digitalEmployees.length)
+    : 0
+
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white mb-3">
       {/* Company header */}
@@ -750,6 +772,15 @@ function CompanyGroup({
           <Badge variant="secondary" className="text-xs">
             {stats.total} DE{stats.total !== 1 ? 's' : ''}
           </Badge>
+          {/* Average completion pill */}
+          <span className={cn(
+            'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+            avgCompletion >= 75 ? 'bg-emerald-100 text-emerald-700' :
+            avgCompletion >= 40 ? 'bg-amber-100 text-amber-700' :
+            'bg-gray-100 text-gray-600'
+          )}>
+            {avgCompletion}% avg
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {stats.blocked > 0 && (

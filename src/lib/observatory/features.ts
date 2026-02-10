@@ -96,8 +96,9 @@ export const FEATURES: Feature[] = [
     status: 'built',
     category: 'design-week',
     dateAdded: '2026-01-27',
-    healthStatus: 'degraded',
-    notes: 'UI complete but API wiring incomplete - scope changes not persisted',
+    dateCompleted: '2026-02-10',
+    healthStatus: 'healthy',
+    notes: 'Full UI with resolve/unresolve wired to API. Scope changes persisted via /api/scope-items/[id]/resolve and /unresolve endpoints. Integrated as Scope tab in DE workspace.',
   },
   {
     id: 'design-week-detail',
@@ -179,10 +180,12 @@ export const FEATURES: Feature[] = [
     id: 'runbook-viewer',
     name: 'Runbook Viewer',
     description: 'View generated runbooks for live Digital Employees',
-    status: 'planned',
+    status: 'built',
     category: 'support',
     dateAdded: '2026-01-27',
-    healthStatus: 'unknown',
+    dateCompleted: '2026-02-10',
+    healthStatus: 'healthy',
+    notes: 'Full runbook viewer with scope, escalation rules, scenarios, integrations, and KPIs. Sticky nav, collapsible scenarios, print support.',
   },
 
   // Admin Features

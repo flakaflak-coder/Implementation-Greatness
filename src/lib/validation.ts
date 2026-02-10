@@ -314,6 +314,19 @@ export const PortfolioTimelineUpdateSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// JOURNEY PHASE TRANSITION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const JourneyPhaseTransitionSchema = z.object({
+  action: z.enum(['advance', 'set']),
+  targetPhase: z.nativeEnum(JourneyPhaseType).optional(),
+  force: z.boolean().optional().default(false),
+}).refine(
+  (data) => data.action !== 'set' || data.targetPhase !== undefined,
+  { message: 'targetPhase is required when action is "set"', path: ['targetPhase'] }
+)
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 

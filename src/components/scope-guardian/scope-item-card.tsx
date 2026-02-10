@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Clock, CheckCircle2, XCircle, AlertTriangle, ExternalLink } from 'lucide-react'
+import { FileText, Clock, CheckCircle2, XCircle, AlertTriangle, ExternalLink, Undo2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +35,7 @@ interface ScopeItemCardProps {
   notes?: string | null
   evidence: Evidence[]
   onResolve?: (id: string, classification: 'IN_SCOPE' | 'OUT_OF_SCOPE', notes?: string) => void
+  onUnresolve?: (id: string) => void
   onViewEvidence?: (evidence: Evidence) => void
 }
 
@@ -47,6 +48,7 @@ export function ScopeItemCard({
   notes,
   evidence,
   onResolve,
+  onUnresolve,
   onViewEvidence,
 }: ScopeItemCardProps) {
   const [showResolveDialog, setShowResolveDialog] = useState(false)
@@ -184,6 +186,21 @@ export function ScopeItemCard({
                   </Button>
                 </div>
               )}
+
+              {/* Unresolve button for resolved items */}
+              {!isAmbiguous && onUnresolve && (
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onUnresolve(id)}
+                    className="text-gray-600 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50"
+                  >
+                    <Undo2 className="w-4 h-4 mr-1" />
+                    Move back to Ambiguous
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -193,18 +210,26 @@ export function ScopeItemCard({
       <Dialog open={showResolveDialog} onOpenChange={setShowResolveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Resolution Notes</DialogTitle>
+            <DialogTitle>Resolve Scope Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="p-3 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium">{statement}</p>
+              {conditions && (
+                <p className="text-xs text-gray-500 mt-1">Condition: {conditions}</p>
+              )}
             </div>
-            <Textarea
-              placeholder="Add notes about this decision or what needs to be discussed..."
-              value={resolutionNotes}
-              onChange={(e) => setResolutionNotes(e.target.value)}
-              rows={4}
-            />
+            <div>
+              <p className="text-sm text-gray-600 mb-2">
+                Add notes to explain the rationale for this decision. This will be included in the design documents for audit purposes.
+              </p>
+              <Textarea
+                placeholder="e.g., Confirmed with client during Process Design session -- this will be handled by the existing support team instead."
+                value={resolutionNotes}
+                onChange={(e) => setResolutionNotes(e.target.value)}
+                rows={4}
+              />
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button

@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Circle, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 export type StageStatus = 'pending' | 'running' | 'complete' | 'error'
 
@@ -20,7 +21,15 @@ interface PipelineProgressProps {
   className?: string
 }
 
-export function PipelineProgress({ stages, className }: PipelineProgressProps) {
+export function PipelineProgress(props: PipelineProgressProps) {
+  return (
+    <ErrorBoundary>
+      <PipelineProgressInner {...props} />
+    </ErrorBoundary>
+  )
+}
+
+function PipelineProgressInner({ stages, className }: PipelineProgressProps) {
   return (
     <div className={cn('space-y-3', className)}>
       {stages.map((stage, index) => (

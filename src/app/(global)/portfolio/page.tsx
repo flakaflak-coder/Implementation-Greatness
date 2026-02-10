@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import {
   RefreshCw,
   Filter,
@@ -16,11 +17,21 @@ import {
   TestTube,
   Rocket,
   CalendarDays,
+  AlertTriangle,
+  BarChart3,
+  ArrowRight,
+  TrendingUp,
+  ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   DesignWeekOverviewCard,
   type DesignWeekOverview,
@@ -87,8 +98,33 @@ interface TimelineData {
   currentWeek: number
 }
 
+interface PredictionData {
+  predictions: {
+    deId: string
+    deName: string
+    companyName: string
+    currentPhase: string
+    targetGoLive: string | null
+    predictedGoLive: string
+    velocityRatio: number
+    blockerCount: number
+    riskStatus: 'on_track' | 'at_risk' | 'likely_delayed' | 'no_target'
+    daysAhead: number
+    completedPhases: number
+    totalPhases: number
+  }[]
+  summary: {
+    total: number
+    onTrack: number
+    atRisk: number
+    likelyDelayed: number
+    noTarget: number
+  }
+}
+
 type ViewMode = 'cards' | 'gantt' | 'weeks'
 type FilterType = 'all' | 'issues' | 'prereq-blocked' | 'design_week' | 'configuration' | 'uat'
+type GanttSortKey = 'company' | 'status' | 'go-live' | 'progress'
 
 // Mesh gradient styles - organic multi-color blends
 const MESH_GRADIENTS = {
@@ -192,8 +228,9 @@ function StatCard({
   )
 }
 
-// Health status card with mesh gradient header
-function HealthCard({ green, yellow, red }: { green: number; yellow: number; red: number }) {
+// Health status card with mesh gradient header and on-track percentage
+function HealthCard({ green, yellow, red, total }: { green: number; yellow: number; red: number; total: number }) {
+  const onTrackPercent = total > 0 ? Math.round((green / total) * 100) : 0
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100/50 shadow-sm">
       {/* Mesh gradient header */}
@@ -208,12 +245,36 @@ function HealthCard({ green, yellow, red }: { green: number; yellow: number; red
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
         />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-sm font-semibold text-white drop-shadow-md">Health Status</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+          <p className="text-2xl font-bold text-white drop-shadow-md">{onTrackPercent}%</p>
+          <p className="text-xs font-medium text-white/80 drop-shadow-sm">On Track</p>
         </div>
       </div>
       {/* Content */}
       <div className="p-4">
+        {/* Stacked bar showing health distribution */}
+        {total > 0 && (
+          <div className="flex h-2 rounded-full overflow-hidden mb-3">
+            {green > 0 && (
+              <div
+                className="bg-emerald-500 transition-all"
+                style={{ width: `${(green / total) * 100}%` }}
+              />
+            )}
+            {yellow > 0 && (
+              <div
+                className="bg-amber-400 transition-all"
+                style={{ width: `${(yellow / total) * 100}%` }}
+              />
+            )}
+            {red > 0 && (
+              <div
+                className="bg-red-500 transition-all"
+                style={{ width: `${(red / total) * 100}%` }}
+              />
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-center gap-0.5" aria-label={`${green} healthy`}>
             <div className="flex items-center gap-1.5">
@@ -246,29 +307,36 @@ export default function PortfolioPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('weeks')
   const [cardData, setCardData] = useState<PortfolioData | null>(null)
   const [timelineData, setTimelineData] = useState<TimelineData | null>(null)
+  const [predictionData, setPredictionData] = useState<PredictionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [selectedConsultant, setSelectedConsultant] = useState<string | null>(null)
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
+  const [ganttSort, setGanttSort] = useState<GanttSortKey>('company')
 
-  // Fetch both data sets
+  // Fetch all data sets
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [cardResponse, timelineResponse] = await Promise.all([
+      const [cardResponse, timelineResponse, predictionResponse] = await Promise.all([
         fetch('/api/portfolio'),
         fetch('/api/portfolio/timeline'),
+        fetch('/api/portfolio/predictions'),
       ])
 
       const cardResult = await cardResponse.json()
       const timelineResult = await timelineResponse.json()
+      const predictionResult = await predictionResponse.json()
 
       if (cardResult.success) {
         setCardData(cardResult.data)
       }
       if (timelineResult.success) {
         setTimelineData(timelineResult.data)
+      }
+      if (predictionResult.success) {
+        setPredictionData(predictionResult.data)
       }
       setError(null)
     } catch {
@@ -353,6 +421,47 @@ export default function PortfolioPage() {
     return filteredCompanies
   }, [timelineData, filterType, selectedConsultant, selectedCompany])
 
+  // Sort companies/DEs for gantt/week views
+  const sortedTimelineCompanies = useMemo(() => {
+    if (ganttSort === 'company') return filteredTimelineCompanies
+
+    // For non-company sorts, we flatten DEs, sort them, and re-group
+    const allDEs: (TimelineDE & { companyName: string; companyId: string })[] = []
+    for (const company of filteredTimelineCompanies) {
+      for (const de of company.digitalEmployees) {
+        allDEs.push({ ...de, companyName: company.name, companyId: company.id })
+      }
+    }
+
+    if (ganttSort === 'status') {
+      const statusOrder: Record<string, number> = { red: 0, yellow: 1, green: 2 }
+      allDEs.sort((a, b) => (statusOrder[a.trafficLight] ?? 2) - (statusOrder[b.trafficLight] ?? 2))
+    } else if (ganttSort === 'go-live') {
+      allDEs.sort((a, b) => {
+        const aWeek = a.goLiveWeek ?? 999
+        const bWeek = b.goLiveWeek ?? 999
+        return aWeek - bWeek
+      })
+    } else if (ganttSort === 'progress') {
+      allDEs.sort((a, b) => b.percentComplete - a.percentComplete)
+    }
+
+    // Re-group by company
+    const companyMap = new Map<string, TimelineCompany>()
+    for (const de of allDEs) {
+      if (!companyMap.has(de.companyId)) {
+        companyMap.set(de.companyId, {
+          id: de.companyId,
+          name: de.companyName,
+          digitalEmployees: [],
+        })
+      }
+      companyMap.get(de.companyId)!.digitalEmployees.push(de)
+    }
+
+    return Array.from(companyMap.values())
+  }, [filteredTimelineCompanies, ganttSort])
+
   // Summary stats from timeline data
   const summary = timelineData?.summary ?? {
     total: 0,
@@ -403,7 +512,7 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-6 py-8">
         {/* Page header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Portfolio Overview</h1>
             <p className="text-gray-500 text-sm mt-1">
@@ -439,6 +548,36 @@ export default function PortfolioPage() {
               Refresh
             </Button>
           </div>
+        </div>
+
+        {/* Sub-navigation: quick access to At-Risk and Capacity */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#C2703E] text-white text-sm font-medium">
+            <BarChart3 className="w-4 h-4" />
+            Overview
+          </div>
+          <Link href="/portfolio/at-risk">
+            <div className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-700',
+              (summary.byTrafficLight.red + summary.byTrafficLight.yellow) > 0
+                ? 'border-red-200 bg-red-50/50 text-red-700'
+                : 'border-gray-200 bg-white text-gray-600'
+            )}>
+              <AlertTriangle className="w-4 h-4" />
+              At Risk
+              {(summary.byTrafficLight.red + summary.byTrafficLight.yellow) > 0 && (
+                <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">
+                  {summary.byTrafficLight.red + summary.byTrafficLight.yellow}
+                </span>
+              )}
+            </div>
+          </Link>
+          <Link href="/portfolio/capacity">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm font-medium transition-all hover:bg-[#FDF3EC] hover:border-[#E8D5C4] hover:text-[#C2703E]">
+              <Users className="w-4 h-4" />
+              Capacity
+            </div>
+          </Link>
         </div>
 
         {error && (
@@ -501,6 +640,7 @@ export default function PortfolioPage() {
             green={summary.byTrafficLight.green}
             yellow={summary.byTrafficLight.yellow}
             red={summary.byTrafficLight.red}
+            total={summary.total}
           />
         </div>
 
@@ -567,9 +707,28 @@ export default function PortfolioPage() {
             </div>
           )}
 
-          {/* Active filters display */}
-          {(filterType !== 'all' || selectedConsultant || selectedCompany) && (
-            <div className="flex items-center gap-2 ml-auto">
+          {/* Sort control + active filters — pushed right */}
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Sort control (for gantt & week views) */}
+            {(viewMode === 'gantt' || viewMode === 'weeks') && (
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                <TrendingUp className="w-4 h-4 text-gray-400" />
+                <select
+                  value={ganttSort}
+                  onChange={(e) => setGanttSort(e.target.value as GanttSortKey)}
+                  className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
+                >
+                  <option value="company">Sort by Company</option>
+                  <option value="status">Sort by Status (worst first)</option>
+                  <option value="go-live">Sort by Go-Live (soonest first)</option>
+                  <option value="progress">Sort by Progress (most first)</option>
+                </select>
+              </div>
+            )}
+
+            {/* Active filters display */}
+            {(filterType !== 'all' || selectedConsultant || selectedCompany) && (
+              <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">
                 Showing{' '}
                 {viewMode === 'cards'
@@ -591,6 +750,7 @@ export default function PortfolioPage() {
               </Button>
             </div>
           )}
+          </div>
         </div>
 
         {/* Content based on view mode */}
@@ -600,7 +760,7 @@ export default function PortfolioPage() {
           </div>
         ) : viewMode === 'weeks' ? (
           /* Week Timeline View */
-          filteredTimelineCompanies.length === 0 ? (
+          sortedTimelineCompanies.length === 0 ? (
             <Card className="border-dashed border-2 bg-white/50 backdrop-blur-sm">
               <CardContent className="py-16 text-center">
                 {filterType !== 'all' || selectedConsultant || selectedCompany ? (
@@ -640,7 +800,7 @@ export default function PortfolioPage() {
           ) : (
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm p-4">
               <WeekTimeline
-                companies={filteredTimelineCompanies}
+                companies={sortedTimelineCompanies}
                 currentWeek={currentWeek}
                 onWeekChange={handleWeekChange}
                 onPhaseToggle={handlePhaseToggle}
@@ -649,7 +809,7 @@ export default function PortfolioPage() {
           )
         ) : viewMode === 'gantt' ? (
           /* Gantt Timeline View (Stages) */
-          filteredTimelineCompanies.length === 0 ? (
+          sortedTimelineCompanies.length === 0 ? (
             <Card className="border-dashed border-2 bg-white/50 backdrop-blur-sm">
               <CardContent className="py-16 text-center">
                 {filterType !== 'all' || selectedConsultant || selectedCompany ? (
@@ -688,7 +848,7 @@ export default function PortfolioPage() {
             </Card>
           ) : (
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm p-4">
-              <GanttTimeline companies={filteredTimelineCompanies} />
+              <GanttTimeline companies={sortedTimelineCompanies} />
             </div>
           )
         ) : (

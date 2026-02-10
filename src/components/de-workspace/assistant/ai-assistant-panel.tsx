@@ -29,6 +29,7 @@ import {
   Calendar,
   ArrowRight,
   FileSignature,
+  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -338,6 +339,7 @@ function parseActions(content: string): { cleanContent: string; actions: FreddyA
 const tabIcons: Record<WorkspaceTab, React.ReactNode> = {
   handover: <FileSignature className="w-3 h-3" />,
   progress: <Rocket className="w-3 h-3" />,
+  scope: <Shield className="w-3 h-3" />,
   business: <Briefcase className="w-3 h-3" />,
   technical: <Wrench className="w-3 h-3" />,
   testplan: <ClipboardCheck className="w-3 h-3" />,

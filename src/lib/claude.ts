@@ -363,6 +363,39 @@ Kill Switch Mechanism, Risk & Mitigation, and Transition to Steady State.`,
   }
 }
 
+/**
+ * Classify a Claude API error into a user-friendly message.
+ * Never exposes API keys, internal URLs, or raw stack traces.
+ */
+function classifyClaudeError(error: unknown): { userMessage: string; retryable: boolean } {
+  if (!(error instanceof Error)) {
+    return { userMessage: 'An unexpected error occurred during Claude processing.', retryable: false }
+  }
+
+  const msg = error.message.toLowerCase()
+
+  if (msg.includes('429') || msg.includes('rate limit') || msg.includes('too many requests')) {
+    return { userMessage: 'Claude rate limit reached. Please wait a moment and try again.', retryable: true }
+  }
+  if (msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('invalid api key') || msg.includes('authentication')) {
+    return { userMessage: 'Claude authentication failed. Please verify the API key configuration.', retryable: false }
+  }
+  if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('econnaborted') || msg.includes('socket hang up')) {
+    return { userMessage: 'Claude request timed out. The content may be too large or the service is under heavy load.', retryable: true }
+  }
+  if (msg.includes('500') || msg.includes('529') || msg.includes('503') || msg.includes('overloaded') || msg.includes('service unavailable')) {
+    return { userMessage: 'Claude service is temporarily unavailable. Please try again shortly.', retryable: true }
+  }
+
+  // Sanitize: strip potential credentials and URLs
+  let sanitized = error.message
+    .replace(/(?:key|token|api[_-]?key)[=:\s]+\S+/gi, '[redacted]')
+    .replace(/https?:\/\/\S+/gi, '[service-url]')
+  if (sanitized.length > 200) sanitized = sanitized.substring(0, 197) + '...'
+
+  return { userMessage: `Claude processing error: ${sanitized}`, retryable: false }
+}
+
 // Main extraction function
 export async function extractFromTranscript(
   transcript: string,
@@ -384,17 +417,37 @@ export async function extractFromTranscript(
   // Build safe prompt with sanitized user content
   const safePrompt = buildSafePrompt(template.prompt, transcript, 'TRANSCRIPT')
 
-  const response = await getAnthropic().messages.create({
-    model: template.model,
-    max_tokens: template.maxTokens,
-    temperature: template.temperature,
-    messages: [
-      {
-        role: 'user',
-        content: safePrompt,
-      },
-    ],
-  })
+  let response
+  try {
+    response = await getAnthropic().messages.create({
+      model: template.model,
+      max_tokens: template.maxTokens,
+      temperature: template.temperature,
+      messages: [
+        {
+          role: 'user',
+          content: safePrompt,
+        },
+      ],
+    })
+  } catch (error) {
+    const latencyMs = Date.now() - startTime
+    const classified = classifyClaudeError(error)
+    console.error(`[Claude Extraction] API call failed for session type "${sessionType}": ${classified.userMessage}`)
+
+    await trackLLMOperationServer({
+      pipelineName: `claude-extract-${sessionType}`,
+      model: template.model,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs,
+      success: false,
+      errorMessage: classified.userMessage,
+      metadata: { sessionType },
+    })
+
+    throw new Error(classified.userMessage)
+  }
 
   const latencyMs = Date.now() - startTime
 
@@ -532,14 +585,16 @@ export async function generateDocument(
 
   const startTime = Date.now()
 
-  const response = await getAnthropic().messages.create({
-    model: template.model,
-    max_tokens: template.maxTokens,
-    temperature: template.temperature,
-    messages: [
-      {
-        role: 'user',
-        content: `${template.prompt}
+  let response
+  try {
+    response = await getAnthropic().messages.create({
+      model: template.model,
+      max_tokens: template.maxTokens,
+      temperature: template.temperature,
+      messages: [
+        {
+          role: 'user',
+          content: `${template.prompt}
 
 ---
 
@@ -552,9 +607,27 @@ EXTRACTED ITEMS:
 ${JSON.stringify(allItems, null, 2)}
 
 Generate the complete document in markdown format.`,
-      },
-    ],
-  })
+        },
+      ],
+    })
+  } catch (error) {
+    const latencyMs = Date.now() - startTime
+    const classified = classifyClaudeError(error)
+    console.error(`[Claude Document Generation] API call failed for "${documentType}": ${classified.userMessage}`)
+
+    await trackLLMOperationServer({
+      pipelineName: `claude-generate-${documentType.toLowerCase()}`,
+      model: template.model,
+      inputTokens: 0,
+      outputTokens: 0,
+      latencyMs,
+      success: false,
+      errorMessage: classified.userMessage,
+      metadata: { documentType, designWeekId },
+    })
+
+    throw new Error(classified.userMessage)
+  }
 
   const latencyMs = Date.now() - startTime
 

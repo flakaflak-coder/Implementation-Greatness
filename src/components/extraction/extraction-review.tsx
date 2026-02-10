@@ -33,6 +33,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 interface ExtractedItem {
   id: string
@@ -112,7 +113,15 @@ function formatConfidence(confidence: number) {
   )
 }
 
-export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
+export function ExtractionReview(props: ExtractionReviewProps) {
+  return (
+    <ErrorBoundary>
+      <ExtractionReviewInner {...props} />
+    </ErrorBoundary>
+  )
+}
+
+function ExtractionReviewInner({ sessionId }: ExtractionReviewProps) {
   const { data: session } = useSession()
   const [items, setItems] = useState<ExtractedItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,6 +129,7 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({})
   const [updating, setUpdating] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
     fetchItems()
@@ -197,8 +207,13 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
     }
   }
 
-  // Group items by type
-  const groupedItems = items.reduce(
+  // Filter items by status
+  const filteredItems = statusFilter === 'all'
+    ? items
+    : items.filter((item) => item.status === statusFilter)
+
+  // Group filtered items by type
+  const groupedItems = filteredItems.reduce(
     (acc, item) => {
       if (!acc[item.type]) {
         acc[item.type] = []
@@ -211,13 +226,32 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
 
   const pendingCount = items.filter((i) => i.status === 'PENDING').length
   const approvedCount = items.filter((i) => i.status === 'APPROVED').length
+  const rejectedCount = items.filter((i) => i.status === 'REJECTED').length
+  const clarificationCount = items.filter((i) => i.status === 'NEEDS_CLARIFICATION').length
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-gray-500">
-          <Sparkles className="w-8 h-8 mx-auto mb-2 animate-pulse" />
-          Loading extracted items...
+        <CardContent className="py-12 text-center text-gray-500">
+          <Sparkles className="w-10 h-10 mx-auto mb-3 animate-pulse text-[#D4956A]" />
+          <p className="font-medium text-gray-700">Analyzing extracted items...</p>
+          <p className="text-sm text-gray-400 mt-1">This may take a moment</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
+          <p className="font-medium text-gray-900 mb-1">Failed to load extracted items</p>
+          <p className="text-sm text-gray-500 mb-4">{error}</p>
+          <Button onClick={fetchItems} variant="outline" size="sm">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
         </CardContent>
       </Card>
     )
@@ -226,10 +260,14 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
   if (items.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-gray-500">
-          <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="font-medium">No items extracted yet</p>
-          <p className="text-sm">Run extraction on this session to see items here.</p>
+        <CardContent className="py-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="font-semibold text-gray-700 mb-1">No items extracted yet</p>
+          <p className="text-sm text-gray-500 max-w-sm mx-auto">
+            Once the session recording is processed, AI will extract stakeholders, goals, scope items, and more for your review.
+          </p>
         </CardContent>
       </Card>
     )
@@ -238,38 +276,91 @@ export function ExtractionReview({ sessionId }: ExtractionReviewProps) {
   return (
     <div className="space-y-6">
       {/* Summary bar */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-4">
-          <div className="text-sm">
-            <span className="font-medium">{items.length}</span> items extracted
-          </div>
-          <div className="h-4 w-px bg-gray-300" />
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-sm">{pendingCount} pending</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-sm">{approvedCount} approved</span>
-          </div>
-        </div>
-        {pendingCount > 0 && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={approveAll} className="text-green-600 hover:bg-green-50">
-              <Check className="w-4 h-4 mr-2" />
-              Approve All ({pendingCount})
-            </Button>
-            <Button variant="outline" size="sm" onClick={rejectAll} className="text-red-600 hover:bg-red-50">
-              <X className="w-4 h-4 mr-2" />
-              Reject All
-            </Button>
-          </div>
+      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+        {/* Help text for first-time users */}
+        {pendingCount === items.length && items.length > 0 && (
+          <p className="text-sm text-gray-600 pb-2 border-b border-gray-200">
+            The AI extracted {items.length} items from this session. Review each item below: approve to include it in the DE profile, flag for clarification if you need to confirm with the client, or reject if inaccurate.
+          </p>
         )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="text-sm">
+              <span className="font-medium">{items.length}</span> items extracted
+            </div>
+            <div className="h-4 w-px bg-gray-300" />
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-sm">{pendingCount} pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-sm">{approvedCount} approved</span>
+            </div>
+            {rejectedCount > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-sm">{rejectedCount} rejected</span>
+              </div>
+            )}
+            {clarificationCount > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-400" />
+                <span className="text-sm">{clarificationCount} needs clarification</span>
+              </div>
+            )}
+          </div>
+          {pendingCount > 0 && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={approveAll} className="text-green-600 hover:bg-green-50">
+                <Check className="w-4 h-4 mr-2" />
+                Approve All ({pendingCount})
+              </Button>
+              <Button variant="outline" size="sm" onClick={rejectAll} className="text-red-600 hover:bg-red-50">
+                <X className="w-4 h-4 mr-2" />
+                Reject All
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Status filter tabs */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 mr-2">Filter:</span>
+          {[
+            { value: 'all', label: 'All', count: items.length },
+            { value: 'PENDING', label: 'Pending', count: pendingCount },
+            { value: 'APPROVED', label: 'Approved', count: approvedCount },
+            { value: 'NEEDS_CLARIFICATION', label: 'Needs Clarification', count: clarificationCount },
+            { value: 'REJECTED', label: 'Rejected', count: rejectedCount },
+          ].filter(f => f.count > 0 || f.value === 'all').map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => setStatusFilter(filter.value)}
+              className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+                statusFilter === filter.value
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
+        </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          {error}
+      {/* All reviewed celebration */}
+      {pendingCount === 0 && items.length > 0 && (
+        <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div>
+            <p className="font-medium text-emerald-900">All items reviewed</p>
+            <p className="text-sm text-emerald-700">
+              {approvedCount} approved{rejectedCount > 0 ? `, ${rejectedCount} rejected` : ''}
+              {clarificationCount > 0 ? `, ${clarificationCount} flagged for clarification` : ''}.
+              Approved items are now reflected in the Business and Technical profiles.
+            </p>
+          </div>
         </div>
       )}
 
