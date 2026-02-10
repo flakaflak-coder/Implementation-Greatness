@@ -17,7 +17,9 @@ import { generateWithFallback, parseJSONFromResponse } from './ai-client'
  * COMMUNICATION_STYLE, RESPONSE_TEMPLATE, GUARDRAIL_NEVER, GUARDRAIL_ALWAYS,
  * FINANCIAL_LIMIT, LEGAL_RESTRICTION, COMPLIANCE_REQUIREMENT, SYSTEM_INTEGRATION,
  * DATA_FIELD, API_ENDPOINT, SECURITY_REQUIREMENT, ERROR_HANDLING, TECHNICAL_CONTACT,
- * OPEN_ITEM, DECISION, APPROVAL, RISK
+ * OPEN_ITEM, DECISION, APPROVAL, RISK, PERSONA_TRAIT, TONE_RULE, DOS_AND_DONTS,
+ * EXAMPLE_DIALOGUE, ESCALATION_SCRIPT, MONITORING_METRIC, LAUNCH_CRITERION, DECISION_TREE,
+ * DEAL_SUMMARY, CONTRACT_DEADLINE, SALES_WATCH_OUT, PROMISED_CAPABILITY, CLIENT_PREFERENCE
  */
 const GENERAL_EXTRACTION_PROMPT = `You are an AI assistant that extracts relevant entities from content for a Digital Employee (AI agent) onboarding system.
 
@@ -91,6 +93,14 @@ IMPORTANT: Use EXACTLY these type values - they map directly to the database sch
 - BRAND_TONE: Communication style guidelines - consolidate into ONE comprehensive description
 - COMMUNICATION_STYLE: Formality level and languages - consolidate into ONE entity
 
+### PERSONA (profile: persona)
+- PERSONA_TRAIT: Named personality characteristic with example phrase (e.g., "Helpful - always offers proactive next steps")
+- TONE_RULE: Specific tone/writing rule (e.g., "Max 15-20 words per sentence", "Use 'u' not 'je'")
+- DOS_AND_DONTS: Wrong/right conversation pair (what NOT to say → what to say instead)
+- EXAMPLE_DIALOGUE: Multi-turn conversation sample for a specific scenario
+- ESCALATION_SCRIPT: Exact language to use when escalating (context: office hours, after hours, unknown topic, emotional)
+- DECISION_TREE: Question type → action routing node (what type of question → what the DE should do)
+
 ### GUARDRAILS (profile: guardrails)
 - GUARDRAIL_NEVER: Things DE must NEVER do (critical restrictions, safety limits)
 - GUARDRAIL_ALWAYS: Things DE must ALWAYS do (mandatory actions, required behaviors)
@@ -106,11 +116,22 @@ IMPORTANT: Use EXACTLY these type values - they map directly to the database sch
 - ERROR_HANDLING: How errors should be handled
 - TECHNICAL_CONTACT: Technical point of contact
 
+### MONITORING & LAUNCH (profile: monitoring & launch)
+- MONITORING_METRIC: KPI with owner, threshold, frequency, and action trigger (e.g., "First Response Time < 30s, owner: Operations Lead")
+- LAUNCH_CRITERION: Go/no-go criterion for launch with phase and owner (e.g., "Knowledge base accuracy > 90%, phase: soft launch")
+
 ### DECISIONS (profile: decisions)
 - DECISION: Decision POINTS in the process flow (yes/no branches, conditions)
 - OPEN_ITEM: Unresolved item needing follow-up
 - APPROVAL: Sign-off or approval given
 - RISK: Identified risk or concern
+
+### SALES HANDOVER (profile: salesHandover)
+- DEAL_SUMMARY: Overall deal description, what the implementation is about
+- CONTRACT_DEADLINE: Key dates from contracts - go-live dates, milestones, review dates (include structuredData: { date, type, isHard })
+- SALES_WATCH_OUT: Risks, warnings, political notes, things to look out for (include structuredData: { severity: info|warning|critical, category: political|technical|timeline|scope|other })
+- PROMISED_CAPABILITY: Features or capabilities promised to the client during sales (include structuredData: { source, priority: must_have|should_have|nice_to_have })
+- CLIENT_PREFERENCE: Known client preferences, communication style, things the client cares about
 
 ### TYPE CLARIFICATIONS
 - HAPPY_PATH_STEP is an ACTION (e.g., "Agent picks up case", "Send email to customer")
@@ -123,7 +144,7 @@ IMPORTANT: Use EXACTLY these type values - they map directly to the database sch
 For EACH entity found, extract:
 {
   "id": "unique-id",
-  "category": "BUSINESS|PROCESS|SCOPE|CHANNELS|SKILLS|COMMUNICATION|GUARDRAILS|INTEGRATIONS|SECURITY|DECISIONS",
+  "category": "BUSINESS|PROCESS|SCOPE|CHANNELS|SKILLS|COMMUNICATION|PERSONA|GUARDRAILS|INTEGRATIONS|MONITORING_LAUNCH|DECISIONS",
   "type": "SPECIFIC_TYPE",
   "content": "The extracted information",
   "confidence": 0.95,
@@ -206,6 +227,30 @@ Conversion rules (use 22 working days/month, 4.33 weeks/month):
 
 **TECHNICAL_CONTACT:**
 { "name": "Jane Doe", "role": "API Engineer", "email": "jane@example.com", "system": "Salesforce" }
+
+**PERSONA_TRAIT:**
+{ "name": "Helpful", "description": "Always offers proactive next steps", "examplePhrase": "Let me see what I can find for you" }
+
+**TONE_RULE:**
+{ "rule": "Max 15-20 words per sentence", "category": "reading_level|formality|sentence_structure|vocabulary|other" }
+
+**DOS_AND_DONTS:**
+{ "wrong": "That's not possible", "right": "Let me find another way to help you", "category": "tone" }
+
+**EXAMPLE_DIALOGUE:**
+{ "scenario": "Happy path: Simple question about parking permit", "category": "happy_path|clarification|edge_case|angry_customer|complex", "messages": [{"speaker": "user", "text": "..."}, {"speaker": "de", "text": "..."}] }
+
+**ESCALATION_SCRIPT:**
+{ "context": "office_hours|after_hours|unknown_topic|emotional|other", "label": "Office Hours Escalation", "script": "I understand this is important. Let me connect you with a colleague who can help further.", "includesContext": true }
+
+**DECISION_TREE:**
+{ "questionType": "Information request", "volumePercent": 40, "automationFeasibility": "full|partial|never", "action": "Answer from knowledge base", "escalate": false }
+
+**MONITORING_METRIC:**
+{ "name": "First Response Time", "target": "< 30 seconds", "perspective": "user_experience|operational|knowledge_quality|financial", "frequency": "realtime|daily|weekly|monthly|quarterly", "owner": "Operations Lead", "alertThreshold": "> 60 seconds", "actionTrigger": "Alert operations team", "dataSource": "Chat platform" }
+
+**LAUNCH_CRITERION:**
+{ "criterion": "Knowledge base accuracy > 90%", "phase": "soft_launch|full_launch|hypercare", "category": "technical|quality|process|stakeholder", "owner": "Project Manager", "softTarget": "85%", "fullTarget": "92%" }
 
 ## Instructions
 

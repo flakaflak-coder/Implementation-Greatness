@@ -129,8 +129,12 @@ function mapClassificationToPhase(type: string): number {
       return 3
     case 'TECHNICAL_SESSION':
       return 4
+    case 'PERSONA_DESIGN_SESSION':
+      return 3
     case 'SIGNOFF_SESSION':
       return 6
+    case 'SALES_HANDOVER_DOCUMENT':
+      return 1
     default:
       return 2
   }
@@ -148,6 +152,9 @@ function getProfileTypeForItem(itemType: string): 'business' | 'technical' {
     'SECURITY_REQUIREMENT',
     'COMPLIANCE_REQUIREMENT',
     'DATA_HANDLING',
+    'ERROR_HANDLING',
+    'TECHNICAL_CONTACT',
+    'MONITORING_METRIC',
   ]
 
   return technicalTypes.includes(itemType) ? 'technical' : 'business'
@@ -241,6 +248,25 @@ export function getProfileSection(itemType: string): string {
     // Technical Profile - Security
     SECURITY_REQUIREMENT: 'security',
     COMPLIANCE_REQUIREMENT: 'security',
+
+    // Business Profile - Persona & Conversational Design
+    PERSONA_TRAIT: 'persona',
+    TONE_RULE: 'persona',
+    DOS_AND_DONTS: 'persona',
+    EXAMPLE_DIALOGUE: 'persona',
+    ESCALATION_SCRIPT: 'persona',
+
+    // Business Profile - Monitoring & Launch
+    MONITORING_METRIC: 'monitoring',
+    LAUNCH_CRITERION: 'launch',
+    DECISION_TREE: 'process',
+
+    // Sales Handover Profile
+    DEAL_SUMMARY: 'salesHandover',
+    CONTRACT_DEADLINE: 'salesHandover',
+    SALES_WATCH_OUT: 'salesHandover',
+    PROMISED_CAPABILITY: 'salesHandover',
+    CLIENT_PREFERENCE: 'salesHandover',
   }
 
   return sectionMapping[itemType] || 'other'

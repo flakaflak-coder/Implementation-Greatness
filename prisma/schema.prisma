@@ -210,6 +210,9 @@ model DesignWeek {
   // Test Plan - stores test cases and coverage tracking
   testPlan          Json?           @db.JsonB
 
+  // Sales Handover Profile - stores deal context, watch-outs, deadlines, special notes
+  salesHandoverProfile Json?        @db.JsonB
+
   // Relations
   digitalEmployee    DigitalEmployee     @relation(fields: [digitalEmployeeId], references: [id], onDelete: Cascade)
   sessions           Session[]
@@ -880,9 +883,13 @@ enum PromptType {
   EXTRACT_PROCESS
   EXTRACT_TECHNICAL
   EXTRACT_SIGNOFF
+  EXTRACT_PERSONA        // Extract persona traits, tone, do's/don'ts, dialogues
   GENERATE_DE_DESIGN
   GENERATE_SOLUTION
   GENERATE_TEST_PLAN
+  GENERATE_PERSONA_DOC   // Sub3: Persona & Conversational Design
+  GENERATE_MONITORING    // Sub4: Monitoring Framework
+  GENERATE_ROLLOUT       // Sub5: Test & Rollout Plan
 }
 
 // Extracted items from sessions with detailed typing
@@ -975,6 +982,25 @@ enum ExtractedItemType {
   DECISION
   APPROVAL
   RISK
+
+  // Persona & Conversational Design extractions
+  EXAMPLE_DIALOGUE
+  ESCALATION_SCRIPT
+  PERSONA_TRAIT
+  TONE_RULE
+  DOS_AND_DONTS
+
+  // Monitoring & Launch extractions
+  MONITORING_METRIC
+  LAUNCH_CRITERION
+  DECISION_TREE
+
+  // Sales Handover extractions
+  DEAL_SUMMARY
+  CONTRACT_DEADLINE
+  SALES_WATCH_OUT
+  PROMISED_CAPABILITY
+  CLIENT_PREFERENCE
 }
 
 enum ReviewStatus {
@@ -1019,6 +1045,9 @@ enum GeneratedDocType {
   DE_DESIGN        // Digital Employee Design (client-facing)
   SOLUTION_DESIGN  // Technical Solution Design (internal)
   TEST_PLAN        // Test Plan (client-facing)
+  PERSONA_DESIGN   // Persona & Conversational Design (Sub3)
+  MONITORING       // Monitoring Framework & Dashboard (Sub4)
+  ROLLOUT_PLAN     // Test & Rollout Plan (Sub5)
 }
 
 enum DocumentStatus {
@@ -1094,6 +1123,8 @@ enum ContentClassification {
   SKILLS_GUARDRAILS_SESSION
   TECHNICAL_SESSION
   SIGNOFF_SESSION
+  PERSONA_DESIGN_SESSION
+  SALES_HANDOVER_DOCUMENT
   REQUIREMENTS_DOCUMENT
   TECHNICAL_SPEC
   PROCESS_DOCUMENT

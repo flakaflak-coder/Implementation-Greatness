@@ -696,6 +696,727 @@ interface TechnicalFoundationData {
   apiEndpoints: Array<{ content: string; structuredData: unknown }>
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERSONA & CONVERSATIONAL DESIGN PDF
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface PersonaDesignData {
+  companyName: string
+  digitalEmployeeName: string
+  personaTraits: Array<{ content: string; structuredData: unknown }>
+  toneRules: Array<{ content: string; structuredData: unknown }>
+  dosAndDonts: Array<{ content: string; structuredData: unknown }>
+  exampleDialogues: Array<{ content: string; structuredData: unknown }>
+  escalationScripts: Array<{ content: string; structuredData: unknown }>
+  edgeCaseResponses: Array<{ content: string; structuredData: unknown }>
+  communicationStyles: Array<{ content: string }>
+  guardrails: Array<{ content: string; type: string }>
+}
+
+export function PersonaDesignPDF({ data }: { data: PersonaDesignData }) {
+  const date = new Date().toISOString().split('T')[0]
+
+  return (
+    <Document>
+      {/* Cover Page */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.coverTop}>
+          <View style={styles.coverAccent} />
+          <Text style={styles.coverDocType}>Persona & Conversational Design</Text>
+          <Text style={styles.coverTitle}>{data.digitalEmployeeName}</Text>
+          <Text style={styles.coverSubtitle}>Identity, Tone & Conversation Guidelines</Text>
+          <Text style={styles.coverCompany}>{data.companyName}</Text>
+        </View>
+
+        <View style={styles.metricGrid}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.personaTraits.length}</Text>
+            <Text style={styles.metricLabel}>Persona Traits</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.dosAndDonts.length}</Text>
+            <Text style={styles.metricLabel}>Do&apos;s & Don&apos;ts</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.escalationScripts.length}</Text>
+            <Text style={styles.metricLabel}>Escalation Scripts</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.exampleDialogues.length}</Text>
+            <Text style={styles.metricLabel}>Example Dialogues</Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Persona Design</Text>
+        </View>
+      </Page>
+
+      {/* Personality & Tone */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Personality & Tone of Voice</Text>
+
+        {/* Persona Traits */}
+        {data.personaTraits.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Personality Traits</Text>
+            {data.personaTraits.map((trait, idx) => {
+              const sd = trait.structuredData as Record<string, string> | null
+              return (
+                <View key={idx} style={[styles.card, styles.cardSuccess]}>
+                  <Text style={styles.cardTitle}>{sd?.name || `Trait ${idx + 1}`}</Text>
+                  <Text style={styles.cardContent}>{trait.content}</Text>
+                  {sd?.examplePhrase && (
+                    <Text style={[styles.cardContent, { fontStyle: 'italic', marginTop: 4 }]}>
+                      Example: &quot;{sd.examplePhrase}&quot;
+                    </Text>
+                  )}
+                </View>
+              )
+            })}
+          </>
+        )}
+
+        {/* Tone Rules */}
+        {data.toneRules.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Tone of Voice Rules</Text>
+            {data.toneRules.map((rule, idx) => {
+              const sd = rule.structuredData as Record<string, string> | null
+              return (
+                <View key={idx} style={styles.card}>
+                  <Text style={styles.cardTitle}>{sd?.aspect || `Rule ${idx + 1}`}</Text>
+                  <Text style={styles.cardContent}>{rule.content}</Text>
+                </View>
+              )
+            })}
+          </>
+        )}
+
+        {/* Communication Style */}
+        {data.communicationStyles.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Communication Style</Text>
+            <View style={styles.bulletList}>
+              {data.communicationStyles.map((cs, idx) => (
+                <View key={idx} style={styles.bulletItem}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text style={styles.bulletText}>{cs.content}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {data.personaTraits.length === 0 && data.toneRules.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardContent}>No persona traits or tone rules extracted yet.</Text>
+          </View>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Page 2</Text>
+        </View>
+      </Page>
+
+      {/* Do's & Don'ts + Guardrails */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Conversation Guidelines</Text>
+
+        {/* Do's & Don'ts */}
+        {data.dosAndDonts.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Do&apos;s & Don&apos;ts</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, { width: '10%' }]}>#</Text>
+                <Text style={[styles.tableHeaderCell, { width: '45%' }]}>Wrong (Don&apos;t)</Text>
+                <Text style={[styles.tableHeaderCell, { width: '45%' }]}>Right (Do)</Text>
+              </View>
+              {data.dosAndDonts.map((item, idx) => {
+                const sd = item.structuredData as Record<string, string> | null
+                return (
+                  <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                    <Text style={[styles.tableCell, { width: '10%' }]}>{idx + 1}</Text>
+                    <Text style={[styles.tableCell, { width: '45%', color: '#991B1B' }]}>
+                      {sd?.wrong || '-'}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '45%', color: '#065F46' }]}>
+                      {sd?.right || item.content}
+                    </Text>
+                  </View>
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Guardrails */}
+        {data.guardrails.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>What the DE Must NEVER Do</Text>
+            {data.guardrails.map((g, idx) => (
+              <View key={idx} style={[styles.card, styles.cardDanger]}>
+                <Text style={styles.cardContent}>{g.content}</Text>
+              </View>
+            ))}
+          </>
+        )}
+
+        {/* Edge Cases */}
+        {data.edgeCaseResponses.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Edge Case Handling</Text>
+            {data.edgeCaseResponses.map((ec, idx) => {
+              const sd = ec.structuredData as Record<string, string> | null
+              return (
+                <View key={idx} style={[styles.card, styles.cardWarning]}>
+                  <Text style={styles.cardTitle}>{sd?.trigger || `Edge Case ${idx + 1}`}</Text>
+                  <Text style={styles.cardContent}>{ec.content}</Text>
+                </View>
+              )
+            })}
+          </>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Page 3</Text>
+        </View>
+      </Page>
+
+      {/* Escalation Scripts & Example Dialogues */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Escalation & Example Dialogues</Text>
+
+        {/* Escalation Scripts */}
+        {data.escalationScripts.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Escalation Scripts</Text>
+            {data.escalationScripts.map((script, idx) => {
+              const sd = script.structuredData as Record<string, string> | null
+              return (
+                <View key={idx} style={[styles.card, styles.cardWarning]}>
+                  <Text style={styles.cardTitle}>
+                    {sd?.context || sd?.trigger || `Script ${idx + 1}`}
+                  </Text>
+                  <Text style={styles.cardContent}>{script.content}</Text>
+                  {sd?.script && sd.script !== script.content && (
+                    <View style={[styles.highlightBox, { marginTop: 6, padding: 8 }]}>
+                      <Text style={[styles.cardContent, { fontStyle: 'italic' }]}>
+                        &quot;{sd.script}&quot;
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )
+            })}
+          </>
+        )}
+
+        {/* Example Dialogues */}
+        {data.exampleDialogues.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Example Dialogues</Text>
+            {data.exampleDialogues.slice(0, 5).map((dialogue, idx) => {
+              const sd = dialogue.structuredData as Record<string, unknown> | null
+              const scenario = (sd?.scenario as string) || `Dialogue ${idx + 1}`
+              const messages = (sd?.messages as Array<{ speaker: string; text: string }>) || []
+              return (
+                <View key={idx} style={[styles.card, { marginBottom: 10 }]}>
+                  <Text style={styles.cardTitle}>{scenario}</Text>
+                  {messages.length > 0 ? (
+                    messages.slice(0, 6).map((msg, mi) => (
+                      <Text key={mi} style={[styles.cardContent, {
+                        marginTop: 3,
+                        fontWeight: msg.speaker === 'DE' ? 'bold' : 'normal',
+                      }]}>
+                        {msg.speaker}: {msg.text}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text style={styles.cardContent}>{dialogue.content}</Text>
+                  )}
+                </View>
+              )
+            })}
+          </>
+        )}
+
+        {data.escalationScripts.length === 0 && data.exampleDialogues.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardContent}>No escalation scripts or example dialogues extracted yet.</Text>
+          </View>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName} | Generated: {date}</Text>
+          <Text style={styles.footerText}>Page 4</Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MONITORING FRAMEWORK PDF
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MonitoringFrameworkData {
+  companyName: string
+  digitalEmployeeName: string
+  monitoringMetrics: Array<{ content: string; structuredData: unknown }>
+  kpis: Array<{ content: string; structuredData: unknown }>
+  volumes: Array<{ content: string; structuredData: unknown }>
+}
+
+export function MonitoringFrameworkPDF({ data }: { data: MonitoringFrameworkData }) {
+  const date = new Date().toISOString().split('T')[0]
+
+  // Categorize metrics by perspective
+  const userMetrics: typeof data.monitoringMetrics = []
+  const operationalMetrics: typeof data.monitoringMetrics = []
+  const knowledgeMetrics: typeof data.monitoringMetrics = []
+  const financialMetrics: typeof data.monitoringMetrics = []
+
+  for (const m of data.monitoringMetrics) {
+    const sd = m.structuredData as Record<string, string> | null
+    const perspective = sd?.perspective?.toLowerCase() || ''
+    if (perspective.includes('user') || perspective.includes('experience') || perspective.includes('satisfaction')) {
+      userMetrics.push(m)
+    } else if (perspective.includes('knowledge') || perspective.includes('quality')) {
+      knowledgeMetrics.push(m)
+    } else if (perspective.includes('financial') || perspective.includes('cost') || perspective.includes('roi')) {
+      financialMetrics.push(m)
+    } else {
+      operationalMetrics.push(m)
+    }
+  }
+
+  const totalMetrics = data.monitoringMetrics.length + data.kpis.length
+
+  return (
+    <Document>
+      {/* Cover Page */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.coverTop}>
+          <View style={styles.coverAccent} />
+          <Text style={styles.coverDocType}>Monitoring Framework</Text>
+          <Text style={styles.coverTitle}>{data.digitalEmployeeName}</Text>
+          <Text style={styles.coverSubtitle}>KPIs, Dashboards & Reporting</Text>
+          <Text style={styles.coverCompany}>{data.companyName}</Text>
+        </View>
+
+        <View style={styles.metricGrid}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{totalMetrics}</Text>
+            <Text style={styles.metricLabel}>Total Metrics Tracked</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{userMetrics.length}</Text>
+            <Text style={styles.metricLabel}>User Experience</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{operationalMetrics.length}</Text>
+            <Text style={styles.metricLabel}>Operational</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{date}</Text>
+            <Text style={styles.metricLabel}>Generated</Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Monitoring Framework</Text>
+        </View>
+      </Page>
+
+      {/* KPI Definitions */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>KPI Definitions</Text>
+
+        {/* Render KPIs from KPI_TARGET items */}
+        {data.kpis.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Key Performance Indicators</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, { width: '25%' }]}>KPI</Text>
+                <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Target</Text>
+                <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Owner</Text>
+                <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Frequency</Text>
+                <Text style={[styles.tableHeaderCell, { width: '30%' }]}>Action if Breached</Text>
+              </View>
+              {data.kpis.map((kpi, idx) => {
+                const sd = kpi.structuredData as Record<string, string> | null
+                return (
+                  <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                    <Text style={[styles.tableCell, { width: '25%', fontWeight: 'bold' }]}>
+                      {sd?.name || kpi.content.slice(0, 40)}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '15%' }]}>{sd?.target || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '15%' }]}>{sd?.owner || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '15%' }]}>{sd?.frequency || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '30%' }]}>{sd?.actionTrigger || '-'}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Monitoring Metrics by perspective */}
+        {data.monitoringMetrics.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Monitoring Metrics</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, { width: '22%' }]}>Metric</Text>
+                <Text style={[styles.tableHeaderCell, { width: '13%' }]}>Target</Text>
+                <Text style={[styles.tableHeaderCell, { width: '13%' }]}>Perspective</Text>
+                <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Owner</Text>
+                <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Alert Threshold</Text>
+                <Text style={[styles.tableHeaderCell, { width: '25%' }]}>Action</Text>
+              </View>
+              {data.monitoringMetrics.map((metric, idx) => {
+                const sd = metric.structuredData as Record<string, string> | null
+                return (
+                  <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                    <Text style={[styles.tableCell, { width: '22%', fontWeight: 'bold' }]}>
+                      {sd?.name || metric.content.slice(0, 30)}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '13%' }]}>{sd?.target || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '13%' }]}>{sd?.perspective || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '12%' }]}>{sd?.owner || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '15%' }]}>{sd?.alertThreshold || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '25%' }]}>{sd?.actionTrigger || '-'}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        {data.kpis.length === 0 && data.monitoringMetrics.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardContent}>No monitoring metrics or KPIs extracted yet.</Text>
+          </View>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Page 2</Text>
+        </View>
+      </Page>
+
+      {/* Volume & Reporting */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Volume Expectations & Reporting</Text>
+
+        {/* Volume expectations */}
+        {data.volumes.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Volume Expectations</Text>
+            {data.volumes.map((vol, idx) => (
+              <View key={idx} style={[styles.card, styles.cardSuccess]}>
+                <Text style={styles.cardContent}>{vol.content}</Text>
+              </View>
+            ))}
+          </>
+        )}
+
+        {/* Reporting Cycle */}
+        <Text style={styles.subsectionTitle}>Recommended Reporting Cycle</Text>
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderCell, { width: '20%' }]}>Cadence</Text>
+            <Text style={[styles.tableHeaderCell, { width: '40%' }]}>Content</Text>
+            <Text style={[styles.tableHeaderCell, { width: '20%' }]}>Audience</Text>
+            <Text style={[styles.tableHeaderCell, { width: '20%' }]}>Format</Text>
+          </View>
+          {[
+            { cadence: 'Daily', content: 'Volume, CSAT, escalation rate, top unanswered questions', audience: 'Operations', format: 'Auto-summary' },
+            { cadence: 'Weekly', content: 'All operational KPIs, quality samples, knowledge gaps, top 5 improvements', audience: 'Project Team', format: 'Deep-dive meeting' },
+            { cadence: 'Monthly', content: 'All 4 KPI perspectives, trend analysis, baseline comparison', audience: 'Management', format: 'PDF report' },
+            { cadence: 'Quarterly', content: 'Financial impact analysis, ROI calculation, strategic recommendations', audience: 'Stakeholders', format: 'Business review' },
+          ].map((row, idx) => (
+            <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+              <Text style={[styles.tableCell, { width: '20%', fontWeight: 'bold' }]}>{row.cadence}</Text>
+              <Text style={[styles.tableCell, { width: '40%' }]}>{row.content}</Text>
+              <Text style={[styles.tableCell, { width: '20%' }]}>{row.audience}</Text>
+              <Text style={[styles.tableCell, { width: '20%' }]}>{row.format}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Alert Configuration */}
+        <Text style={styles.subsectionTitle}>Alert Configuration</Text>
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightContent}>
+            Automated alerts should be configured for: CSAT drops below threshold, hallucination detection, uptime drops, escalation spikes, new uncovered topics, and volume anomalies. Alerts are routed by severity to appropriate team members.
+          </Text>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName} | Generated: {date}</Text>
+          <Text style={styles.footerText}>Page 3</Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROLLOUT PLAN PDF
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface RolloutPlanData {
+  companyName: string
+  digitalEmployeeName: string
+  launchCriteria: Array<{ content: string; structuredData: unknown }>
+  testCases: Array<{
+    id: string
+    name: string
+    type: string
+    priority: string
+    expectedResult: string
+  }>
+  kpis: Array<{ content: string; structuredData: unknown }>
+  scopeItems: Array<{ description: string; classification: string }>
+}
+
+export function RolloutPlanPDF({ data }: { data: RolloutPlanData }) {
+  const date = new Date().toISOString().split('T')[0]
+
+  // Categorize launch criteria by phase
+  const goNoGoCriteria: typeof data.launchCriteria = []
+  const softLaunchCriteria: typeof data.launchCriteria = []
+  const otherCriteria: typeof data.launchCriteria = []
+
+  for (const lc of data.launchCriteria) {
+    const sd = lc.structuredData as Record<string, string> | null
+    const phase = sd?.phase?.toLowerCase() || ''
+    if (phase.includes('go') || phase.includes('decision') || phase.includes('full')) {
+      goNoGoCriteria.push(lc)
+    } else if (phase.includes('soft') || phase.includes('pilot')) {
+      softLaunchCriteria.push(lc)
+    } else {
+      otherCriteria.push(lc)
+    }
+  }
+
+  return (
+    <Document>
+      {/* Cover Page */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.coverTop}>
+          <View style={styles.coverAccent} />
+          <Text style={styles.coverDocType}>Test & Rollout Plan</Text>
+          <Text style={styles.coverTitle}>{data.digitalEmployeeName}</Text>
+          <Text style={styles.coverSubtitle}>Testing Phases, Launch Criteria & Hypercare</Text>
+          <Text style={styles.coverCompany}>{data.companyName}</Text>
+        </View>
+
+        <View style={styles.metricGrid}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.testCases.length}</Text>
+            <Text style={styles.metricLabel}>Test Cases</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.launchCriteria.length}</Text>
+            <Text style={styles.metricLabel}>Launch Criteria</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>{data.kpis.length}</Text>
+            <Text style={styles.metricLabel}>KPIs Tracked</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>5</Text>
+            <Text style={styles.metricLabel}>Testing Phases</Text>
+          </View>
+        </View>
+
+        {/* Phase overview */}
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightTitle}>Testing Phases</Text>
+          <Text style={styles.highlightContent}>
+            Phase 1: Functional Testing (Engineering) → Phase 2: UAT (Client Team) → Phase 3: Staff Pilot (5-10 Staff) → Phase 4: Soft Launch (Limited Users) → Phase 5: Full Launch (All Users)
+          </Text>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Rollout Plan</Text>
+        </View>
+      </Page>
+
+      {/* Launch Criteria & Go/No-Go */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Launch Criteria & Go/No-Go</Text>
+
+        {/* Go/No-Go Checklist */}
+        {data.launchCriteria.length > 0 ? (
+          <>
+            {goNoGoCriteria.length > 0 && (
+              <>
+                <Text style={styles.subsectionTitle}>Go/No-Go Criteria</Text>
+                {goNoGoCriteria.map((lc, idx) => {
+                  const sd = lc.structuredData as Record<string, string> | null
+                  return (
+                    <View key={idx} style={[styles.card, styles.cardDanger]}>
+                      <Text style={styles.cardTitle}>{sd?.criterion || `Criterion ${idx + 1}`}</Text>
+                      <Text style={styles.cardContent}>{lc.content}</Text>
+                      {sd?.owner && (
+                        <Text style={[styles.cardContent, { marginTop: 4 }]}>Owner: {sd.owner}</Text>
+                      )}
+                    </View>
+                  )
+                })}
+              </>
+            )}
+
+            {softLaunchCriteria.length > 0 && (
+              <>
+                <Text style={styles.subsectionTitle}>Soft Launch Criteria</Text>
+                {softLaunchCriteria.map((lc, idx) => {
+                  const sd = lc.structuredData as Record<string, string> | null
+                  return (
+                    <View key={idx} style={[styles.card, styles.cardWarning]}>
+                      <Text style={styles.cardTitle}>{sd?.criterion || `Criterion ${idx + 1}`}</Text>
+                      <Text style={styles.cardContent}>{lc.content}</Text>
+                      {sd?.threshold && (
+                        <Text style={[styles.cardContent, { marginTop: 4 }]}>
+                          Threshold: {sd.threshold}
+                        </Text>
+                      )}
+                    </View>
+                  )
+                })}
+              </>
+            )}
+
+            {otherCriteria.length > 0 && (
+              <>
+                <Text style={styles.subsectionTitle}>Additional Launch Criteria</Text>
+                {otherCriteria.map((lc, idx) => (
+                  <View key={idx} style={styles.card}>
+                    <Text style={styles.cardContent}>{lc.content}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+          </>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardContent}>No launch criteria extracted yet.</Text>
+          </View>
+        )}
+
+        {/* KPI Thresholds */}
+        {data.kpis.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>KPI Thresholds by Phase</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderCell, { width: '30%' }]}>KPI</Text>
+                <Text style={[styles.tableHeaderCell, { width: '35%' }]}>Soft Launch Target</Text>
+                <Text style={[styles.tableHeaderCell, { width: '35%' }]}>Full Launch Target</Text>
+              </View>
+              {data.kpis.slice(0, 8).map((kpi, idx) => {
+                const sd = kpi.structuredData as Record<string, string> | null
+                return (
+                  <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                    <Text style={[styles.tableCell, { width: '30%', fontWeight: 'bold' }]}>
+                      {sd?.name || kpi.content.slice(0, 30)}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '35%' }]}>{sd?.alertThreshold || '-'}</Text>
+                    <Text style={[styles.tableCell, { width: '35%' }]}>{sd?.target || '-'}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </>
+        )}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName}</Text>
+          <Text style={styles.footerText}>Page 2</Text>
+        </View>
+      </Page>
+
+      {/* Hypercare & Risk */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Hypercare & Risk Management</Text>
+
+        {/* Hypercare Protocol */}
+        <Text style={styles.subsectionTitle}>Hypercare Protocol (4 Weeks Post-Launch)</Text>
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Week</Text>
+            <Text style={[styles.tableHeaderCell, { width: '50%' }]}>Activities</Text>
+            <Text style={[styles.tableHeaderCell, { width: '35%' }]}>Focus</Text>
+          </View>
+          {[
+            { week: 'Week 1', activities: 'Daily review all conversations, immediate bugfixes, KB updates', focus: 'Stability & accuracy' },
+            { week: 'Week 2', activities: 'Analyze Week 1 data, prompt tuning, KB expansion', focus: 'Optimization' },
+            { week: 'Week 3', activities: 'Stability monitoring, staff training if needed', focus: 'Confidence building' },
+            { week: 'Week 4', activities: 'Evaluate hypercare period, prepare for transition', focus: 'Handover readiness' },
+          ].map((row, idx) => (
+            <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+              <Text style={[styles.tableCell, { width: '15%', fontWeight: 'bold' }]}>{row.week}</Text>
+              <Text style={[styles.tableCell, { width: '50%' }]}>{row.activities}</Text>
+              <Text style={[styles.tableCell, { width: '35%' }]}>{row.focus}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Escalation SLAs */}
+        <Text style={styles.subsectionTitle}>Escalation SLAs During Hypercare</Text>
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderCell, { width: '20%' }]}>Priority</Text>
+            <Text style={[styles.tableHeaderCell, { width: '30%' }]}>Description</Text>
+            <Text style={[styles.tableHeaderCell, { width: '25%' }]}>Response</Text>
+            <Text style={[styles.tableHeaderCell, { width: '25%' }]}>Resolution</Text>
+          </View>
+          {[
+            { priority: 'P1 - Critical', desc: 'Wrong info, security breach, outage', response: '1 hour', resolution: '4 hours' },
+            { priority: 'P2 - High', desc: 'Feature degraded, flow broken', response: '4 hours', resolution: '1 business day' },
+            { priority: 'P3 - Normal', desc: 'Cosmetic issues, minor gaps', response: '1 business day', resolution: 'Next release' },
+          ].map((row, idx) => (
+            <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+              <Text style={[styles.tableCell, { width: '20%', fontWeight: 'bold' }]}>{row.priority}</Text>
+              <Text style={[styles.tableCell, { width: '30%' }]}>{row.desc}</Text>
+              <Text style={[styles.tableCell, { width: '25%' }]}>{row.response}</Text>
+              <Text style={[styles.tableCell, { width: '25%' }]}>{row.resolution}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Kill Switch */}
+        <Text style={styles.subsectionTitle}>Kill Switch</Text>
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightTitle}>Emergency Disable Procedure</Text>
+          <Text style={styles.highlightContent}>
+            1. Decision to disable (Immediate) → 2. Disable chat widget/routing (&lt;5 min) → 3. Notify stakeholders (&lt;15 min) → 4. Root cause analysis (&lt;2 hours) → 5. Fix and re-enable decision (Per severity)
+          </Text>
+          <Text style={[styles.highlightContent, { marginTop: 6 }]}>
+            Activate when: Critical hallucination, security breach, consistently wrong information, or complete integration failure with no fallback.
+          </Text>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Confidential - {data.companyName} | Generated: {date}</Text>
+          <Text style={styles.footerText}>Page 3</Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}
+
 export function TechnicalFoundationPDF({ data }: { data: TechnicalFoundationData }) {
   const date = new Date().toISOString().split('T')[0]
 

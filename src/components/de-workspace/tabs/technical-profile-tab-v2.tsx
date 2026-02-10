@@ -16,6 +16,8 @@ import {
   X,
   FileCode,
   Server,
+  BarChart3,
+  Activity,
 } from 'lucide-react'
 import { TagList } from '../profile-fields'
 import {
@@ -25,6 +27,7 @@ import {
   APIEndpoint,
   SecurityRequirement,
   TechnicalContact,
+  MonitoringMetric,
   createEmptyTechnicalProfile,
   TECHNICAL_SECTION_CONFIG,
   IntegrationType,
@@ -45,6 +48,7 @@ const sectionColors: Record<string, string> = {
   cyan: 'border-cyan-200 bg-cyan-50/50',
   rose: 'border-rose-200 bg-rose-50/50',
   emerald: 'border-emerald-200 bg-emerald-50/50',
+  orange: 'border-orange-200 bg-orange-50/50',
 }
 
 const iconColors: Record<string, string> = {
@@ -53,6 +57,7 @@ const iconColors: Record<string, string> = {
   cyan: 'text-cyan-600',
   rose: 'text-rose-600',
   emerald: 'text-emerald-600',
+  orange: 'text-orange-600',
 }
 
 // Section icons
@@ -63,6 +68,7 @@ const SectionIcon = ({ name, className }: { name: string; className?: string }) 
     Globe: <Globe className={className} />,
     ShieldCheck: <ShieldCheck className={className} />,
     Users: <Users className={className} />,
+    BarChart3: <BarChart3 className={className} />,
   }
   return icons[name] || null
 }
@@ -73,7 +79,7 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['integrations', 'dataFields', 'apiEndpoints', 'securityRequirements', 'technicalContacts'])
+    new Set(['integrations', 'dataFields', 'apiEndpoints', 'securityRequirements', 'technicalContacts', 'monitoringMetrics'])
   )
 
   // Load profile data
@@ -247,6 +253,19 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
         <TechnicalContactsList
           contacts={profile.technicalContacts}
           onUpdate={(technicalContacts) => updateProfile((p) => ({ ...p, technicalContacts }))}
+        />
+      </TechnicalSection>
+
+      {/* Monitoring Metrics Section */}
+      <TechnicalSection
+        sectionKey="monitoringMetrics"
+        config={TECHNICAL_SECTION_CONFIG.monitoringMetrics}
+        expanded={expandedSections.has('monitoringMetrics')}
+        onToggle={() => toggleSection('monitoringMetrics')}
+      >
+        <MonitoringMetricsList
+          metrics={profile.monitoringMetrics || []}
+          onUpdate={(monitoringMetrics) => updateProfile((p) => ({ ...p, monitoringMetrics }))}
         />
       </TechnicalSection>
 
@@ -434,6 +453,28 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
                 <span className="text-gray-500">
                   Write: {integration.fieldsWrite.join(', ')}
                 </span>
+              )}
+            </div>
+          )}
+          {(integration.fallbackBehavior || integration.retryStrategy || integration.dataFreshness) && (
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              {integration.fallbackBehavior && (
+                <div className="p-2 bg-amber-50 rounded border border-amber-100">
+                  <span className="font-medium text-amber-700">Fallback:</span>{' '}
+                  <span className="text-amber-600">{integration.fallbackBehavior}</span>
+                </div>
+              )}
+              {integration.retryStrategy && (
+                <div className="p-2 bg-blue-50 rounded border border-blue-100">
+                  <span className="font-medium text-blue-700">Retry:</span>{' '}
+                  <span className="text-blue-600">{integration.retryStrategy}</span>
+                </div>
+              )}
+              {integration.dataFreshness && (
+                <div className="p-2 bg-emerald-50 rounded border border-emerald-100">
+                  <span className="font-medium text-emerald-700">Freshness:</span>{' '}
+                  <span className="text-emerald-600">{integration.dataFreshness}</span>
+                </div>
               )}
             </div>
           )}
@@ -1045,6 +1086,222 @@ function TechnicalContactsList({ contacts, onUpdate }: TechnicalContactsListProp
         >
           <Plus className="h-4 w-4" />
           Add contact
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Monitoring Metrics List
+// ============================================
+interface MonitoringMetricsListProps {
+  metrics: MonitoringMetric[]
+  onUpdate: (metrics: MonitoringMetric[]) => void
+}
+
+const perspectiveLabels: Record<MonitoringMetric['perspective'], { label: string; color: string }> = {
+  user_experience: { label: 'User Experience', color: 'bg-blue-100 text-blue-700' },
+  operational: { label: 'Operational', color: 'bg-emerald-100 text-emerald-700' },
+  knowledge_quality: { label: 'Knowledge Quality', color: 'bg-violet-100 text-violet-700' },
+  financial: { label: 'Financial', color: 'bg-amber-100 text-amber-700' },
+}
+
+const frequencyLabels: Record<MonitoringMetric['frequency'], string> = {
+  realtime: 'Realtime',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+}
+
+function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newTarget, setNewTarget] = useState('')
+  const [newOwner, setNewOwner] = useState('')
+  const [newPerspective, setNewPerspective] = useState<MonitoringMetric['perspective']>('operational')
+  const [newFrequency, setNewFrequency] = useState<MonitoringMetric['frequency']>('weekly')
+  const [newAlertThreshold, setNewAlertThreshold] = useState('')
+
+  const handleAdd = () => {
+    if (newName.trim()) {
+      onUpdate([
+        ...metrics,
+        {
+          id: `metric-${Date.now()}`,
+          name: newName.trim(),
+          target: newTarget.trim(),
+          owner: newOwner.trim(),
+          perspective: newPerspective,
+          frequency: newFrequency,
+          alertThreshold: newAlertThreshold.trim(),
+          actionTrigger: '',
+          dataSource: '',
+        },
+      ])
+      setNewName('')
+      setNewTarget('')
+      setNewOwner('')
+      setNewPerspective('operational')
+      setNewFrequency('weekly')
+      setNewAlertThreshold('')
+      setIsAdding(false)
+    }
+  }
+
+  const handleRemove = (id: string) => {
+    onUpdate(metrics.filter((m) => m.id !== id))
+  }
+
+  // Group metrics by perspective
+  const grouped = metrics.reduce(
+    (acc, m) => {
+      acc[m.perspective] = acc[m.perspective] || []
+      acc[m.perspective].push(m)
+      return acc
+    },
+    {} as Record<string, MonitoringMetric[]>
+  )
+
+  return (
+    <div className="space-y-4">
+      {metrics.length === 0 && !isAdding && (
+        <p className="text-gray-500 text-sm">No monitoring metrics defined</p>
+      )}
+      {metrics.length > 0 && (
+        <div className="space-y-4">
+          {Object.entries(grouped).map(([perspective, perspectiveMetrics]) => {
+            const config = perspectiveLabels[perspective as MonitoringMetric['perspective']]
+            return (
+              <div key={perspective}>
+                <h5 className={cn('text-xs font-medium px-2 py-1 rounded-t inline-block', config?.color || 'bg-gray-100 text-gray-700')}>
+                  {config?.label || perspective}
+                </h5>
+                <div className="overflow-x-auto border rounded-lg rounded-tl-none">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">Metric</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">Target</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">Owner</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">Frequency</th>
+                        <th className="text-left py-2 px-3 font-medium text-amber-600">Alert</th>
+                        <th className="py-2 px-3 w-8"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {perspectiveMetrics.map((metric) => (
+                        <tr key={metric.id} className="border-b border-gray-100 group">
+                          <td className="py-2 px-3 font-medium text-gray-900">{metric.name}</td>
+                          <td className="py-2 px-3 text-emerald-600 font-medium">{metric.target || '-'}</td>
+                          <td className="py-2 px-3 text-gray-600">{metric.owner || '-'}</td>
+                          <td className="py-2 px-3">
+                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                              {frequencyLabels[metric.frequency]}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-amber-600 text-xs">{metric.alertThreshold || '-'}</td>
+                          <td className="py-2 px-3">
+                            <button
+                              onClick={() => handleRemove(metric.id)}
+                              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {isAdding ? (
+        <div className="p-4 bg-white rounded-lg border-2 border-orange-300 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Metric name (e.g., First Response Time)"
+              className="col-span-2 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="text"
+              value={newTarget}
+              onChange={(e) => setNewTarget(e.target.value)}
+              placeholder="Target (e.g., < 30 seconds)"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="text"
+              value={newOwner}
+              onChange={(e) => setNewOwner(e.target.value)}
+              placeholder="Owner (e.g., Operations Lead)"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <select
+              value={newPerspective}
+              onChange={(e) => setNewPerspective(e.target.value as MonitoringMetric['perspective'])}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              {Object.entries(perspectiveLabels).map(([value, { label }]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={newFrequency}
+              onChange={(e) => setNewFrequency(e.target.value as MonitoringMetric['frequency'])}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              {Object.entries(frequencyLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={newAlertThreshold}
+              onChange={(e) => setNewAlertThreshold(e.target.value)}
+              placeholder="Alert threshold (e.g., > 60 seconds)"
+              className="col-span-2 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setIsAdding(false)
+                setNewName('')
+                setNewTarget('')
+                setNewOwner('')
+                setNewAlertThreshold('')
+              }}
+              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+        >
+          <Plus className="h-4 w-4" />
+          Add monitoring metric
         </button>
       )}
     </div>

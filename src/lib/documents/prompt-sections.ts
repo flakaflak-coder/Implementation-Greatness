@@ -62,7 +62,7 @@ ${deDescription ? `**Initiative Description:** ${deDescription}` : ''}`
 export function buildExtractedDataSection(extractedData: {
   stakeholders: Array<{ name: string; role: string; email?: string }>
   goals: Array<{ title: string; description: string }>
-  kpis: Array<{ name: string; target: string; unit?: string }>
+  kpis: Array<{ name: string; target: string; unit?: string; owner?: string; alertThreshold?: string }>
   volumes: Array<{ metric: string; value: string; period: string }>
   processSteps: Array<{ stepNumber: number; name: string; description: string }>
   exceptions: Array<{ name: string; description: string; handling: string }>
@@ -73,6 +73,10 @@ export function buildExtractedDataSection(extractedData: {
   businessRules: Array<{ name: string; condition: string; action: string }>
   securityRequirements: string[]
   channels: string[]
+  personaTraits?: Array<{ name: string; description: string; examplePhrase?: string }>
+  escalationScripts?: Array<{ context: string; script: string }>
+  monitoringMetrics?: Array<{ name: string; target: string; owner?: string; perspective?: string }>
+  launchCriteria?: Array<{ criterion: string; phase?: string; owner?: string }>
 }): string {
   return `
 ═══════════════════════════════════════════════════════════════════════════════
@@ -116,7 +120,19 @@ ${extractedData.businessRules.map((r) => `• **${r.name}**\n  When: ${r.conditi
 ${extractedData.securityRequirements.length > 0 ? extractedData.securityRequirements.map((s) => `• ${s}`).join('\n') : '• Security requirements to be defined'}
 
 ### Communication Channels
-${extractedData.channels.length > 0 ? extractedData.channels.join(', ') : 'To be determined'}`
+${extractedData.channels.length > 0 ? extractedData.channels.join(', ') : 'To be determined'}
+${extractedData.personaTraits && extractedData.personaTraits.length > 0 ? `
+### Persona & Conversational Design
+${extractedData.personaTraits.map((t) => `• **${t.name}**: ${t.description}${t.examplePhrase ? `\n  Example: "${t.examplePhrase}"` : ''}`).join('\n')}` : ''}
+${extractedData.escalationScripts && extractedData.escalationScripts.length > 0 ? `
+### Escalation Scripts
+${extractedData.escalationScripts.map((s) => `• **${s.context}**\n  "${s.script}"`).join('\n\n')}` : ''}
+${extractedData.monitoringMetrics && extractedData.monitoringMetrics.length > 0 ? `
+### Monitoring Metrics
+${extractedData.monitoringMetrics.map((m) => `• ${m.name}: Target ${m.target}${m.owner ? ` (Owner: ${m.owner})` : ''}${m.perspective ? ` [${m.perspective}]` : ''}`).join('\n')}` : ''}
+${extractedData.launchCriteria && extractedData.launchCriteria.length > 0 ? `
+### Launch Criteria
+${extractedData.launchCriteria.map((c) => `• ${c.criterion}${c.phase ? ` (Phase: ${c.phase})` : ''}${c.owner ? ` — Owner: ${c.owner}` : ''}`).join('\n')}` : ''}`
 }
 
 /**

@@ -32,6 +32,7 @@ export async function GET(
                     'COMPLIANCE_REQUIREMENT',
                     'ERROR_HANDLING',
                     'TECHNICAL_CONTACT',
+                    'MONITORING_METRIC',
                   ],
                 },
               },

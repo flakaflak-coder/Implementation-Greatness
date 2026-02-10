@@ -119,10 +119,49 @@ Review the extracted entities and:
    - Are mitigations proposed?
    - Are risk owners assigned?
 
+4. **Launch Criteria**
+   - Are go/no-go criteria defined?
+   - Are soft launch thresholds set?
+   - Are hypercare requirements documented?
+
 Review the extracted entities and:
 - Prioritize open items
 - Confirm decision completeness
-- Flag unmitigated risks`,
+- Flag unmitigated risks
+- Extract launch criteria as LAUNCH_CRITERION type`,
+
+  PERSONA_DESIGN_SESSION: `You are reviewing extraction results from a PERSONA & CONVERSATIONAL DESIGN session. Focus on:
+
+1. **Persona Definition**
+   - Are personality traits named with examples?
+   - Is the tone of voice clearly defined?
+   - Are formality rules specified?
+
+2. **Conversational Design**
+   - Are do's and don'ts defined with examples?
+   - Is the opening message specified?
+   - Is the conversation structure documented?
+
+3. **Escalation Language**
+   - Are escalation scripts provided for different contexts?
+   - Is warm handover language defined?
+   - Are edge case responses documented?
+
+4. **Example Dialogues**
+   - Are there examples for happy path, clarification, edge cases?
+   - Are angry customer scenarios covered?
+   - Do dialogues demonstrate the intended tone?
+
+5. **Feedback & Monitoring**
+   - Is the feedback mechanism defined?
+   - Are monitoring metrics specified with owners?
+   - Is the improvement cycle documented?
+
+Review the extracted entities and:
+- Ensure persona traits have example phrases
+- Flag missing escalation contexts
+- Identify gaps in dialogue coverage
+- Use types: PERSONA_TRAIT, TONE_RULE, DOS_AND_DONTS, EXAMPLE_DIALOGUE, ESCALATION_SCRIPT, MONITORING_METRIC, LAUNCH_CRITERION, DECISION_TREE`,
 
   REQUIREMENTS_DOCUMENT: `You are reviewing extraction results from a REQUIREMENTS document. Focus on:
 - Functional requirements clarity
@@ -138,6 +177,29 @@ Review the extracted entities and:
 - Process flow completeness
 - Role definitions
 - Exception handling`,
+
+  SALES_HANDOVER_DOCUMENT: `You are reviewing extraction results from a SALES HANDOVER document (proposal, SOW, deal summary). Focus on:
+
+1. **Deal Context**
+   - Is the deal summary clear and complete?
+   - Is the client motivation captured?
+   - Are contract terms and value documented?
+
+2. **Deadlines & Milestones**
+   - Are go-live dates and contractual deadlines captured?
+   - Are they marked as hard vs aspirational?
+
+3. **Watch-Outs**
+   - Are political, technical, or timeline risks noted?
+   - Are known constraints documented?
+
+4. **Promises**
+   - What capabilities were promised to the client?
+   - Are they prioritized (must-have vs nice-to-have)?
+
+5. **Stakeholders**
+   - Are key client contacts identified?
+   - Are decision makers flagged?`,
 
   UNKNOWN: `You are reviewing extraction results from unknown content. Do your best to:
 - Structure the information logically
@@ -402,6 +464,48 @@ export function mapToExtractedItemType(entityType: string): string {
     RISK: 'RISK',
     CONCERN: 'RISK',
     ISSUE: 'RISK',
+
+    // === Persona & Conversational Design ===
+    EXAMPLE_DIALOGUE: 'EXAMPLE_DIALOGUE',
+    DIALOGUE: 'EXAMPLE_DIALOGUE',
+    CONVERSATION_EXAMPLE: 'EXAMPLE_DIALOGUE',
+    SAMPLE_CONVERSATION: 'EXAMPLE_DIALOGUE',
+    ESCALATION_SCRIPT: 'ESCALATION_SCRIPT',
+    HANDOVER_SCRIPT: 'ESCALATION_SCRIPT',
+    WARM_HANDOVER: 'ESCALATION_SCRIPT',
+    PERSONA_TRAIT: 'PERSONA_TRAIT',
+    PERSONALITY: 'PERSONA_TRAIT',
+    PERSONALITY_TRAIT: 'PERSONA_TRAIT',
+    TRAIT: 'PERSONA_TRAIT',
+    TONE_RULE: 'TONE_RULE',
+    TONE_OF_VOICE: 'TONE_RULE',
+    VOICE_RULE: 'TONE_RULE',
+    READING_LEVEL: 'TONE_RULE',
+    DOS_AND_DONTS: 'DOS_AND_DONTS',
+    DO_AND_DONT: 'DOS_AND_DONTS',
+    CONVERSATIONAL_GUIDELINE: 'DOS_AND_DONTS',
+
+    // === Monitoring & Launch ===
+    MONITORING_METRIC: 'MONITORING_METRIC',
+    MONITORING_KPI: 'MONITORING_METRIC',
+    DASHBOARD_METRIC: 'MONITORING_METRIC',
+    ALERT_THRESHOLD: 'MONITORING_METRIC',
+    LAUNCH_CRITERION: 'LAUNCH_CRITERION',
+    GO_NO_GO: 'LAUNCH_CRITERION',
+    LAUNCH_READINESS: 'LAUNCH_CRITERION',
+    SOFT_LAUNCH: 'LAUNCH_CRITERION',
+    HYPERCARE: 'LAUNCH_CRITERION',
+    DECISION_TREE: 'DECISION_TREE',
+    ROUTING_RULE: 'DECISION_TREE',
+    QUESTION_ROUTING: 'DECISION_TREE',
+    AUTOMATION_FEASIBILITY: 'DECISION_TREE',
+
+    // === Sales Handover ===
+    DEAL_SUMMARY: 'DEAL_SUMMARY',
+    CONTRACT_DEADLINE: 'CONTRACT_DEADLINE',
+    SALES_WATCH_OUT: 'SALES_WATCH_OUT',
+    PROMISED_CAPABILITY: 'PROMISED_CAPABILITY',
+    CLIENT_PREFERENCE: 'CLIENT_PREFERENCE',
   }
 
   const mapped = typeMapping[entityType]

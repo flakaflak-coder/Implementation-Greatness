@@ -31,6 +31,7 @@ export async function GET(
                     'GUARDRAIL_ALWAYS',
                     'SCOPE_IN',
                     'SCOPE_OUT',
+                    'LAUNCH_CRITERION',
                   ],
                 },
               },

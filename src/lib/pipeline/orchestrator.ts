@@ -24,8 +24,10 @@ const CLASSIFICATION_TO_PHASE: Record<ContentClassification, number> = {
   KICKOFF_SESSION: 1,
   PROCESS_DESIGN_SESSION: 2,
   SKILLS_GUARDRAILS_SESSION: 2, // Part of Process Design
+  PERSONA_DESIGN_SESSION: 2, // Part of Process Design (persona/conversational design)
   TECHNICAL_SESSION: 3,
   SIGNOFF_SESSION: 4,
+  SALES_HANDOVER_DOCUMENT: 0, // Pre-Design-Week, does not advance phase
   REQUIREMENTS_DOCUMENT: 1, // Typically part of Kickoff
   TECHNICAL_SPEC: 3,
   PROCESS_DOCUMENT: 2,

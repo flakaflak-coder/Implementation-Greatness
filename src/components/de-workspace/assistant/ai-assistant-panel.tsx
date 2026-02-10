@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Calendar,
   ArrowRight,
+  FileSignature,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -280,6 +281,7 @@ function parseActions(content: string): { cleanContent: string; actions: FreddyA
 
 // Tab icon mapping
 const tabIcons: Record<WorkspaceTab, React.ReactNode> = {
+  handover: <FileSignature className="w-3 h-3" />,
   progress: <Rocket className="w-3 h-3" />,
   business: <Briefcase className="w-3 h-3" />,
   technical: <Wrench className="w-3 h-3" />,

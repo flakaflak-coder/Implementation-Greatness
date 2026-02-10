@@ -263,6 +263,51 @@ Only include items with confidence >= 0.50.`,
       temperature: 0.2,
       maxTokens: 4096,
     },
+    EXTRACT_PERSONA: {
+      prompt: `You are an AI assistant helping to extract persona and conversational design information from a Design Week session.
+
+${CONFIDENCE_SCORING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
+
+Analyze the provided transcript and extract:
+
+1. **Persona Traits** - Named personality characteristics with example phrases (PERSONA_TRAIT type)
+2. **Tone Rules** - Reading level, formality, sentence length rules (TONE_RULE type)
+3. **Do's & Don'ts** - Wrong/right conversation pairs (DOS_AND_DONTS type)
+4. **Example Dialogues** - Full multi-turn conversations (EXAMPLE_DIALOGUE type)
+5. **Escalation Scripts** - Exact language per context (ESCALATION_SCRIPT type)
+6. **Monitoring Metrics** - KPIs with owners and thresholds (MONITORING_METRIC type)
+7. **Launch Criteria** - Go/no-go criteria per launch phase (LAUNCH_CRITERION type)
+8. **Decision Tree** - Question type → action routing (DECISION_TREE type)
+
+For each item:
+- type: The ExtractedItemType
+- category: A sub-category (e.g., for PERSONA_TRAIT: "helpful", "empathetic", "honest")
+- content: Clear description
+- structuredData: Rich structured data:
+  - PERSONA_TRAIT: {"name": "Helpful", "examplePhrase": "Let me find that for you"}
+  - TONE_RULE: {"category": "reading_level|formality|sentence_structure|vocabulary", "examples": "..."}
+  - DOS_AND_DONTS: {"wrong": "I'm just a bot", "right": "I don't have that information", "category": "tone"}
+  - EXAMPLE_DIALOGUE: {"scenario": "Happy path", "category": "happy_path|clarification|edge_case|angry_customer|complex", "messages": [{"speaker": "user|de", "text": "..."}]}
+  - ESCALATION_SCRIPT: {"context": "office_hours|after_hours|unknown_topic|emotional", "script": "exact language", "includesContext": true}
+  - MONITORING_METRIC: {"target": ">=4.0", "perspective": "user_experience|operational|knowledge_quality|financial", "frequency": "daily", "owner": "...", "alertThreshold": "<3.5", "actionTrigger": "..."}
+  - LAUNCH_CRITERION: {"phase": "soft_launch|full_launch|hypercare", "owner": "...", "softTarget": "...", "fullTarget": "..."}
+  - DECISION_TREE: {"questionType": "...", "volumePercent": 25, "automationFeasibility": "full|partial|never", "action": "...", "escalate": false}
+- confidence: Use the scoring guide above
+- sourceQuote: Exact quote
+- sourceSpeaker: Who said it
+
+Respond in JSON format:
+{
+  "items": [...],
+  "warnings": ["optional warnings"]
+}
+
+Only include items with confidence >= 0.50.`,
+      temperature: 0.2,
+      maxTokens: 8192,
+    },
     GENERATE_DE_DESIGN: {
       prompt: `Generate a Digital Employee Design document based on the extracted information.
 This document should be client-facing and business-friendly for sign-off.
@@ -284,6 +329,32 @@ Include happy path tests, edge cases, boundary tests, and escalation tests.`,
       temperature: 0.3,
       maxTokens: 16384,
     },
+    GENERATE_PERSONA_DOC: {
+      prompt: `Generate a Persona & Conversational Design document (Sub3) based on the extracted information.
+Include: Identity Profile, Personality Traits with examples, Tone of Voice Rules,
+Do's & Don'ts table, Opening Message, Conversation Structure (6-step flow),
+Escalation Scripts (4 contexts), Example Dialogues (5+ scenarios),
+Edge Cases & Boundaries, and Feedback Mechanism design.`,
+      temperature: 0.3,
+      maxTokens: 16384,
+    },
+    GENERATE_MONITORING: {
+      prompt: `Generate a Monitoring Framework & Dashboard document (Sub4) based on the extracted information.
+Include: Measurement Framework (4 perspectives), KPI Definitions with owners and thresholds,
+Dashboard Specifications per stakeholder, Alert Configuration, Reporting Cycle
+(daily/weekly/monthly/quarterly), Weekly Improvement Actions, and Baseline Measurement plan.`,
+      temperature: 0.3,
+      maxTokens: 16384,
+    },
+    GENERATE_ROLLOUT: {
+      prompt: `Generate a Test & Rollout Plan document (Sub5) based on the extracted information.
+Include: Testing Phases (Functional → UAT → Staff Pilot → Soft Launch → Full Launch),
+Test Scenarios per Phase, Soft Launch Protocol with lower KPI thresholds,
+Go/No-Go Checklist (13+ points), Hypercare Protocol (4-week post-launch),
+Kill Switch Mechanism, Risk & Mitigation, and Transition to Steady State.`,
+      temperature: 0.3,
+      maxTokens: 16384,
+    },
   }
 
   return {
@@ -295,13 +366,14 @@ Include happy path tests, edge cases, boundary tests, and escalation tests.`,
 // Main extraction function
 export async function extractFromTranscript(
   transcript: string,
-  sessionType: 'kickoff' | 'process' | 'technical' | 'signoff'
+  sessionType: 'kickoff' | 'process' | 'technical' | 'signoff' | 'persona'
 ): Promise<ExtractionResponse> {
   const promptTypeMap: Record<string, PromptType> = {
     kickoff: 'EXTRACT_KICKOFF',
     process: 'EXTRACT_PROCESS',
     technical: 'EXTRACT_TECHNICAL',
     signoff: 'EXTRACT_SIGNOFF',
+    persona: 'EXTRACT_PERSONA',
   }
 
   const promptType = promptTypeMap[sessionType]

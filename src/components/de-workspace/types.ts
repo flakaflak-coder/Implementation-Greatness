@@ -456,7 +456,7 @@ export interface DEWorkspaceProps {
 }
 
 // Tab state
-export type WorkspaceTab = 'progress' | 'business' | 'technical' | 'testplan'
+export type WorkspaceTab = 'handover' | 'progress' | 'business' | 'technical' | 'testplan'
 
 // Helper function to group items by profile section
 export function groupItemsByProfile(items: ExtractedItemWithSession[]): GroupedProfileItems {

@@ -51,6 +51,9 @@ export interface KPI {
   currentValue?: string
   unit: string // '%' | 'minutes' | 'hours' | 'cases'
   frequency?: string // 'daily' | 'weekly' | 'monthly'
+  owner?: string
+  alertThreshold?: string
+  actionTrigger?: string
 }
 
 // ============================================
@@ -120,6 +123,7 @@ export interface CaseType {
   volumePercent: number
   complexity: 'LOW' | 'MEDIUM' | 'HIGH'
   automatable: boolean
+  automationFeasibility?: 'full' | 'partial' | 'never'
   description?: string
 }
 
@@ -162,6 +166,134 @@ export interface GuardrailsSection {
 }
 
 // ============================================
+// Persona & Conversational Design Section
+// ============================================
+export interface PersonaTrait {
+  id: string
+  name: string // e.g., "Helpful", "Clear", "Patient", "Honest", "Empathetic"
+  description: string
+  examplePhrase: string // e.g., "Let me see what I can find for you"
+}
+
+export interface ToneRule {
+  id: string
+  rule: string // e.g., "Max 15-20 words per sentence"
+  category: 'reading_level' | 'formality' | 'sentence_structure' | 'vocabulary' | 'other'
+  examples?: string
+}
+
+export interface DosAndDonts {
+  id: string
+  wrong: string // What NOT to say
+  right: string // What to say instead
+  category?: string // e.g., "tone", "clarity", "empathy"
+}
+
+export interface ExampleDialogue {
+  id: string
+  scenario: string // e.g., "Happy path: Simple question"
+  category: 'happy_path' | 'clarification' | 'edge_case' | 'angry_customer' | 'complex'
+  messages: DialogueMessage[]
+}
+
+export interface DialogueMessage {
+  speaker: 'user' | 'de'
+  text: string
+}
+
+export interface EscalationScript {
+  id: string
+  context: 'office_hours' | 'after_hours' | 'unknown_topic' | 'emotional' | 'other'
+  label: string // Human-readable label
+  script: string // Exact language to use
+  includesContext: boolean // Whether conversation history is passed to agent
+}
+
+export interface PersonaSection {
+  traits: PersonaTrait[]
+  toneRules: ToneRule[]
+  dosAndDonts: DosAndDonts[]
+  openingMessage: string
+  aiDisclaimer: string
+  conversationStructure: string[] // Ordered steps: "Acknowledge", "Understand", etc.
+  exampleDialogues: ExampleDialogue[]
+  escalationScripts: EscalationScript[]
+  edgeCaseResponses: EdgeCaseResponse[]
+  feedbackMechanism: FeedbackMechanism
+}
+
+export interface EdgeCaseResponse {
+  id: string
+  trigger: string // e.g., "Profanity", "Spam", "Legal question", "Timeout"
+  response: string // Exact response to use
+}
+
+export interface FeedbackMechanism {
+  enabled: boolean
+  methods: string[] // e.g., ["thumbs_up_down", "csat_1_5", "comment_field"]
+  improvementCycle: string // e.g., "Weekly top-5 improvements reviewed by project team"
+  owner?: string
+}
+
+// ============================================
+// Monitoring & Launch Section
+// ============================================
+export interface MonitoringMetric {
+  id: string
+  name: string
+  target: string
+  perspective: 'user_experience' | 'operational' | 'knowledge_quality' | 'financial'
+  frequency: 'realtime' | 'daily' | 'weekly' | 'monthly' | 'quarterly'
+  owner: string
+  alertThreshold: string
+  actionTrigger: string
+  dataSource: string
+}
+
+export interface LaunchCriterion {
+  id: string
+  criterion: string
+  phase: 'soft_launch' | 'full_launch' | 'hypercare'
+  category: 'technical' | 'quality' | 'process' | 'stakeholder'
+  owner: string
+  status: 'pending' | 'met' | 'not_met' | 'waived'
+  softTarget?: string // Lower threshold for soft launch
+  fullTarget?: string // Full launch threshold
+}
+
+export interface DecisionTreeNode {
+  id: string
+  questionType: string // e.g., "Information request", "Status inquiry", "Complaint"
+  volumePercent: number
+  automationFeasibility: 'full' | 'partial' | 'never'
+  action: string // What the DE should do
+  escalate: boolean
+  reason?: string // Why this routing decision
+}
+
+export interface MonitoringSection {
+  metrics: MonitoringMetric[]
+  dashboardViews: string[] // Who sees what
+  reportingCycle: {
+    daily: string
+    weekly: string
+    monthly: string
+    quarterly: string
+  }
+}
+
+export interface LaunchSection {
+  criteria: LaunchCriterion[]
+  decisionTree: DecisionTreeNode[]
+  hypercare: {
+    duration: string // e.g., "4 weeks"
+    activities: string[]
+    escalationSLAs: { priority: string; response: string; resolution: string }[]
+  }
+  killSwitch: string // Description of how to disable
+}
+
+// ============================================
 // Complete Business Profile
 // ============================================
 export interface BusinessProfile {
@@ -173,6 +305,9 @@ export interface BusinessProfile {
   process: ProcessSection
   scope: ScopeSection
   guardrails: GuardrailsSection
+  persona?: PersonaSection
+  monitoring?: MonitoringSection
+  launch?: LaunchSection
 }
 
 // ============================================
@@ -282,7 +417,134 @@ export const PROFILE_SECTION_CONFIG = {
     color: 'rose',
     description: 'Rules and restrictions',
   },
+  persona: {
+    title: 'Persona & Conversational Design',
+    icon: 'MessageCircle',
+    color: 'pink',
+    description: 'Personality, tone, do\'s/don\'ts, escalation scripts',
+  },
+  monitoring: {
+    title: 'Monitoring Framework',
+    icon: 'BarChart3',
+    color: 'orange',
+    description: 'KPIs with owners, alerts, and reporting cycles',
+  },
+  launch: {
+    title: 'Launch Readiness',
+    icon: 'Rocket',
+    color: 'green',
+    description: 'Go/no-go criteria, soft launch, and hypercare',
+  },
 } as const
+
+// ============================================
+// SALES HANDOVER PROFILE TYPES
+// ============================================
+
+export interface SalesWatchOut {
+  id: string
+  description: string
+  severity: 'info' | 'warning' | 'critical'
+  category: 'political' | 'technical' | 'timeline' | 'scope' | 'other'
+}
+
+export interface SalesDeadline {
+  id: string
+  date: string // ISO date string
+  description: string
+  type: 'contract' | 'go_live' | 'milestone' | 'review' | 'other'
+  isHard: boolean // hard deadline vs aspirational
+}
+
+export interface PromisedCapability {
+  id: string
+  description: string
+  source: string // where this was promised (proposal, meeting, etc.)
+  priority: 'must_have' | 'should_have' | 'nice_to_have'
+}
+
+export interface SalesHandoverContext {
+  dealSummary: string
+  clientMotivation: string
+  contractType: string
+  contractValue: string
+  salesOwner: string
+}
+
+export interface SalesSpecialNotes {
+  clientPreferences: string[]
+  internalNotes: string
+  promisedCapabilities: PromisedCapability[]
+  knownConstraints: string[]
+}
+
+export interface SalesHandoverProfile {
+  context: SalesHandoverContext
+  watchOuts: SalesWatchOut[]
+  deadlines: SalesDeadline[]
+  specialNotes: SalesSpecialNotes
+  stakeholders: Stakeholder[] // reuse existing Stakeholder type
+  submittedBy: string
+  submittedAt: string
+  lastUpdatedAt: string
+}
+
+export const SALES_HANDOVER_SECTION_CONFIG = {
+  context: {
+    title: 'Context & Deal Summary',
+    icon: 'FileSignature',
+    color: 'blue',
+    description: 'What is this implementation about?',
+  },
+  watchOuts: {
+    title: 'Watch-Outs',
+    icon: 'AlertTriangle',
+    color: 'amber',
+    description: 'What should we look out for?',
+  },
+  deadlines: {
+    title: 'Deadlines',
+    icon: 'Calendar',
+    color: 'rose',
+    description: 'Are there specific deadlines or contractual dates?',
+  },
+  specialNotes: {
+    title: 'Special Notes & Promises',
+    icon: 'Star',
+    color: 'violet',
+    description: 'Anything else we should know?',
+  },
+  stakeholders: {
+    title: 'Key Contacts',
+    icon: 'Users',
+    color: 'emerald',
+    description: 'Who are the key people from the client side?',
+  },
+} as const
+
+export function createEmptySalesHandoverProfile(): SalesHandoverProfile {
+  return {
+    context: {
+      dealSummary: '',
+      clientMotivation: '',
+      contractType: '',
+      contractValue: '',
+      salesOwner: '',
+    },
+    watchOuts: [],
+    deadlines: [],
+    specialNotes: {
+      clientPreferences: [],
+      internalNotes: '',
+      promisedCapabilities: [],
+      knownConstraints: [],
+    },
+    stakeholders: [],
+    submittedBy: '',
+    submittedAt: '',
+    lastUpdatedAt: '',
+  }
+}
 
 // ============================================
 // TECHNICAL PROFILE TYPES
@@ -307,6 +569,10 @@ export interface Integration {
   errorHandling?: string
   status: IntegrationStatus
   technicalContact?: string
+  fallbackBehavior?: string // What happens when system is down
+  retryStrategy?: string // e.g., "Exponential backoff, 3 attempts, max 30s"
+  dataFreshness?: string // e.g., "Daily sync + event-driven"
+  dataResidency?: string // e.g., "EU-West private cloud"
 }
 
 // Data Field
@@ -360,6 +626,7 @@ export interface TechnicalProfile {
   apiEndpoints: APIEndpoint[]
   securityRequirements: SecurityRequirement[]
   technicalContacts: TechnicalContact[]
+  monitoringMetrics: MonitoringMetric[]
   notes: string[]
 }
 
@@ -395,6 +662,12 @@ export const TECHNICAL_SECTION_CONFIG = {
     color: 'emerald',
     description: 'System owners and contacts',
   },
+  monitoringMetrics: {
+    title: 'Monitoring Metrics',
+    icon: 'BarChart3',
+    color: 'orange',
+    description: 'KPIs with owners, thresholds, and alert triggers',
+  },
 } as const
 
 // Empty Technical Profile Template
@@ -405,6 +678,7 @@ export function createEmptyTechnicalProfile(): TechnicalProfile {
     apiEndpoints: [],
     securityRequirements: [],
     technicalContacts: [],
+    monitoringMetrics: [],
     notes: [],
   }
 }
@@ -545,6 +819,42 @@ export function createEmptyProfile(): BusinessProfile {
       always: [],
       financialLimits: [],
       legalRestrictions: [],
+    },
+    persona: {
+      traits: [],
+      toneRules: [],
+      dosAndDonts: [],
+      openingMessage: '',
+      aiDisclaimer: '',
+      conversationStructure: ['Acknowledge', 'Understand', 'Clarify', 'Answer', 'Proactive next', 'Close'],
+      exampleDialogues: [],
+      escalationScripts: [],
+      edgeCaseResponses: [],
+      feedbackMechanism: {
+        enabled: false,
+        methods: [],
+        improvementCycle: '',
+      },
+    },
+    monitoring: {
+      metrics: [],
+      dashboardViews: [],
+      reportingCycle: {
+        daily: '',
+        weekly: '',
+        monthly: '',
+        quarterly: '',
+      },
+    },
+    launch: {
+      criteria: [],
+      decisionTree: [],
+      hypercare: {
+        duration: '4 weeks',
+        activities: [],
+        escalationSLAs: [],
+      },
+      killSwitch: '',
     },
   }
 }

@@ -139,6 +139,78 @@ export interface ExtractionResult {
     slaMinutes?: number
     quote: string
   }>
+
+  // Persona & Conversational Design extractions
+  personaTraits?: Array<{
+    name: string
+    description: string
+    examplePhrase: string
+    quote: string
+  }>
+  toneRules?: Array<{
+    rule: string
+    category: 'reading_level' | 'formality' | 'sentence_structure' | 'vocabulary' | 'other'
+    examples?: string
+    quote: string
+  }>
+  dosAndDonts?: Array<{
+    wrong: string
+    right: string
+    category?: string
+    quote: string
+  }>
+  exampleDialogues?: Array<{
+    scenario: string
+    category: 'happy_path' | 'clarification' | 'edge_case' | 'angry_customer' | 'complex'
+    messages: Array<{ speaker: 'user' | 'de'; text: string }>
+    quote: string
+  }>
+  escalationScripts?: Array<{
+    context: 'office_hours' | 'after_hours' | 'unknown_topic' | 'emotional' | 'other'
+    label: string
+    script: string
+    includesContext: boolean
+    quote: string
+  }>
+  openingMessage?: {
+    greeting: string
+    aiDisclaimer: string
+    quote: string
+  }
+  feedbackMechanism?: {
+    methods: string[]
+    improvementCycle: string
+    quote: string
+  }
+
+  // Monitoring & Launch extractions
+  monitoringMetrics?: Array<{
+    name: string
+    target: string
+    perspective: 'user_experience' | 'operational' | 'knowledge_quality' | 'financial'
+    frequency: string
+    owner: string
+    alertThreshold: string
+    actionTrigger: string
+    quote: string
+  }>
+  launchCriteria?: Array<{
+    criterion: string
+    phase: 'soft_launch' | 'full_launch' | 'hypercare'
+    owner: string
+    softTarget?: string
+    fullTarget?: string
+    quote: string
+  }>
+  decisionTree?: Array<{
+    questionType: string
+    volumePercent: number
+    automationFeasibility: 'full' | 'partial' | 'never'
+    action: string
+    escalate: boolean
+    reason?: string
+    quote: string
+  }>
 }
 
 // Session-type-specific extraction prompts aligned with Sophie's checklist
@@ -188,9 +260,12 @@ Respond in JSON with structure:
     "deName": "proposed DE name",
     "quote": "relevant quote from transcript"
   },
-  "kpis": [{"name": "KPI name", "targetValue": "target", "unit": "optional unit", "measurementMethod": "how measured", "quote": "exact quote"}],
-  "stakeholders": [{"name": "Full Name", "role": "Their Role", "email": "work@company.com (optional)", "isDecisionMaker": true/false, "quote": "exact quote"}]
+  "kpis": [{"name": "KPI name", "targetValue": "target", "unit": "optional unit", "measurementMethod": "how measured", "owner": "who monitors this KPI (optional)", "alertThreshold": "when to escalate (optional)", "frequency": "daily|weekly|monthly (optional)", "quote": "exact quote"}],
+  "stakeholders": [{"name": "Full Name", "role": "Their Role", "email": "work@company.com (optional)", "isDecisionMaker": true/false, "quote": "exact quote"}],
+  "decisionTree": [{"questionType": "type of question/request", "volumePercent": 25, "automationFeasibility": "full|partial|never", "action": "what the DE should do", "escalate": false, "reason": "why this routing", "quote": "exact quote"}]
 }
+
+Also extract a decision tree if discussed: what types of questions/requests come in, what % each represents, and whether each is fully automatable, partially automatable, or should never be automated.
 
 Include exact quotes. Only include items with confidence >= 0.50.`
 
@@ -235,7 +310,7 @@ Respond in JSON:
 {
   "transcript": "full transcript",
   "processSteps": [{"step": "description", "order": 1, "quote": "exact quote"}],
-  "caseTypes": [{"type": "case type name", "volumePercent": 25, "complexity": "LOW|MEDIUM|HIGH", "automatable": true, "quote": "exact quote"}],
+  "caseTypes": [{"type": "case type name", "volumePercent": 25, "complexity": "LOW|MEDIUM|HIGH", "automatable": true, "automationFeasibility": "full|partial|never", "quote": "exact quote"}],
   "channels": [{"type": "EMAIL|WEB_FORM|API|PORTAL|OTHER", "volumePercent": 30, "currentSLA": "current", "targetSLA": "target", "rules": "any rules", "quote": "exact quote"}],
   "escalationRules": [{"triggerCondition": "when to escalate", "action": "what to do", "targetTeam": "optional team", "slaMinutes": 30, "quote": "exact quote"}],
   "scopeItems": [{"statement": "scope item", "classification": "IN_SCOPE|OUT_OF_SCOPE|AMBIGUOUS", "quote": "exact quote"}]
@@ -318,9 +393,17 @@ Only extract system names, authentication METHODS (not actual credentials), and 
 Respond in JSON:
 {
   "transcript": "full transcript",
-  "integrations": [{"systemName": "System Name", "purpose": "what it's used for", "accessType": "READ|WRITE|READ_WRITE", "dataFields": ["field1", "field2"], "technicalContact": "Name (optional)", "apiAvailable": true, "quote": "exact quote"}],
-  "securityRequirements": [{"requirement": "what's required", "type": "category", "quote": "exact quote"}]
+  "integrations": [{"systemName": "System Name", "purpose": "what it's used for", "accessType": "READ|WRITE|READ_WRITE", "dataFields": ["field1", "field2"], "technicalContact": "Name (optional)", "apiAvailable": true, "fallbackBehavior": "what happens when system is down (optional)", "retryStrategy": "retry approach (optional)", "dataFreshness": "sync frequency (optional)", "quote": "exact quote"}],
+  "securityRequirements": [{"requirement": "what's required", "type": "category", "quote": "exact quote"}],
+  "monitoringMetrics": [{"name": "metric name", "target": "target value", "perspective": "user_experience|operational|knowledge_quality|financial", "frequency": "daily|weekly|monthly", "owner": "who monitors", "alertThreshold": "when to alert", "actionTrigger": "what to do if threshold breached", "quote": "exact quote"}]
 }
+
+Also extract any monitoring metrics or KPIs discussed in the technical context (system uptime, API latency, error rates, etc.).
+
+3. **Fallback Behaviors**
+   - What happens when each system is unavailable?
+   - Retry strategies (exponential backoff, max retries)
+   - Data freshness requirements (how often to sync)
 
 Include exact quotes. Only include items with confidence >= 0.50.`
 
@@ -356,7 +439,83 @@ Respond in JSON:
   "openItems": [{"item": "what needs to be done", "owner": "who owns it", "quote": "exact quote"}],
   "decisions": [{"decision": "what was decided", "approvedBy": "who approved", "quote": "exact quote"}],
   "risks": [{"risk": "risk description", "mitigation": "how to mitigate", "quote": "exact quote"}],
-  "approvals": [{"stakeholder": "who signed off", "status": "approved/pending", "conditions": "any conditions", "quote": "exact quote"}]
+  "approvals": [{"stakeholder": "who signed off", "status": "approved/pending", "conditions": "any conditions", "quote": "exact quote"}],
+  "launchCriteria": [{"criterion": "go/no-go criterion", "phase": "soft_launch|full_launch|hypercare", "owner": "who owns this", "softTarget": "soft launch threshold (optional)", "fullTarget": "full launch threshold (optional)", "quote": "exact quote"}]
+}
+
+5. **Launch Criteria**
+   - Go/no-go criteria per launch phase
+   - Soft launch vs full launch thresholds
+   - Hypercare requirements
+
+Include exact quotes. Only include items with confidence >= 0.50.`
+
+const PERSONA_DESIGN_PROMPT = `You are an AI assistant extracting PERSONA & CONVERSATIONAL DESIGN information from a Design Week session for Digital Employee onboarding.
+
+Focus on extracting: **Personality, Tone of Voice, Do's/Don'ts, Example Dialogues, Escalation Scripts**
+
+${CONFIDENCE_SCORING_GUIDE}
+
+${ERROR_RECOVERY_GUIDE}
+
+Extract the following:
+
+1. **Persona Traits**
+   - Named personality characteristics (e.g., Helpful, Clear, Patient, Honest, Empathetic, Proactive)
+   - Description of each trait
+   - Example phrase demonstrating the trait
+
+2. **Tone of Voice Rules**
+   - Reading level (e.g., B1 Dutch, plain English)
+   - Formality (u vs. je, formal/informal)
+   - Max sentence length
+   - Vocabulary rules (jargon replacements)
+   - Active/passive voice preference
+
+3. **Do's & Don'ts**
+   - Wrong/right conversation pairs
+   - What the DE should NEVER say (with better alternative)
+   - Category: tone, clarity, empathy, jargon, actionability
+
+4. **Opening Message**
+   - Exact greeting text
+   - AI transparency disclaimer
+   - Question prompt
+
+5. **Conversation Structure**
+   - Step-by-step flow (e.g., Acknowledge → Understand → Clarify → Answer → Proactive next → Close)
+
+6. **Escalation Scripts**
+   - Exact language per context: office_hours, after_hours, unknown_topic, emotional
+   - Whether conversation context is passed to the human agent ("warm handover")
+
+7. **Example Dialogues**
+   - Full multi-turn conversations for scenarios: happy_path, clarification, edge_case, angry_customer, complex
+   - Each message with speaker (user/de) and text
+
+8. **Edge Case Responses**
+   - How to handle: profanity, spam, legal questions, timeout, sexual remarks, repeated abuse
+
+9. **Feedback Mechanism**
+   - Collection methods (thumbs up/down, CSAT 1-5, comment field)
+   - Improvement cycle (e.g., "Weekly top-5 improvements reviewed by project team")
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "personaTraits": [{"name": "Helpful", "description": "Always tries to find an answer", "examplePhrase": "Let me see what I can find for you", "quote": "exact quote"}],
+  "toneRules": [{"rule": "Max 15-20 words per sentence", "category": "sentence_structure", "examples": "Short sentences are clearer", "quote": "exact quote"}],
+  "dosAndDonts": [{"wrong": "I'm a chatbot and don't know everything", "right": "I don't have reliable information on that topic", "category": "tone", "quote": "exact quote"}],
+  "openingMessage": {"greeting": "Hello! I'm Dani, the digital assistant of...", "aiDisclaimer": "I am an AI assistant. I can help with...", "quote": "exact quote"},
+  "exampleDialogues": [{"scenario": "Simple parking question", "category": "happy_path", "messages": [{"speaker": "user", "text": "..."}, {"speaker": "de", "text": "..."}], "quote": "discussed at..."}],
+  "escalationScripts": [{"context": "office_hours", "label": "During office hours", "script": "I'll connect you with a colleague who can see our conversation...", "includesContext": true, "quote": "exact quote"}],
+  "feedbackMechanism": {"methods": ["thumbs_up_down", "csat_1_5"], "improvementCycle": "Weekly review by project team", "quote": "exact quote"},
+  "escalationRules": [{"triggerCondition": "when to escalate", "action": "what to do", "quote": "exact quote"}],
+  "guardrails": {
+    "never": [{"item": "what to never do", "reason": "why", "quote": "exact quote"}],
+    "always": [{"item": "what to always do", "reason": "why", "quote": "exact quote"}]
+  },
+  "brandTone": {"tone": "description", "formality": "FORMAL|INFORMAL", "language": ["Dutch"], "empathyLevel": "description", "quote": "exact quote"}
 }
 
 Include exact quotes. Only include items with confidence >= 0.50.`
@@ -415,6 +574,8 @@ function getPromptForSessionType(sessionPhase?: number): string {
       return TECHNICAL_PROMPT
     case 6: // Sign-off
       return SIGNOFF_PROMPT
+    case 7: // Persona & Conversational Design
+      return PERSONA_DESIGN_PROMPT
     default:
       // Log warning for unexpected session phase - using legacy prompt as fallback
       console.warn(

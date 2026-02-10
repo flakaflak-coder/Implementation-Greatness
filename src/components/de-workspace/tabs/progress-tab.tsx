@@ -86,6 +86,10 @@ const PHASE_CONFIG = [
       'What types of requests do you NOT handle?',
       'When do you escalate?',
       'What are the most common exceptions?',
+      "What's the DE's personality and tone of voice?",
+      'How should the DE greet users?',
+      'What should the DE never say?',
+      'What are the exact escalation scripts?',
     ],
     icon: MessageSquare,
     gradient: 'from-violet-500 to-purple-600',
@@ -105,6 +109,8 @@ const PHASE_CONFIG = [
       'What credentials/access do we need?',
       'Any security or compliance requirements?',
       'Who owns the technical relationship?',
+      'What monitoring metrics are needed?',
+      'What happens when a system goes down?',
     ],
     icon: Cpu,
     gradient: 'from-orange-500 to-amber-500',
@@ -122,6 +128,8 @@ const PHASE_CONFIG = [
       'Are there any outstanding concerns?',
       'Who is signing off on behalf of the client?',
       'What are the immediate next steps?',
+      'What are the go/no-go criteria?',
+      "What's the soft launch plan?",
     ],
     icon: Signature,
     gradient: 'from-emerald-500 to-green-500',
@@ -150,7 +158,7 @@ const QUESTION_COVERAGE_MAPPING: Record<number, ExtractedItemType[][]> = {
     ['TIMELINE_CONSTRAINT'],             // "What's the timeline expectation?"
     ['BUSINESS_CASE'],                   // "Any hard constraints or non-negotiables?"
   ],
-  // Phase 2 (Process Design) - 8 questions
+  // Phase 2 (Process Design) - 12 questions
   2: [
     ['CASE_TYPE', 'CHANNEL'],            // "What triggers this process?"
     ['HAPPY_PATH_STEP'],                 // "Walk me through a typical case"
@@ -160,8 +168,12 @@ const QUESTION_COVERAGE_MAPPING: Record<number, ExtractedItemType[][]> = {
     ['SCOPE_OUT'],                       // "What types do you NOT handle?"
     ['ESCALATION_TRIGGER'],              // "When do you escalate?"
     ['EXCEPTION_CASE'],                  // "Most common exceptions?"
+    ['PERSONA_TRAIT', 'TONE_RULE'],      // "What's the DE's personality and tone?"
+    ['EXAMPLE_DIALOGUE', 'COMMUNICATION_STYLE'], // "How should the DE greet users?"
+    ['DOS_AND_DONTS', 'GUARDRAIL_NEVER'], // "What should the DE never say?"
+    ['ESCALATION_SCRIPT'],               // "What are the exact escalation scripts?"
   ],
-  // Phase 3 (Technical) - 6 questions
+  // Phase 3 (Technical) - 8 questions
   3: [
     ['SYSTEM_INTEGRATION'],              // "What systems does this touch?"
     ['DATA_FIELD'],                      // "Where does data come from?"
@@ -169,13 +181,17 @@ const QUESTION_COVERAGE_MAPPING: Record<number, ExtractedItemType[][]> = {
     ['SECURITY_REQUIREMENT'],            // "What credentials/access needed?"
     ['COMPLIANCE_REQUIREMENT', 'SECURITY_REQUIREMENT'], // "Security/compliance?"
     ['TECHNICAL_CONTACT', 'STAKEHOLDER'], // "Who owns technical relationship?"
+    ['MONITORING_METRIC'],               // "What monitoring metrics are needed?"
+    ['ERROR_HANDLING', 'SYSTEM_INTEGRATION'], // "What happens when a system goes down?"
   ],
-  // Phase 4 (Sign-off) - 4 questions
+  // Phase 4 (Sign-off) - 6 questions
   4: [
     ['SCOPE_IN', 'SCOPE_OUT'],           // "Is scope complete?"
     ['OPEN_ITEM', 'RISK'],               // "Outstanding concerns?"
     ['APPROVAL', 'STAKEHOLDER'],         // "Who is signing off?"
     ['DECISION', 'OPEN_ITEM'],           // "Immediate next steps?"
+    ['LAUNCH_CRITERION'],                // "What are the go/no-go criteria?"
+    ['LAUNCH_CRITERION'],                // "What's the soft launch plan?"
   ],
 }
 

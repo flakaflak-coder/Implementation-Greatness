@@ -118,6 +118,12 @@ const BUSINESS_PROFILE_TYPES = [
   'FINANCIAL_LIMIT',
   'LEGAL_RESTRICTION',
   'COMPLIANCE_REQUIREMENT',
+  'PERSONA_TRAIT',
+  'TONE_RULE',
+  'DOS_AND_DONTS',
+  'EXAMPLE_DIALOGUE',
+  'ESCALATION_SCRIPT',
+  'DECISION_TREE',
 ]
 
 // Types that should go to Technical Profile
@@ -129,6 +135,7 @@ const TECHNICAL_PROFILE_TYPES = [
   'COMPLIANCE_REQUIREMENT',
   'ERROR_HANDLING',
   'TECHNICAL_CONTACT',
+  'MONITORING_METRIC',
 ]
 
 // Types that should generate Test Cases
@@ -139,6 +146,7 @@ const TEST_PLAN_TYPES = [
   'GUARDRAIL_ALWAYS',
   'SCOPE_IN',
   'SCOPE_OUT',
+  'LAUNCH_CRITERION',
 ]
 
 // Types that are decision/tracking focused (not in profiles)
@@ -147,6 +155,15 @@ const DECISION_TYPES = [
   'DECISION',
   'APPROVAL',
   'RISK',
+]
+
+// Types that map to the Sales Handover profile (not business/technical profiles)
+const SALES_HANDOVER_TYPES = [
+  'DEAL_SUMMARY',
+  'CONTRACT_DEADLINE',
+  'SALES_WATCH_OUT',
+  'PROMISED_CAPABILITY',
+  'CLIENT_PREFERENCE',
 ]
 
 // ============================================
@@ -236,6 +253,7 @@ describe('Extraction Pipeline Alignment', () => {
           ...profileMapperTypes,
           ...technicalMapperTypes,
           ...DECISION_TYPES, // These are intentionally not in profiles (yet)
+          ...SALES_HANDOVER_TYPES, // These map to the Sales Handover profile
         ])
       ]
 

@@ -91,7 +91,7 @@ export async function GET(
     }
 
     // Validate document type
-    const validTypes = ['design', 'meet', 'test-plan', 'process', 'executive', 'technical']
+    const validTypes = ['design', 'meet', 'test-plan', 'process', 'executive', 'technical', 'persona', 'monitoring', 'rollout']
     if (!validTypes.includes(docType)) {
       return createErrorResponse(
         'INVALID_TYPE',
@@ -234,7 +234,10 @@ export async function GET(
       TestPlanPDF,
       ProcessDesignPDF,
       ExecutiveSummaryPDF,
-      TechnicalFoundationPDF
+      TechnicalFoundationPDF,
+      PersonaDesignPDF,
+      MonitoringFrameworkPDF,
+      RolloutPlanPDF,
     } = await import('@/lib/documents/focused-templates')
 
     // Helper to create filename
@@ -434,6 +437,152 @@ export async function GET(
       const filename = createFilename('technical-foundation')
 
       console.log(`[Export] Technical Foundation PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.length.toString(),
+        },
+      })
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOCUSED DOCUMENT: PERSONA & CONVERSATIONAL DESIGN
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (docType === 'persona') {
+      console.log(`[Export] Generating Persona & Conversational Design document...`)
+
+      const extractedItems = designWeek.sessions.flatMap(s => s.extractedItems)
+      const personaContext = {
+        companyName: designWeek.digitalEmployee.company.name,
+        digitalEmployeeName: designWeek.digitalEmployee.name,
+        personaTraits: extractedItems
+          .filter(i => i.type === 'PERSONA_TRAIT')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        toneRules: extractedItems
+          .filter(i => i.type === 'TONE_RULE')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        dosAndDonts: extractedItems
+          .filter(i => i.type === 'DOS_AND_DONTS')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        exampleDialogues: extractedItems
+          .filter(i => i.type === 'EXAMPLE_DIALOGUE')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        escalationScripts: extractedItems
+          .filter(i => i.type === 'ESCALATION_SCRIPT')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        edgeCaseResponses: extractedItems
+          .filter(i => i.type === 'ERROR_HANDLING')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        communicationStyles: extractedItems
+          .filter(i => i.type === 'COMMUNICATION_STYLE')
+          .map(i => ({ content: i.content })),
+        guardrails: extractedItems
+          .filter(i => i.type === 'GUARDRAIL_NEVER' || i.type === 'LEGAL_RESTRICTION')
+          .map(i => ({ content: i.content, type: i.type })),
+      }
+
+      if (format === 'json') {
+        return NextResponse.json({ success: true, type: 'persona', data: personaContext })
+      }
+
+      const pdfElement = React.createElement(PersonaDesignPDF, { data: personaContext })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfBuffer = await renderToBuffer(pdfElement as any)
+      const filename = createFilename('persona-design')
+
+      console.log(`[Export] Persona Design PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.length.toString(),
+        },
+      })
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOCUSED DOCUMENT: MONITORING FRAMEWORK
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (docType === 'monitoring') {
+      console.log(`[Export] Generating Monitoring Framework document...`)
+
+      const extractedItems = designWeek.sessions.flatMap(s => s.extractedItems)
+      const monitoringContext = {
+        companyName: designWeek.digitalEmployee.company.name,
+        digitalEmployeeName: designWeek.digitalEmployee.name,
+        monitoringMetrics: extractedItems
+          .filter(i => i.type === 'MONITORING_METRIC')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        kpis: extractedItems
+          .filter(i => i.type === 'KPI_TARGET')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        volumes: extractedItems
+          .filter(i => i.type === 'VOLUME_EXPECTATION')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+      }
+
+      if (format === 'json') {
+        return NextResponse.json({ success: true, type: 'monitoring', data: monitoringContext })
+      }
+
+      const pdfElement = React.createElement(MonitoringFrameworkPDF, { data: monitoringContext })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfBuffer = await renderToBuffer(pdfElement as any)
+      const filename = createFilename('monitoring-framework')
+
+      console.log(`[Export] Monitoring Framework PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.length.toString(),
+        },
+      })
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOCUSED DOCUMENT: ROLLOUT PLAN
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (docType === 'rollout') {
+      console.log(`[Export] Generating Rollout Plan document...`)
+
+      const extractedItems = designWeek.sessions.flatMap(s => s.extractedItems)
+      const rolloutContext = {
+        companyName: designWeek.digitalEmployee.company.name,
+        digitalEmployeeName: designWeek.digitalEmployee.name,
+        launchCriteria: extractedItems
+          .filter(i => i.type === 'LAUNCH_CRITERION')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        testCases: testPlanData?.testCases?.map(item => ({
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          priority: item.priority,
+          expectedResult: item.expectedResult,
+        })) || [],
+        kpis: extractedItems
+          .filter(i => i.type === 'KPI_TARGET')
+          .map(i => ({ content: i.content, structuredData: i.structuredData })),
+        scopeItems: designWeek.scopeItems.map(item => ({
+          description: item.statement,
+          classification: item.classification,
+        })),
+      }
+
+      if (format === 'json') {
+        return NextResponse.json({ success: true, type: 'rollout', data: rolloutContext })
+      }
+
+      const pdfElement = React.createElement(RolloutPlanPDF, { data: rolloutContext })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfBuffer = await renderToBuffer(pdfElement as any)
+      const filename = createFilename('rollout-plan')
+
+      console.log(`[Export] Rollout Plan PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
       return new NextResponse(new Uint8Array(pdfBuffer), {
         headers: {

@@ -21,6 +21,10 @@ Analyze this content and determine:
 - SKILLS_GUARDRAILS_SESSION: Discussion of DE skills, brand tone, guardrails (never/always), communication style
 - TECHNICAL_SESSION: Technical integration discussion covering systems, APIs, data fields, security requirements
 - SIGNOFF_SESSION: Final sign-off meeting with approvals, open items, decisions, risks
+- PERSONA_DESIGN_SESSION: Persona and conversational design covering personality, tone, do's/don'ts, escalation scripts, example dialogues
+
+**Sales & Pre-Implementation:**
+- SALES_HANDOVER_DOCUMENT: Sales proposals, statements of work (SOW), deal summaries, CRM exports, commercial offers, account plans, or pre-sales meeting notes
 
 **Document Types:**
 - REQUIREMENTS_DOCUMENT: Formal requirements or specifications document
@@ -60,6 +64,22 @@ Analyze this content and determine:
 - Open items review, decision tracking
 - Risk discussions, mitigation plans
 
+**PERSONA_DESIGN_SESSION indicators:**
+- Persona name, personality traits, tone of voice
+- "the DE should sound like", "opening message", "greeting"
+- Do's and don'ts of conversation
+- Escalation scripts, warm handover language
+- Example dialogues, conversation flows
+- Feedback mechanism (thumbs up/down, CSAT)
+
+**SALES_HANDOVER_DOCUMENT indicators:**
+- "proposal", "statement of work", "SOW", "commercial offer"
+- "contract terms", "pricing", "SLA commitments", "deal summary"
+- Account plans, CRM exports, deal notes
+- Client context from sales phase, "what was promised"
+- Pre-implementation information, handover notes
+- Mentions of contract value, deal size, expected go-live date
+
 ## Checklist Questions by Type
 
 For each content type, there are key questions that SHOULD be covered:
@@ -98,6 +118,15 @@ For each content type, there are key questions that SHOULD be covered:
 - Who's the technical contact?
 - What are the security requirements?
 - What are the compliance requirements?
+
+**PERSONA_DESIGN_SESSION checklist:**
+- What personality traits should the DE have?
+- What tone of voice rules apply (formality, reading level)?
+- What should the DE never say? (do's and don'ts)
+- What is the opening message?
+- What are the escalation scripts per context?
+- Are there example dialogues for common scenarios?
+- How is user feedback collected and used?
 
 **SIGNOFF_SESSION checklist:**
 - Are all open items resolved?
@@ -227,12 +256,30 @@ export function getChecklistForType(type: ContentClassification): string[] {
       'What are the security requirements?',
       'What are the compliance requirements?',
     ],
+    PERSONA_DESIGN_SESSION: [
+      'What personality traits should the DE have?',
+      'What tone of voice rules apply (formality, reading level)?',
+      'What should the DE never say? (do\'s and don\'ts)',
+      'What is the exact opening message?',
+      'What are the escalation scripts for each context?',
+      'Are there example dialogues for common scenarios?',
+      'How is user feedback collected and used for improvement?',
+    ],
     SIGNOFF_SESSION: [
       'Are all open items resolved?',
       'Are all decisions documented?',
       'Are risks identified and mitigated?',
       'Who is providing final approval?',
       'Are there any conditions on approval?',
+    ],
+    SALES_HANDOVER_DOCUMENT: [
+      'What is the deal about? (deal summary)',
+      'Why does the client want this? (client motivation)',
+      'Are there specific deadlines or go-live dates?',
+      'Who are the key stakeholders from the client side?',
+      'What was promised to the client?',
+      'Are there any watch-outs or risks identified by sales?',
+      'What is the contract type and value?',
     ],
     REQUIREMENTS_DOCUMENT: [
       'Are functional requirements clearly defined?',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Rocket, Briefcase, Wrench, ClipboardCheck, Upload } from 'lucide-react'
+import { Rocket, Briefcase, Wrench, ClipboardCheck, Upload, FileSignature } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { ProgressTab } from './tabs/progress-tab'
 import { BusinessProfileTabV2 } from './tabs/business-profile-tab-v2'
 import { TechnicalProfileTabV2 } from './tabs/technical-profile-tab-v2'
 import { TestPlanTabV2 } from './tabs/test-plan-tab-v2'
+import { SalesHandoverTab } from './tabs/sales-handover-tab'
 import { UnifiedUpload, UploadHistory } from '@/components/upload'
 import {
   type DEWorkspaceProps,
@@ -174,7 +175,11 @@ export function DEWorkspace({
         onValueChange={(value) => setActiveTab(value as WorkspaceTab)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsTrigger value="handover" className="gap-2">
+          <FileSignature className="h-4 w-4" />
+          <span className="hidden sm:inline">Handover</span>
+        </TabsTrigger>
         <TabsTrigger value="progress" className="gap-2">
           <Rocket className="h-4 w-4" />
           <span className="hidden sm:inline">Progress</span>
@@ -202,6 +207,10 @@ export function DEWorkspace({
           <span className="hidden sm:inline">Test Plan</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="handover">
+        <SalesHandoverTab key={`handover-${refreshKey}`} designWeekId={designWeek.id} />
+      </TabsContent>
 
       <TabsContent value="progress">
         <ProgressTab

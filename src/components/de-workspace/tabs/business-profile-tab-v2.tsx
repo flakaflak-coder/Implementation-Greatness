@@ -17,6 +17,9 @@ import {
   Plus,
   X,
   User,
+  MessageCircle,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react'
 import { EditableField, TagList, GuardrailsList } from '../profile-fields'
 import {
@@ -27,6 +30,10 @@ import {
   Skill,
   ProcessStep,
   ExceptionCase,
+  PersonaTrait,
+  ToneRule,
+  DosAndDonts,
+  EscalationScript,
   createEmptyProfile,
   PROFILE_SECTION_CONFIG,
 } from '../profile-types'
@@ -45,6 +52,7 @@ const sectionColors: Record<string, string> = {
   violet: 'border-violet-200 bg-violet-50/50',
   amber: 'border-amber-200 bg-amber-50/50',
   rose: 'border-rose-200 bg-rose-50/50',
+  pink: 'border-pink-200 bg-pink-50/50',
 }
 
 const iconColors: Record<string, string> = {
@@ -55,6 +63,7 @@ const iconColors: Record<string, string> = {
   violet: 'text-violet-600',
   amber: 'text-amber-600',
   rose: 'text-rose-600',
+  pink: 'text-pink-600',
 }
 
 // Section icons
@@ -67,6 +76,7 @@ const SectionIcon = ({ name, className }: { name: string; className?: string }) 
     Sparkles: <Sparkles className={className} />,
     GitBranch: <GitBranch className={className} />,
     Shield: <Shield className={className} />,
+    MessageCircle: <MessageCircle className={className} />,
   }
   return icons[name] || null
 }
@@ -77,7 +87,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['identity', 'businessContext', 'kpis', 'channels', 'skills', 'process', 'guardrails'])
+    new Set(['identity', 'businessContext', 'kpis', 'channels', 'skills', 'process', 'guardrails', 'persona'])
   )
 
   // Load profile data
@@ -518,6 +528,119 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
         </div>
       </ProfileSection>
+
+      {/* Persona & Conversational Design Section */}
+      <ProfileSection
+        sectionKey="persona"
+        config={PROFILE_SECTION_CONFIG.persona}
+        expanded={expandedSections.has('persona')}
+        onToggle={() => toggleSection('persona')}
+      >
+        <div className="space-y-6">
+          {/* Persona Traits */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Personality Traits</h4>
+            <PersonaTraitsList
+              traits={profile.persona?.traits || []}
+              onUpdate={(traits) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), traits },
+                }))
+              }
+            />
+          </div>
+
+          {/* Tone Rules */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-gray-900 mb-3">Tone of Voice Rules</h4>
+            <ToneRulesList
+              rules={profile.persona?.toneRules || []}
+              onUpdate={(toneRules) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), toneRules },
+                }))
+              }
+            />
+          </div>
+
+          {/* Do's & Don'ts */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-gray-900 mb-3">Do&apos;s & Don&apos;ts</h4>
+            <DosAndDontsList
+              items={profile.persona?.dosAndDonts || []}
+              onUpdate={(dosAndDonts) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), dosAndDonts },
+                }))
+              }
+            />
+          </div>
+
+          {/* Opening Message */}
+          <div className="border-t pt-4">
+            <EditableField
+              label="Opening Message"
+              value={profile.persona?.openingMessage || ''}
+              onChange={(value) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), openingMessage: String(value) },
+                }))
+              }
+              placeholder="Hi! I'm [DE name], your digital assistant. How can I help you today?"
+              multiline
+            />
+          </div>
+
+          {/* AI Disclaimer */}
+          <div className="border-t pt-4">
+            <EditableField
+              label="AI Transparency Disclaimer"
+              value={profile.persona?.aiDisclaimer || ''}
+              onChange={(value) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), aiDisclaimer: String(value) },
+                }))
+              }
+              placeholder="I'm an AI assistant. For complex or sensitive questions, I'll connect you with a human colleague."
+              multiline
+            />
+          </div>
+
+          {/* Escalation Scripts */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-gray-900 mb-3">Escalation Scripts</h4>
+            <EscalationScriptsList
+              scripts={profile.persona?.escalationScripts || []}
+              onUpdate={(escalationScripts) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), escalationScripts },
+                }))
+              }
+            />
+          </div>
+
+          {/* Conversation Structure */}
+          <div className="border-t pt-4">
+            <TagList
+              label="Conversation Structure (ordered steps)"
+              tags={profile.persona?.conversationStructure || []}
+              onChange={(tags) =>
+                updateProfile((p) => ({
+                  ...p,
+                  persona: { ...(p.persona || createEmptyProfile().persona!), conversationStructure: tags },
+                }))
+              }
+              placeholder="e.g., Acknowledge, Understand, Clarify..."
+            />
+          </div>
+        </div>
+      </ProfileSection>
     </div>
   )
 }
@@ -732,6 +855,16 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
               {kpi.targetValue}
               {kpi.unit}
             </div>
+            {(kpi.owner || kpi.alertThreshold) && (
+              <div className="mt-1 space-y-0.5">
+                {kpi.owner && (
+                  <p className="text-xs text-gray-500">Owner: {kpi.owner}</p>
+                )}
+                {kpi.alertThreshold && (
+                  <p className="text-xs text-amber-600">Alert: {kpi.alertThreshold}</p>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1277,6 +1410,506 @@ function ExceptionsList({ exceptions, onUpdate }: ExceptionsListProps) {
         >
           <Plus className="h-4 w-4" />
           Add exception
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Persona Traits List
+// ============================================
+interface PersonaTraitsListProps {
+  traits: PersonaTrait[]
+  onUpdate: (traits: PersonaTrait[]) => void
+}
+
+function PersonaTraitsList({ traits, onUpdate }: PersonaTraitsListProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newDescription, setNewDescription] = useState('')
+  const [newExample, setNewExample] = useState('')
+
+  const handleAdd = () => {
+    if (newName.trim()) {
+      onUpdate([
+        ...traits,
+        {
+          id: `trait-${Date.now()}`,
+          name: newName.trim(),
+          description: newDescription.trim(),
+          examplePhrase: newExample.trim(),
+        },
+      ])
+      setNewName('')
+      setNewDescription('')
+      setNewExample('')
+      setIsAdding(false)
+    }
+  }
+
+  const handleRemove = (id: string) => {
+    onUpdate(traits.filter((t) => t.id !== id))
+  }
+
+  return (
+    <div className="space-y-2">
+      {traits.length === 0 && !isAdding && (
+        <p className="text-gray-500 text-sm">No persona traits defined</p>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {traits.map((trait) => (
+          <div
+            key={trait.id}
+            className="p-3 bg-white rounded-lg border border-gray-200 group"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-pink-100 text-pink-600 rounded-lg">
+                  <MessageCircle className="h-4 w-4" />
+                </div>
+                <h4 className="font-medium text-gray-900">{trait.name}</h4>
+              </div>
+              <button
+                onClick={() => handleRemove(trait.id)}
+                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {trait.description && (
+              <p className="mt-2 text-sm text-gray-600">{trait.description}</p>
+            )}
+            {trait.examplePhrase && (
+              <p className="mt-1 text-xs text-pink-600 italic">&ldquo;{trait.examplePhrase}&rdquo;</p>
+            )}
+          </div>
+        ))}
+      </div>
+      {isAdding ? (
+        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-pink-300">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Trait name (e.g., Helpful, Clear, Patient)"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <input
+            type="text"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            placeholder="Description (e.g., Always offers proactive next steps)"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <input
+            type="text"
+            value={newExample}
+            onChange={(e) => setNewExample(e.target.value)}
+            placeholder='Example phrase (e.g., "Let me see what I can find for you")'
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setIsAdding(false)
+                setNewName('')
+                setNewDescription('')
+                setNewExample('')
+              }}
+              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add persona trait
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Tone Rules List
+// ============================================
+interface ToneRulesListProps {
+  rules: ToneRule[]
+  onUpdate: (rules: ToneRule[]) => void
+}
+
+const toneRuleCategoryLabels: Record<ToneRule['category'], string> = {
+  reading_level: 'Reading Level',
+  formality: 'Formality',
+  sentence_structure: 'Sentence Structure',
+  vocabulary: 'Vocabulary',
+  other: 'Other',
+}
+
+function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newRule, setNewRule] = useState('')
+  const [newCategory, setNewCategory] = useState<ToneRule['category']>('other')
+
+  const handleAdd = () => {
+    if (newRule.trim()) {
+      onUpdate([
+        ...rules,
+        {
+          id: `tone-${Date.now()}`,
+          rule: newRule.trim(),
+          category: newCategory,
+        },
+      ])
+      setNewRule('')
+      setNewCategory('other')
+      setIsAdding(false)
+    }
+  }
+
+  const handleRemove = (id: string) => {
+    onUpdate(rules.filter((r) => r.id !== id))
+  }
+
+  return (
+    <div className="space-y-2">
+      {rules.length === 0 && !isAdding && (
+        <p className="text-gray-500 text-sm">No tone rules defined</p>
+      )}
+      {rules.map((rule) => (
+        <div
+          key={rule.id}
+          className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group"
+        >
+          <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700 rounded whitespace-nowrap">
+            {toneRuleCategoryLabels[rule.category]}
+          </span>
+          <p className="flex-1 text-sm text-gray-700">{rule.rule}</p>
+          <button
+            onClick={() => handleRemove(rule.id)}
+            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      {isAdding ? (
+        <div className="flex items-center gap-2 mt-2">
+          <select
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value as ToneRule['category'])}
+            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          >
+            {Object.entries(toneRuleCategoryLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={newRule}
+            onChange={(e) => setNewRule(e.target.value)}
+            placeholder="e.g., Max 15-20 words per sentence"
+            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <button
+            onClick={handleAdd}
+            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+          >
+            Add
+          </button>
+          <button
+            onClick={() => setIsAdding(false)}
+            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add tone rule
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Do's & Don'ts List
+// ============================================
+interface DosAndDontsListProps {
+  items: DosAndDonts[]
+  onUpdate: (items: DosAndDonts[]) => void
+}
+
+function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newWrong, setNewWrong] = useState('')
+  const [newRight, setNewRight] = useState('')
+
+  const handleAdd = () => {
+    if (newWrong.trim() && newRight.trim()) {
+      onUpdate([
+        ...items,
+        {
+          id: `dosdont-${Date.now()}`,
+          wrong: newWrong.trim(),
+          right: newRight.trim(),
+        },
+      ])
+      setNewWrong('')
+      setNewRight('')
+      setIsAdding(false)
+    }
+  }
+
+  const handleRemove = (id: string) => {
+    onUpdate(items.filter((i) => i.id !== id))
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.length === 0 && !isAdding && (
+        <p className="text-gray-500 text-sm">No do&apos;s & don&apos;ts defined</p>
+      )}
+      {items.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 px-3 font-medium text-red-600 w-1/2">
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="h-3.5 w-3.5" /> Don&apos;t say
+                  </span>
+                </th>
+                <th className="text-left py-2 px-3 font-medium text-emerald-600 w-1/2">
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="h-3.5 w-3.5" /> Say instead
+                  </span>
+                </th>
+                <th className="py-2 px-3 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b border-gray-100 group">
+                  <td className="py-2 px-3 text-red-700 bg-red-50/50">{item.wrong}</td>
+                  <td className="py-2 px-3 text-emerald-700 bg-emerald-50/50">{item.right}</td>
+                  <td className="py-2 px-3">
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {isAdding ? (
+        <div className="grid grid-cols-2 gap-2 mt-2 p-3 bg-white rounded-lg border border-pink-300">
+          <input
+            type="text"
+            value={newWrong}
+            onChange={(e) => setNewWrong(e.target.value)}
+            placeholder="Don't say (e.g., That's not possible)"
+            className="px-3 py-1.5 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 bg-red-50/50"
+          />
+          <input
+            type="text"
+            value={newRight}
+            onChange={(e) => setNewRight(e.target.value)}
+            placeholder="Say instead (e.g., Let me find another way)"
+            className="px-3 py-1.5 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-emerald-50/50"
+          />
+          <div className="col-span-2 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setIsAdding(false)
+                setNewWrong('')
+                setNewRight('')
+              }}
+              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add do/don&apos;t pair
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Escalation Scripts List
+// ============================================
+interface EscalationScriptsListProps {
+  scripts: EscalationScript[]
+  onUpdate: (scripts: EscalationScript[]) => void
+}
+
+const escalationContextLabels: Record<EscalationScript['context'], string> = {
+  office_hours: 'Office Hours',
+  after_hours: 'After Hours',
+  unknown_topic: 'Unknown Topic',
+  emotional: 'Emotional Customer',
+  other: 'Other',
+}
+
+const escalationContextColors: Record<EscalationScript['context'], string> = {
+  office_hours: 'bg-emerald-100 text-emerald-700',
+  after_hours: 'bg-blue-100 text-blue-700',
+  unknown_topic: 'bg-amber-100 text-amber-700',
+  emotional: 'bg-rose-100 text-rose-700',
+  other: 'bg-gray-100 text-gray-700',
+}
+
+function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newContext, setNewContext] = useState<EscalationScript['context']>('office_hours')
+  const [newLabel, setNewLabel] = useState('')
+  const [newScript, setNewScript] = useState('')
+
+  const handleAdd = () => {
+    if (newScript.trim()) {
+      onUpdate([
+        ...scripts,
+        {
+          id: `escalation-${Date.now()}`,
+          context: newContext,
+          label: newLabel.trim() || escalationContextLabels[newContext],
+          script: newScript.trim(),
+          includesContext: true,
+        },
+      ])
+      setNewContext('office_hours')
+      setNewLabel('')
+      setNewScript('')
+      setIsAdding(false)
+    }
+  }
+
+  const handleRemove = (id: string) => {
+    onUpdate(scripts.filter((s) => s.id !== id))
+  }
+
+  return (
+    <div className="space-y-3">
+      {scripts.length === 0 && !isAdding && (
+        <p className="text-gray-500 text-sm">No escalation scripts defined</p>
+      )}
+      {scripts.map((script) => (
+        <div
+          key={script.id}
+          className="p-3 bg-white rounded-lg border border-gray-200 group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <span className={cn('text-xs px-2 py-0.5 rounded', escalationContextColors[script.context])}>
+                {script.label || escalationContextLabels[script.context]}
+              </span>
+            </div>
+            <button
+              onClick={() => handleRemove(script.id)}
+              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-gray-700 italic bg-gray-50 p-2 rounded">
+            &ldquo;{script.script}&rdquo;
+          </p>
+        </div>
+      ))}
+      {isAdding ? (
+        <div className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-pink-300">
+          <div className="flex items-center gap-2">
+            <select
+              value={newContext}
+              onChange={(e) => setNewContext(e.target.value as EscalationScript['context'])}
+              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              {Object.entries(escalationContextLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder="Custom label (optional)"
+              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            />
+          </div>
+          <textarea
+            value={newScript}
+            onChange={(e) => setNewScript(e.target.value)}
+            placeholder='Exact script, e.g., "I understand this is important to you. Let me connect you with a colleague who can help further."'
+            rows={3}
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setIsAdding(false)
+                setNewScript('')
+                setNewLabel('')
+              }}
+              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mt-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add escalation script
         </button>
       )}
     </div>

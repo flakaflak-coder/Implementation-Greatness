@@ -20,6 +20,11 @@ import {
   XCircle,
   Clock,
   FlaskConical,
+  Rocket,
+  CircleDot,
+  CircleCheck,
+  CircleX,
+  CircleMinus,
 } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -42,6 +47,7 @@ import {
   type TestCaseType,
   type TestCasePriority,
   type TestCaseStatus,
+  type LaunchCriterion,
   createEmptyTestPlan,
   TEST_PLAN_SECTION_CONFIG,
   TEST_PRIORITY_CONFIG,
@@ -64,6 +70,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
   const [testPlan, setTestPlan] = useState<TestPlan>(createEmptyTestPlan())
+  const [launchCriteria, setLaunchCriteria] = useState<LaunchCriterion[]>([])
   const [stats, setStats] = useState({
     total: 0,
     passed: 0,
@@ -77,23 +84,33 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load test plan
+  // Load test plan and launch criteria
   useEffect(() => {
-    async function loadTestPlan() {
+    async function loadData() {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/design-weeks/${designWeekId}/test-plan`)
-        if (!response.ok) throw new Error('Failed to load test plan')
-        const data = await response.json()
-        setTestPlan(data.testPlan)
-        setStats(data.stats)
+        const [testPlanRes, profileRes] = await Promise.all([
+          fetch(`/api/design-weeks/${designWeekId}/test-plan`),
+          fetch(`/api/design-weeks/${designWeekId}/profile`),
+        ])
+        if (!testPlanRes.ok) throw new Error('Failed to load test plan')
+        const testPlanData = await testPlanRes.json()
+        setTestPlan(testPlanData.testPlan)
+        setStats(testPlanData.stats)
+
+        if (profileRes.ok) {
+          const profileData = await profileRes.json()
+          if (profileData.profile?.launch?.criteria) {
+            setLaunchCriteria(profileData.profile.launch.criteria)
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load test plan')
       } finally {
         setIsLoading(false)
       }
     }
-    loadTestPlan()
+    loadData()
   }, [designWeekId])
 
   // Auto-save test plan
@@ -167,6 +184,32 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
     const tc = testPlan.testCases.find((t) => t.id === id)
     if (tc) {
       handleUpdateTestCase({ ...tc, status })
+    }
+  }
+
+  // Update launch criterion status
+  const handleLaunchCriterionStatusChange = async (
+    id: string,
+    status: LaunchCriterion['status']
+  ) => {
+    const updated = launchCriteria.map((c) => (c.id === id ? { ...c, status } : c))
+    setLaunchCriteria(updated)
+    try {
+      const profileRes = await fetch(`/api/design-weeks/${designWeekId}/profile`)
+      if (profileRes.ok) {
+        const profileData = await profileRes.json()
+        const updatedProfile = {
+          ...profileData.profile,
+          launch: { ...(profileData.profile?.launch || {}), criteria: updated },
+        }
+        await fetch(`/api/design-weeks/${designWeekId}/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile: updatedProfile }),
+        })
+      }
+    } catch (err) {
+      console.error('Failed to save launch criteria:', err)
     }
   }
 
@@ -343,6 +386,14 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
           />
         ))}
       </div>
+
+      {/* Launch Readiness Section */}
+      {launchCriteria.length > 0 && (
+        <LaunchReadinessSection
+          criteria={launchCriteria}
+          onStatusChange={handleLaunchCriterionStatusChange}
+        />
+      )}
 
       {/* Empty state */}
       {stats.total === 0 && (
@@ -833,6 +884,163 @@ function TestCaseForm({ testCase, defaultType, onSave, onCancel }: TestCaseFormP
           {testCase?.id ? 'Save Changes' : 'Add Test Case'}
         </Button>
       </div>
+    </div>
+  )
+}
+
+// ============================================
+// Launch Readiness Section
+// ============================================
+interface LaunchReadinessSectionProps {
+  criteria: LaunchCriterion[]
+  onStatusChange: (id: string, status: LaunchCriterion['status']) => void
+}
+
+const launchPhaseLabels: Record<LaunchCriterion['phase'], { label: string; color: string }> = {
+  soft_launch: { label: 'Soft Launch', color: 'bg-blue-100 text-blue-700' },
+  full_launch: { label: 'Full Launch', color: 'bg-emerald-100 text-emerald-700' },
+  hypercare: { label: 'Hypercare', color: 'bg-violet-100 text-violet-700' },
+}
+
+const launchCategoryLabels: Record<LaunchCriterion['category'], string> = {
+  technical: 'Technical',
+  quality: 'Quality',
+  process: 'Process',
+  stakeholder: 'Stakeholder',
+}
+
+const launchStatusConfig: Record<
+  LaunchCriterion['status'],
+  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
+> = {
+  pending: { label: 'Pending', icon: CircleDot, color: 'text-gray-400' },
+  met: { label: 'Met', icon: CircleCheck, color: 'text-emerald-500' },
+  not_met: { label: 'Not Met', icon: CircleX, color: 'text-red-500' },
+  waived: { label: 'Waived', icon: CircleMinus, color: 'text-amber-500' },
+}
+
+function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  // Group by phase
+  const grouped = criteria.reduce(
+    (acc, c) => {
+      acc[c.phase] = acc[c.phase] || []
+      acc[c.phase].push(c)
+      return acc
+    },
+    {} as Record<string, LaunchCriterion[]>
+  )
+
+  const metCount = criteria.filter((c) => c.status === 'met').length
+  const totalCount = criteria.length
+  const allMet = metCount === totalCount && totalCount > 0
+
+  return (
+    <div className="rounded-xl border overflow-hidden">
+      <div className={cn('h-1', allMet ? 'bg-emerald-500' : 'bg-orange-500')} />
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className={cn('p-2 rounded-lg', allMet ? 'bg-emerald-50' : 'bg-orange-50')}>
+            <Rocket className={cn('h-5 w-5', allMet ? 'text-emerald-600' : 'text-orange-600')} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900">Launch Readiness</h3>
+            <p className="text-sm text-gray-500">Go/no-go criteria checklist</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary">
+            {metCount}/{totalCount} met
+          </Badge>
+          {allMet && (
+            <Badge className="bg-emerald-100 text-emerald-700">Ready to launch</Badge>
+          )}
+          {isExpanded ? (
+            <ChevronDown className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          )}
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="px-4 pb-4 space-y-4">
+          {(Object.keys(grouped) as LaunchCriterion['phase'][]).map((phase) => {
+            const phaseConfig = launchPhaseLabels[phase]
+            const phaseCriteria = grouped[phase]
+            const phaseMetCount = phaseCriteria.filter((c) => c.status === 'met').length
+
+            return (
+              <div key={phase}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={cn('text-xs font-medium px-2 py-0.5 rounded', phaseConfig.color)}>
+                    {phaseConfig.label}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {phaseMetCount}/{phaseCriteria.length} met
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {phaseCriteria.map((criterion) => {
+                    const statusConf = launchStatusConfig[criterion.status]
+                    const StatusIcon = statusConf.icon
+                    return (
+                      <div
+                        key={criterion.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 group"
+                      >
+                        <Select
+                          value={criterion.status}
+                          onValueChange={(value) =>
+                            onStatusChange(criterion.id, value as LaunchCriterion['status'])
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-7 p-0 border-0 bg-transparent">
+                            <StatusIcon className={cn('h-5 w-5', statusConf.color)} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(launchStatusConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>
+                                {config.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(
+                            'text-sm',
+                            criterion.status === 'met' ? 'text-gray-400 line-through' : 'text-gray-900'
+                          )}>
+                            {criterion.criterion}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {criterion.owner && (
+                              <span className="text-xs text-gray-400">Owner: {criterion.owner}</span>
+                            )}
+                            <span className="text-xs text-gray-300">
+                              {launchCategoryLabels[criterion.category]}
+                            </span>
+                          </div>
+                        </div>
+                        {criterion.softTarget && criterion.fullTarget && (
+                          <div className="text-right text-xs hidden sm:block">
+                            <p className="text-blue-600">Soft: {criterion.softTarget}</p>
+                            <p className="text-emerald-600">Full: {criterion.fullTarget}</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

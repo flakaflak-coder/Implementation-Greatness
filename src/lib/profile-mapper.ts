@@ -368,6 +368,22 @@ function mapItemToProfile(item: ExtractedItem, profile: BusinessProfile): void {
       profile.guardrails.legalRestrictions.push(item.content)
       break
 
+    // Persona & conversational design types
+    case 'PERSONA_TRAIT':
+    case 'TONE_RULE':
+    case 'DOS_AND_DONTS':
+    case 'EXAMPLE_DIALOGUE':
+    case 'ESCALATION_SCRIPT':
+    case 'DECISION_TREE':
+      // These map to the persona section of the business profile
+      // Stored in structuredData, not the flat profile fields
+      break
+
+    // Monitoring & launch types (handled in technical profile)
+    case 'MONITORING_METRIC':
+    case 'LAUNCH_CRITERION':
+      break
+
     default:
       // Unknown type - log but don't fail
       console.log(`Unmapped item type: ${item.type}`)

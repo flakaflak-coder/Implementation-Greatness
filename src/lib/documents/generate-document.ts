@@ -32,7 +32,7 @@ interface GenerationContext {
   extractedData: {
     stakeholders: Array<{ name: string; role: string; email?: string }>
     goals: Array<{ title: string; description: string }>
-    kpis: Array<{ name: string; target: string; unit?: string }>
+    kpis: Array<{ name: string; target: string; unit?: string; owner?: string; alertThreshold?: string }>
     volumes: Array<{ metric: string; value: string; period: string }>
     processSteps: Array<{ stepNumber: number; name: string; description: string }>
     exceptions: Array<{ name: string; description: string; handling: string }>
@@ -43,6 +43,11 @@ interface GenerationContext {
     businessRules: Array<{ name: string; condition: string; action: string }>
     securityRequirements: string[]
     channels: string[]
+    // New persona/monitoring/launch data
+    personaTraits: Array<{ name: string; description: string; examplePhrase?: string }>
+    escalationScripts: Array<{ context: string; script: string }>
+    monitoringMetrics: Array<{ name: string; target: string; owner?: string; perspective?: string }>
+    launchCriteria: Array<{ criterion: string; phase?: string; owner?: string }>
   }
   language: DocumentLanguage
 }
@@ -744,6 +749,39 @@ export function buildGenerationContext(
       })),
       securityRequirements: getItemsByType('SECURITY_REQUIREMENT').map((item) => item.content),
       channels: getItemsByType('CHANNEL').map((item) => item.content),
+      // New persona/monitoring/launch data
+      personaTraits: getItemsByType('PERSONA_TRAIT').map((item) => {
+        const raw = item.structuredData as Record<string, string> | undefined
+        return {
+          name: raw?.name || extractTitle(item.content),
+          description: raw?.description || item.content,
+          examplePhrase: raw?.examplePhrase,
+        }
+      }),
+      escalationScripts: getItemsByType('ESCALATION_SCRIPT').map((item) => {
+        const raw = item.structuredData as Record<string, string> | undefined
+        return {
+          context: raw?.context || raw?.trigger || extractTitle(item.content),
+          script: raw?.script || item.content,
+        }
+      }),
+      monitoringMetrics: getItemsByType('MONITORING_METRIC').map((item) => {
+        const raw = item.structuredData as Record<string, string> | undefined
+        return {
+          name: raw?.name || extractTitle(item.content),
+          target: raw?.target || item.content,
+          owner: raw?.owner,
+          perspective: raw?.perspective,
+        }
+      }),
+      launchCriteria: getItemsByType('LAUNCH_CRITERION').map((item) => {
+        const raw = item.structuredData as Record<string, string> | undefined
+        return {
+          criterion: raw?.criterion || item.content,
+          phase: raw?.phase,
+          owner: raw?.owner,
+        }
+      }),
     },
   }
 }
