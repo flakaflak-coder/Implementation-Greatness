@@ -77,7 +77,7 @@ function getDefaultPrompt(type: PromptType): {
   temperature: number
   maxTokens: number
 } {
-  const defaults: Record<PromptType, { prompt: string; temperature: number; maxTokens: number }> = {
+  const defaults: Partial<Record<PromptType, { prompt: string; temperature: number; maxTokens: number }>> = {
     EXTRACT_KICKOFF: {
       prompt: `You are an AI assistant helping to extract structured information from a Design Week Kickoff session.
 
@@ -357,8 +357,18 @@ Kill Switch Mechanism, Risk & Mitigation, and Transition to Steady State.`,
     },
   }
 
+  const found = defaults[type]
+  if (!found) {
+    return {
+      prompt: `Extract structured information for the ${type} phase.`,
+      model: DEFAULT_MODEL,
+      temperature: 0.2,
+      maxTokens: 4096,
+    }
+  }
+
   return {
-    ...defaults[type],
+    ...found,
     model: DEFAULT_MODEL,
   }
 }
