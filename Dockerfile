@@ -1,5 +1,8 @@
-# Use Node 22.12+ for Prisma compatibility
+# Use Node 22 for Prisma compatibility
 FROM node:22-alpine AS base
+
+# Upgrade npm to match local dev (lockfileVersion 3 + peer dep resolution)
+RUN npm install -g npm@11
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -59,6 +62,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./nod
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nextjs:nodejs uploads
 
+# Copy entrypoint script
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+
 USER nextjs
 
 EXPOSE 3000
@@ -66,5 +72,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run migrations and push schema to ensure sync, then start the server
-CMD npx prisma migrate deploy && npx prisma db push && node server.js
+# Use entrypoint script that waits for DB before running migrations
+CMD ["sh", "docker-entrypoint.sh"]

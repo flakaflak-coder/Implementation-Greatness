@@ -7,7 +7,7 @@ dockerfilePath = "Dockerfile"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+restartPolicyMaxRetries = 5
 
 [service]
 internalPort = 3000
