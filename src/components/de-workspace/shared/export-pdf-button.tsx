@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { FileDown, Loader2, Globe, Sparkles, Eye, X, Download, AlertTriangle, RefreshCw } from 'lucide-react'
+import { FileDown, Loader2, Globe, Sparkles, Eye, X, Download, AlertTriangle, RefreshCw, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import {
@@ -136,6 +136,7 @@ export function ExportPDFButton({
   const [showPreview, setShowPreview] = useState(false)
   const [progress, setProgress] = useState(0)
   const [progressStep, setProgressStep] = useState('')
+  const [missingFields, setMissingFields] = useState<string[]>([])
 
   // Simulate progress based on estimated time
   const simulateProgress = (docType: DocumentType) => {
@@ -169,7 +170,7 @@ export function ExportPDFButton({
   const generatePdf = useCallback(async (
     docType: DocumentType = selectedDocType,
     language: DocumentLanguage = selectedLanguage
-  ): Promise<{ url: string; filename: string } | null> => {
+  ): Promise<{ url: string; filename: string; missingFields: string[] } | null> => {
     // Start progress simulation
     const stopProgress = simulateProgress(docType)
 
@@ -200,6 +201,17 @@ export function ExportPDFButton({
       setProgress(100)
       setProgressStep('Complete!')
 
+      // Read missing fields from response header
+      let responseMissingFields: string[] = []
+      const missingFieldsHeader = response.headers.get('X-Missing-Fields')
+      if (missingFieldsHeader) {
+        try {
+          responseMissingFields = JSON.parse(missingFieldsHeader) as string[]
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
       // Get filename from Content-Disposition header or use default
       const contentDisposition = response.headers.get('Content-Disposition')
       const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
@@ -207,7 +219,7 @@ export function ExportPDFButton({
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      return { url, filename }
+      return { url, filename, missingFields: responseMissingFields }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         const timeoutError = new Error(`Generation timed out after ${GENERATION_TIMEOUT[docType] / 1000}s. The AI may be overloaded - please try again.`) as Error & { code?: string; canRetry?: boolean }
@@ -225,6 +237,7 @@ export function ExportPDFButton({
   const handlePreview = async () => {
     setIsGeneratingPreview(true)
     setError(null)
+    setMissingFields([])
     setProgress(0)
     setProgressStep('')
 
@@ -234,6 +247,9 @@ export function ExportPDFButton({
         setPreviewUrl(result.url)
         setPreviewFilename(result.filename)
         setShowPreview(true)
+        if (result.missingFields.length > 0) {
+          setMissingFields(result.missingFields)
+        }
       }
     } catch (err) {
       const error = err as Error & { canRetry?: boolean }
@@ -295,12 +311,16 @@ export function ExportPDFButton({
     // Foreground export (original behavior)
     setIsExporting(true)
     setError(null)
+    setMissingFields([])
     setProgress(0)
     setProgressStep('')
 
     try {
       const result = await generatePdf()
       if (result) {
+        if (result.missingFields.length > 0) {
+          setMissingFields(result.missingFields)
+        }
         const a = document.createElement('a')
         a.href = result.url
         a.download = result.filename
@@ -361,6 +381,17 @@ export function ExportPDFButton({
         throw new Error(errorInfo.description)
       }
 
+      // Read missing fields from response header
+      let bgMissingFields: string[] = []
+      const missingFieldsHeader = response.headers.get('X-Missing-Fields')
+      if (missingFieldsHeader) {
+        try {
+          bgMissingFields = JSON.parse(missingFieldsHeader) as string[]
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
       const contentDisposition = response.headers.get('Content-Disposition')
       const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
       const filename = filenameMatch?.[1] || 'design-document.pdf'
@@ -368,10 +399,20 @@ export function ExportPDFButton({
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
 
+      // Build description with missing fields warning
+      const successDescription = bgMissingFields.length > 0
+        ? `Generated with gaps in: ${bgMissingFields.join(', ')}`
+        : 'Click to download your document'
+
+      // Also update component state so the inline warning persists
+      if (bgMissingFields.length > 0) {
+        setMissingFields(bgMissingFields)
+      }
+
       // Update toast with download action
       toast.success(`${docName} ready!`, {
         id: toastId,
-        description: 'Click to download your document',
+        description: successDescription,
         action: {
           label: 'Download',
           onClick: () => {
@@ -533,6 +574,26 @@ export function ExportPDFButton({
                 <RefreshCw className="h-3 w-3" />
                 Retry
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Missing fields warning */}
+        {missingFields.length > 0 && !error && (
+          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">
+                  Document generated with incomplete data
+                </p>
+                <p className="text-sm text-amber-700 mt-0.5">
+                  Missing sections: {missingFields.join(', ')}
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Upload more session recordings to fill in these gaps.
+                </p>
+              </div>
             </div>
           </div>
         )}

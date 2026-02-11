@@ -943,6 +943,14 @@ enum PromptType {
   GENERATE_PERSONA_DOC   // Sub3: Persona & Conversational Design
   GENERATE_MONITORING    // Sub4: Monitoring Framework
   GENERATE_ROLLOUT       // Sub5: Test & Rollout Plan
+
+  // Gemini extraction prompts (multimodal - audio/video/documents)
+  GEMINI_EXTRACT_KICKOFF
+  GEMINI_EXTRACT_PROCESS
+  GEMINI_EXTRACT_SKILLS_GUARDRAILS
+  GEMINI_EXTRACT_TECHNICAL
+  GEMINI_EXTRACT_SIGNOFF
+  GEMINI_EXTRACT_PERSONA
 }
 
 // Extracted items from sessions with detailed typing
@@ -1146,6 +1154,8 @@ model UploadJob {
   mimeType        String
   fileUrl         String
   fileSize        Int
+  contentHash     String?         // SHA-256 hash of file content for duplicate detection
+  retryCount      Int             @default(0)  // Number of retry attempts (max 3)
   status          UploadJobStatus @default(QUEUED)
   currentStage    PipelineStage   @default(CLASSIFICATION)
 
@@ -1200,5 +1210,33 @@ enum PipelineStage {
   SPECIALIZED_EXTRACTION
   TAB_POPULATION
   COMPLETE
+}
+
+// ============================================
+// NOTIFICATION MODELS
+// ============================================
+
+model Notification {
+  id          String             @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String
+  link        String?            // URL to navigate to
+  read        Boolean            @default(false)
+  metadata    Json?              // Additional context
+  createdAt   DateTime           @default(now())
+
+  @@index([read, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  EXTRACTION_COMPLETE
+  EXTRACTION_FAILED
+  HEALTH_CHANGE
+  NEW_AMBIGUOUS_ITEMS
+  PHASE_COMPLETE
+  DESIGN_WEEK_COMPLETE
+  PREREQUISITE_RECEIVED
 }
 

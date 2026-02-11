@@ -788,7 +788,7 @@ Be aware of context:
 
     // Generate response with Claude
     const response = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       system: systemPrompt,
       messages,
@@ -1053,7 +1053,7 @@ If you detect she wants to make changes (e.g., "mark X as blocked", "shift timel
 
     // Generate response with Claude
     const response = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       system: portfolioSystemPrompt,
       messages,

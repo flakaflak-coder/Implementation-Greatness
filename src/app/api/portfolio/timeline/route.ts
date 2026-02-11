@@ -284,6 +284,7 @@ export async function GET() {
         prerequisites: prereqSummary,
         phases,
         createdAt: de.createdAt.toISOString(),
+        updatedAt: de.updatedAt.toISOString(),
       }
     })
 
@@ -356,17 +357,57 @@ export async function GET() {
 /**
  * PATCH /api/portfolio/timeline
  * Update week positions for drag-and-drop functionality
+ * Also supports reassigning a DE to a different consultant via assignedTo
  */
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, startWeek, endWeek, goLiveWeek, blocker, thisWeekActions, sortOrder } = body
+    const { id, startWeek, endWeek, goLiveWeek, blocker, thisWeekActions, sortOrder, updatedAt, assignedTo } = body
 
     if (!id) {
       return NextResponse.json(
         { success: false, error: 'Digital Employee ID is required' },
         { status: 400 }
       )
+    }
+
+    // Optimistic locking: if updatedAt is provided, verify the record hasn't changed
+    if (updatedAt) {
+      const current = await prisma.digitalEmployee.findUnique({
+        where: { id },
+        select: { updatedAt: true },
+      })
+
+      if (!current) {
+        return NextResponse.json(
+          { success: false, error: 'Digital Employee not found' },
+          { status: 404 }
+        )
+      }
+
+      if (current.updatedAt.toISOString() !== updatedAt) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'This record was modified by another user. Please refresh and try again.',
+            code: 'CONFLICT',
+          },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Handle assignedTo update on the DESIGN_WEEK journey phase
+    if (assignedTo !== undefined) {
+      await prisma.journeyPhase.updateMany({
+        where: {
+          digitalEmployeeId: id,
+          phaseType: 'DESIGN_WEEK',
+        },
+        data: {
+          assignedTo: assignedTo || null,
+        },
+      })
     }
 
     // Build update data with only provided fields
@@ -390,12 +431,20 @@ export async function PATCH(request: NextRequest) {
         blocker: true,
         thisWeekActions: true,
         sortOrder: true,
+        updatedAt: true,
+        journeyPhases: {
+          where: { phaseType: 'DESIGN_WEEK' },
+          select: { assignedTo: true },
+        },
       },
     })
 
     return NextResponse.json({
       success: true,
-      data: updated,
+      data: {
+        ...updated,
+        assignedTo: updated.journeyPhases?.[0]?.assignedTo ?? null,
+      },
     })
   } catch (error) {
     console.error('Error updating timeline data:', error)

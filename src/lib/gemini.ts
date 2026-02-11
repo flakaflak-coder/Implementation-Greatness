@@ -8,6 +8,8 @@ import {
   ERROR_RECOVERY_GUIDE,
 } from './prompt-utils'
 import { trackLLMOperationServer } from './observatory/tracking'
+import { prisma } from './db'
+import type { PromptType } from '@prisma/client'
 
 const GEMINI_TEXT_MODEL = 'gemini-3-pro-preview'
 
@@ -560,31 +562,78 @@ Respond in JSON format with this structure:
 
 Be thorough but only include items that are clearly discussed. Include timestamps in seconds.`
 
-// Map session phase to appropriate prompt
-function getPromptForSessionType(sessionPhase?: number): string {
-  switch (sessionPhase) {
-    case 1: // Kickoff
-      return KICKOFF_PROMPT
-    case 2: // Process Design 1
-      return PROCESS_DESIGN_PROMPT
-    case 3: // Process Design 2 (Skills & Guardrails)
-      return SKILLS_GUARDRAILS_PROMPT
-    case 4: // Technical
-    case 5: // Technical continued
-      return TECHNICAL_PROMPT
-    case 6: // Sign-off
-      return SIGNOFF_PROMPT
-    case 7: // Persona & Conversational Design
-      return PERSONA_DESIGN_PROMPT
-    default:
-      // Log warning for unexpected session phase - using legacy prompt as fallback
-      console.warn(
-        `[Gemini Extraction] Unexpected session phase: ${sessionPhase}. ` +
-          `Expected 1-6. Using legacy extraction prompt as fallback. ` +
-          `This may produce inconsistent results.`
-      )
-      return LEGACY_EXTRACTION_PROMPT
+// Map session phase to Gemini PromptType for DB lookup
+const SESSION_PHASE_TO_PROMPT_TYPE: Record<number, PromptType> = {
+  1: 'GEMINI_EXTRACT_KICKOFF',
+  2: 'GEMINI_EXTRACT_PROCESS',
+  3: 'GEMINI_EXTRACT_SKILLS_GUARDRAILS',
+  4: 'GEMINI_EXTRACT_TECHNICAL',
+  5: 'GEMINI_EXTRACT_TECHNICAL',
+  6: 'GEMINI_EXTRACT_SIGNOFF',
+  7: 'GEMINI_EXTRACT_PERSONA',
+}
+
+// Map session phase to hardcoded fallback prompt
+const SESSION_PHASE_TO_DEFAULT_PROMPT: Record<number, string> = {
+  1: KICKOFF_PROMPT,
+  2: PROCESS_DESIGN_PROMPT,
+  3: SKILLS_GUARDRAILS_PROMPT,
+  4: TECHNICAL_PROMPT,
+  5: TECHNICAL_PROMPT,
+  6: SIGNOFF_PROMPT,
+  7: PERSONA_DESIGN_PROMPT,
+}
+
+/**
+ * Load a Gemini extraction prompt from the PromptTemplate database table.
+ * Falls back to the hardcoded constant if no DB entry exists or if the query fails.
+ * This ensures backwards compatibility -- the system works without DB entries.
+ */
+export async function getGeminiPrompt(type: PromptType): Promise<string> {
+  try {
+    const template = await prisma.promptTemplate.findFirst({
+      where: { type, isActive: true },
+      orderBy: { version: 'desc' },
+    })
+
+    if (template) {
+      return template.prompt
+    }
+  } catch (error) {
+    // Gracefully fall back to hardcoded prompt on DB failure
+    console.warn(
+      `[Gemini Prompt] Failed to load prompt from DB for type "${type}". ` +
+        `Falling back to hardcoded default. Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
+
+  // Return empty string to signal caller to use hardcoded default
+  return ''
+}
+
+// Map session phase to appropriate prompt (with DB override support)
+async function getPromptForSessionType(sessionPhase?: number): Promise<string> {
+  // Try DB lookup first for known session phases
+  if (sessionPhase !== undefined && sessionPhase in SESSION_PHASE_TO_PROMPT_TYPE) {
+    const promptType = SESSION_PHASE_TO_PROMPT_TYPE[sessionPhase]
+    const dbPrompt = await getGeminiPrompt(promptType)
+    if (dbPrompt) {
+      return dbPrompt
+    }
+  }
+
+  // Fall back to hardcoded constants
+  if (sessionPhase !== undefined && sessionPhase in SESSION_PHASE_TO_DEFAULT_PROMPT) {
+    return SESSION_PHASE_TO_DEFAULT_PROMPT[sessionPhase]
+  }
+
+  // Log warning for unexpected session phase - using legacy prompt as fallback
+  console.warn(
+    `[Gemini Extraction] Unexpected session phase: ${sessionPhase}. ` +
+      `Expected 1-7. Using legacy extraction prompt as fallback. ` +
+      `This may produce inconsistent results.`
+  )
+  return LEGACY_EXTRACTION_PROMPT
 }
 
 /**
@@ -633,8 +682,8 @@ export async function processRecording(
     },
   }
 
-  // Use session-type-specific prompt
-  const prompt = getPromptForSessionType(sessionPhase)
+  // Use session-type-specific prompt (DB override or hardcoded fallback)
+  const prompt = await getPromptForSessionType(sessionPhase)
 
   let response
   try {
@@ -744,8 +793,8 @@ export async function processDocument(
     },
   }
 
-  // Use session-type-specific prompt, adapted for documents
-  const prompt = getPromptForSessionType(sessionPhase)
+  // Use session-type-specific prompt (DB override or hardcoded fallback), adapted for documents
+  const prompt = (await getPromptForSessionType(sessionPhase))
     .replace(/recording/g, 'document')
     .replace(/timestamp/g, 'page/paragraph')
 

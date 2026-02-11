@@ -4,10 +4,13 @@ import { PipelineStage } from '@prisma/client'
 import { retryPipeline } from '@/lib/pipeline'
 import { validateId } from '@/lib/validation'
 
+const MAX_RETRY_ATTEMPTS = 3
+
 /**
  * POST /api/upload/[jobId]/retry
  *
  * Retries a failed upload job from a specific stage.
+ * Limited to MAX_RETRY_ATTEMPTS retries to prevent infinite retry loops.
  */
 export async function POST(
   request: NextRequest,
@@ -46,6 +49,19 @@ export async function POST(
       )
     }
 
+    if (job.retryCount >= MAX_RETRY_ATTEMPTS) {
+      return NextResponse.json(
+        { error: 'Maximum retry attempts (3) reached. Please upload the file again.' },
+        { status: 400 }
+      )
+    }
+
+    // Increment retry count
+    await prisma.uploadJob.update({
+      where: { id: jobId },
+      data: { retryCount: { increment: 1 } },
+    })
+
     // Use current stage if not specified
     const retryStage = fromStage || job.currentStage
 
@@ -56,6 +72,8 @@ export async function POST(
       jobId,
       status: 'QUEUED',
       retryingFrom: retryStage,
+      retryCount: job.retryCount + 1,
+      maxRetries: MAX_RETRY_ATTEMPTS,
       message: 'Retry started. Use /api/upload/{jobId}/status to track progress.',
     })
   } catch (error) {

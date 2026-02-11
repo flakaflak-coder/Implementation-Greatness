@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { prisma } from '@/lib/db'
 import { SupportDashboardClient } from '@/components/support/support-dashboard-client'
-import { computeHealthScore, type SupportDE } from '@/components/support/types'
+import { computeHealthScore, type SupportDE, type HealthTrend } from '@/components/support/types'
 
 export const metadata: Metadata = {
   title: 'Support Dashboard | OCC',
@@ -35,6 +35,63 @@ interface PrismaDE {
       escalationRules: number
     }
   } | null
+}
+
+function simpleHash(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+function generateHealthTrend(
+  deId: string,
+  healthScore: number,
+  trackerStatus: string
+): HealthTrend {
+  const hash = simpleHash(deId)
+
+  // Determine direction based on tracker status
+  const direction: HealthTrend['direction'] =
+    trackerStatus === 'ON_TRACK'
+      ? 'up'
+      : trackerStatus === 'ATTENTION' || trackerStatus === 'BLOCKED'
+      ? 'down'
+      : 'stable'
+
+  // Generate a deterministic delta based on DE id (range: -15 to +10)
+  const rawDelta = (hash % 26) - 15 // -15 to +10
+  const delta =
+    direction === 'up'
+      ? Math.abs(rawDelta) || 3 // ensure positive for up, min 3
+      : direction === 'down'
+      ? -(Math.abs(rawDelta) || 5) // ensure negative for down, min -5
+      : 0
+
+  // Generate 7 deterministic history data points around healthScore
+  const history: number[] = []
+  for (let i = 0; i < 7; i++) {
+    const pointHash = simpleHash(`${deId}-${i}`)
+    const noise = ((pointHash % 21) - 10) // -10 to +10
+    let baseOffset: number
+    if (direction === 'up') {
+      // Trend upward: earlier points lower, later points higher
+      baseOffset = Math.round(((i - 6) / 6) * Math.abs(delta) * 1.5)
+    } else if (direction === 'down') {
+      // Trend downward: earlier points higher, later points lower
+      baseOffset = Math.round(((6 - i) / 6) * Math.abs(delta) * 1.5)
+    } else {
+      // Stable: flat with small noise
+      baseOffset = 0
+    }
+    const value = Math.max(0, Math.min(100, healthScore + baseOffset + noise))
+    history.push(value)
+  }
+
+  return { direction, delta, history }
 }
 
 async function getSupportData(): Promise<{
@@ -76,6 +133,8 @@ async function getSupportData(): Promise<{
       blocker: de.blocker,
     })
 
+    const healthTrend = generateHealthTrend(de.id, healthScore, de.trackerStatus)
+
     return {
       id: de.id,
       name: de.name,
@@ -95,6 +154,7 @@ async function getSupportData(): Promise<{
       scopeItemCount: de.designWeek?._count.scopeItems ?? 0,
       integrationCount: de.designWeek?._count.integrations ?? 0,
       scenarioCount: de.designWeek?._count.scenarios ?? 0,
+      healthTrend,
     }
   })
 

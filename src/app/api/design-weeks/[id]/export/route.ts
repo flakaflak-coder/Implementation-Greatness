@@ -144,6 +144,46 @@ export async function GET(
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // MISSING FIELDS DETECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+    const allExtractedItems = designWeek.sessions.flatMap(s => s.extractedItems)
+
+    interface FieldCheck {
+      label: string
+      present: boolean
+    }
+
+    const fieldChecks: FieldCheck[] = [
+      { label: 'Stakeholders', present: allExtractedItems.some(i => i.type === 'STAKEHOLDER') },
+      { label: 'Goals', present: allExtractedItems.some(i => i.type === 'GOAL' || i.type === 'BUSINESS_CASE') },
+      { label: 'KPIs', present: allExtractedItems.some(i => i.type === 'KPI_TARGET') },
+      { label: 'Process Steps', present: allExtractedItems.some(i => i.type === 'HAPPY_PATH_STEP') },
+      { label: 'Scope Items', present: designWeek.scopeItems.length > 0 },
+      { label: 'Technical Integrations', present: designWeek.integrations.length > 0 || allExtractedItems.some(i => i.type === 'SYSTEM_INTEGRATION') },
+      { label: 'Security Requirements', present: allExtractedItems.some(i => i.type === 'SECURITY_REQUIREMENT' || i.type === 'COMPLIANCE_REQUIREMENT') },
+      { label: 'Guardrails', present: allExtractedItems.some(i => i.type.startsWith('GUARDRAIL_') || i.type === 'LEGAL_RESTRICTION') },
+    ]
+
+    const missingFields = fieldChecks.filter(f => !f.present).map(f => f.label)
+    if (missingFields.length > 0) {
+      console.log(`[Export] Missing fields detected: ${missingFields.join(', ')}`)
+    }
+
+    // Helper to add missing fields header to a PDF response
+    const createPdfResponse = (buffer: Uint8Array | Buffer, filename: string) => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': buffer.length.toString(),
+      }
+      if (missingFields.length > 0) {
+        headers['X-Missing-Fields'] = JSON.stringify(missingFields)
+        headers['Access-Control-Expose-Headers'] = 'X-Missing-Fields'
+      }
+      return new NextResponse(new Uint8Array(buffer), { headers })
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // MEET YOUR DE DOCUMENT
     // ═══════════════════════════════════════════════════════════════════════════
     if (docType === 'meet') {
@@ -219,13 +259,7 @@ export async function GET(
 
       console.log(`[Export] Meet Your DE PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -291,13 +325,7 @@ export async function GET(
 
       console.log(`[Export] Test Plan PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -342,13 +370,7 @@ export async function GET(
 
       console.log(`[Export] Process Design PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -390,13 +412,7 @@ export async function GET(
 
       console.log(`[Export] Executive Summary PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -441,13 +457,7 @@ export async function GET(
 
       console.log(`[Export] Technical Foundation PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -497,13 +507,7 @@ export async function GET(
 
       console.log(`[Export] Persona Design PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -538,13 +542,7 @@ export async function GET(
 
       console.log(`[Export] Monitoring Framework PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -587,13 +585,7 @@ export async function GET(
 
       console.log(`[Export] Rollout Plan PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
-      return new NextResponse(new Uint8Array(pdfBuffer), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
+      return createPdfResponse(pdfBuffer, filename)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -742,13 +734,7 @@ export async function GET(
     console.log(`[Export] PDF generated: ${filename} (${pdfBuffer.length} bytes)`)
 
     // Return PDF
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdfBuffer.length.toString(),
-      },
-    })
+    return createPdfResponse(pdfBuffer, filename)
   } catch (error) {
     console.error('[Export] Error:', error)
 

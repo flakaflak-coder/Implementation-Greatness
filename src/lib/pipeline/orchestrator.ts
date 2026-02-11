@@ -48,6 +48,45 @@ function sanitizeErrorMessage(error: unknown): string {
 }
 
 /**
+ * Human-readable stage names for warning messages
+ */
+const STAGE_DISPLAY_NAMES: Record<string, string> = {
+  CLASSIFICATION: 'Content Classification',
+  GENERAL_EXTRACTION: 'General Extraction',
+  SPECIALIZED_EXTRACTION: 'Specialized Analysis',
+  TAB_POPULATION: 'Profile Tab Population',
+}
+
+/**
+ * Build human-readable warning messages from stage errors.
+ * Provides actionable context about what was lost and what to do.
+ */
+function buildWarnings(stageErrors: Array<{ stage: string; message: string }>): string[] {
+  const warnings: string[] = []
+
+  for (const { stage } of stageErrors) {
+    switch (stage) {
+      case 'SPECIALIZED_EXTRACTION':
+        warnings.push(
+          'Completed with basic extraction (specialized analysis was skipped due to an error)'
+        )
+        break
+      case 'TAB_POPULATION':
+        warnings.push(
+          'Extraction succeeded but items could not be saved to profile tabs. Try refreshing.'
+        )
+        break
+      default:
+        warnings.push(
+          `${STAGE_DISPLAY_NAMES[stage] || stage} encountered an issue`
+        )
+    }
+  }
+
+  return warnings
+}
+
+/**
  * Map content classification to Design Week phase
  */
 const CLASSIFICATION_TO_PHASE: Record<ContentClassification, number> = {
@@ -444,10 +483,12 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
   } else if (hasPartialResults && !hasCriticalError) {
     // Partial success -- some stages failed but we got usable results
     const errorSummary = stageErrors.map((e) => `${e.stage}: ${e.message}`).join('; ')
+    const warnings = buildWarnings(stageErrors)
 
     console.log(`\n${'='.repeat(60)}`)
     console.log(`[Pipeline] PARTIAL SUCCESS for job ${jobId}`)
     console.log(`[Pipeline] Completed with ${stageErrors.length} stage error(s): ${errorSummary}`)
+    console.log(`[Pipeline] Warnings: ${warnings.join(' | ')}`)
     console.log(`${'='.repeat(60)}\n`)
 
     await updateJobStatus(jobId, 'COMPLETE', 'COMPLETE')
@@ -455,7 +496,8 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       stage: 'COMPLETE',
       status: 'complete',
       percent: 100,
-      message: `Completed with warnings (${stageErrors.length} stage(s) had issues)`,
+      message: warnings[0],
+      details: { warnings },
     })
 
     return {
@@ -463,6 +505,7 @@ export async function runExtractionPipeline(ctx: PipelineContext): Promise<Pipel
       classification,
       rawExtractionId,
       populationResult,
+      warnings,
     }
   } else {
     // Critical failure -- results are not usable

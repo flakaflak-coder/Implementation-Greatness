@@ -30,6 +30,8 @@ export interface PipelineResult {
   rawExtractionId?: string
   populationResult?: PopulationResult
   error?: string
+  /** Human-readable warnings when pipeline completes with partial results */
+  warnings?: string[]
 }
 
 // ============================================

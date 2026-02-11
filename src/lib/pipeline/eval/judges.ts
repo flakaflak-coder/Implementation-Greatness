@@ -24,7 +24,7 @@ import type {
 } from './types'
 import { DEFAULT_THRESHOLDS } from './types'
 
-const JUDGE_MODEL = 'claude-haiku-4-20250514'
+const JUDGE_MODEL = 'claude-haiku-4-5-20251001'
 
 // Lazy-load Anthropic client to avoid initialization in test environments
 let _anthropic: import('@anthropic-ai/sdk').default | null = null
@@ -614,7 +614,7 @@ Respond in JSON only:
   try {
     const anthropic = await getAnthropicClient()
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514', // Use Sonnet for more thorough analysis
+      model: 'claude-sonnet-4-5-20250929', // Use Sonnet for more thorough analysis
       max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
     })
@@ -709,7 +709,7 @@ Respond in JSON only:
   try {
     const anthropic = await getAnthropicClient()
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514', // Sonnet for vision capability
+      model: 'claude-sonnet-4-5-20250929', // Sonnet for vision capability
       max_tokens: 1024,
       messages: [
         {

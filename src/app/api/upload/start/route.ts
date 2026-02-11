@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { uploadFile } from '@/lib/storage'
 import { getMimeType } from '@/lib/gemini'
@@ -177,6 +178,28 @@ export async function POST(request: NextRequest) {
     // Use server-derived MIME type, not client-provided
     const mimeType = getMimeType(filename)
 
+    // Compute content hash for duplicate detection
+    const contentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex')
+
+    // Check for duplicate uploads (same content already processed for this Design Week)
+    const existingJob = await prisma.uploadJob.findFirst({
+      where: {
+        designWeekId: idValidation.id,
+        contentHash,
+        status: 'COMPLETE',
+      },
+    })
+
+    if (existingJob) {
+      return NextResponse.json(
+        {
+          error: 'This file has already been uploaded and processed for this Design Week.',
+          existingJobId: existingJob.id,
+        },
+        { status: 409 }
+      )
+    }
+
     // Verify design week exists
     const designWeek = await prisma.designWeek.findUnique({
       where: { id: idValidation.id },
@@ -200,6 +223,7 @@ export async function POST(request: NextRequest) {
         mimeType,
         fileUrl: uploadResult.path,
         fileSize: uploadResult.size,
+        contentHash,
         status: 'QUEUED',
         currentStage: 'CLASSIFICATION',
       },

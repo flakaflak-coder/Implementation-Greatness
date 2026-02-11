@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Clock, CheckCircle2, XCircle, AlertTriangle, ExternalLink, Undo2 } from 'lucide-react'
+import { FileText, Clock, CheckCircle2, XCircle, AlertTriangle, ExternalLink, Undo2, CheckSquare, Square } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +37,9 @@ interface ScopeItemCardProps {
   onResolve?: (id: string, classification: 'IN_SCOPE' | 'OUT_OF_SCOPE', notes?: string) => void
   onUnresolve?: (id: string) => void
   onViewEvidence?: (evidence: Evidence) => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
 }
 
 export function ScopeItemCard({
@@ -50,6 +53,9 @@ export function ScopeItemCard({
   onResolve,
   onUnresolve,
   onViewEvidence,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: ScopeItemCardProps) {
   const [showResolveDialog, setShowResolveDialog] = useState(false)
   const [resolutionNotes, setResolutionNotes] = useState('')
@@ -60,6 +66,12 @@ export function ScopeItemCard({
     onResolve?.(id, newClassification, resolutionNotes)
     setShowResolveDialog(false)
     setResolutionNotes('')
+  }
+
+  const handleCardClick = () => {
+    if (selectable && onToggleSelect) {
+      onToggleSelect(id)
+    }
   }
 
   const getClassificationIcon = () => {
@@ -89,11 +101,25 @@ export function ScopeItemCard({
       <Card
         className={cn(
           'transition-all',
-          isAmbiguous && 'border-amber-300 bg-amber-50/50'
+          isAmbiguous && 'border-amber-300 bg-amber-50/50',
+          selectable && 'cursor-pointer hover:shadow-md',
+          selectable && selected && 'ring-2 ring-[#C2703E] border-[#C2703E] bg-orange-50/30'
         )}
+        onClick={handleCardClick}
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
+            {/* Selection checkbox */}
+            {selectable && (
+              <div className="mt-0.5 shrink-0">
+                {selected ? (
+                  <CheckSquare className="w-5 h-5 text-[#C2703E]" />
+                ) : (
+                  <Square className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            )}
+
             {/* Classification icon */}
             <div className="mt-0.5">{getClassificationIcon()}</div>
 
@@ -127,7 +153,10 @@ export function ScopeItemCard({
                   {evidence.map((ev) => (
                     <button
                       key={ev.id}
-                      onClick={() => onViewEvidence?.(ev)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onViewEvidence?.(ev)
+                      }}
                       className="flex items-start gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors group w-full text-left"
                     >
                       {ev.sourceType === 'RECORDING' ? (
@@ -158,13 +187,16 @@ export function ScopeItemCard({
                 </div>
               )}
 
-              {/* Resolve buttons for ambiguous items */}
-              {isAmbiguous && onResolve && (
+              {/* Resolve buttons for ambiguous items (hidden in selection mode) */}
+              {isAmbiguous && onResolve && !selectable && (
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-amber-200">
                   <Button
                     size="sm"
                     variant="success"
-                    onClick={() => handleResolve('IN_SCOPE')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleResolve('IN_SCOPE')
+                    }}
                   >
                     <CheckCircle2 className="w-4 h-4 mr-1" />
                     In Scope
@@ -172,7 +204,10 @@ export function ScopeItemCard({
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleResolve('OUT_OF_SCOPE')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleResolve('OUT_OF_SCOPE')
+                    }}
                   >
                     <XCircle className="w-4 h-4 mr-1" />
                     Out of Scope
@@ -180,7 +215,10 @@ export function ScopeItemCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowResolveDialog(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowResolveDialog(true)
+                    }}
                   >
                     Needs Discussion
                   </Button>
@@ -193,7 +231,10 @@ export function ScopeItemCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onUnresolve(id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onUnresolve(id)
+                    }}
                     className="text-gray-600 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50"
                   >
                     <Undo2 className="w-4 h-4 mr-1" />

@@ -30,7 +30,7 @@ describe('POST /api/scope-items/[id]/resolve', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toContain('Valid classification is required')
+    expect(data.error).toBe('Invalid input')
   })
 
   it('returns 400 when classification is invalid', async () => {
@@ -43,7 +43,7 @@ describe('POST /api/scope-items/[id]/resolve', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toContain('Valid classification is required')
+    expect(data.error).toBe('Invalid input')
   })
 
   it('returns 404 when scope item not found', async () => {

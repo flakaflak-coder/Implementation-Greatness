@@ -211,7 +211,7 @@ export async function generateMeetYourDEContent(ctx: MeetYourDEContext): Promise
     console.log(`[Meet Your DE] Generating personable introduction for ${ctx.digitalEmployeeName}...`)
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4000,
       temperature: 0.5, // Balanced: personable but consistent brand voice
       messages: [{ role: 'user', content: prompt }],

@@ -1,5 +1,11 @@
 // Shared types for the Support Dashboard
 
+export interface HealthTrend {
+  direction: 'up' | 'down' | 'stable'
+  delta: number // change amount (e.g., +5, -12)
+  history: number[] // last 7 data points for sparkline
+}
+
 export interface SupportDE {
   id: string
   name: string
@@ -19,6 +25,7 @@ export interface SupportDE {
   scopeItemCount: number
   integrationCount: number
   scenarioCount: number
+  healthTrend?: HealthTrend
 }
 
 export type HealthStatus = 'healthy' | 'attention' | 'critical'

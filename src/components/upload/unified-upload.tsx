@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Upload, FileAudio, FileText, FileVideo, X, RefreshCw, CheckCircle2, AlertCircle, Settings2, Check, Clock } from 'lucide-react'
+import { Upload, FileAudio, FileText, FileVideo, X, RefreshCw, CheckCircle2, AlertCircle, Settings2, Check, Clock, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { PipelineProgress, createPipelineStages } from './pipeline-progress'
 import type { ExtractionMode } from '@/lib/pipeline/types'
 
@@ -110,12 +111,12 @@ const ACCEPTED_TYPES = {
 const ACCEPTED_EXTENSIONS = Object.values(ACCEPTED_TYPES).flat().join(', ')
 
 const EXTRACTION_MODES: { value: ExtractionMode; label: string; description: string; recommended?: boolean }[] = [
-  { value: 'auto', label: 'Auto', description: 'AI picks best strategy for your doc', recommended: true },
-  { value: 'section-based', label: 'Section-Based', description: '5 focused passes (most thorough)' },
-  { value: 'exhaustive', label: 'Exhaustive', description: 'Extract everything, no limits' },
-  { value: 'two-pass', label: 'Two-Pass', description: 'Second pass finds missed items' },
-  { value: 'multi-model', label: 'Multi-Model', description: 'Gemini + Claude parallel, merged' },
-  { value: 'standard', label: 'Standard', description: 'Fast extraction with smart limits' },
+  { value: 'auto', label: 'Auto', description: 'AI picks the best strategy', recommended: true },
+  { value: 'standard', label: 'Standard', description: 'Single-pass extraction' },
+  { value: 'exhaustive', label: 'Exhaustive', description: 'Maximum coverage, slower' },
+  { value: 'two-pass', label: 'Two-Pass', description: 'Extract then re-check for missed items' },
+  { value: 'multi-model', label: 'Multi-Model', description: 'Use both Gemini and Claude' },
+  { value: 'section-based', label: 'Section-Based', description: 'Split document into sections first' },
 ]
 
 export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUploadProps) {
@@ -125,6 +126,7 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [extractionMode, setExtractionMode] = useState<ExtractionMode>('auto')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [timeEstimate, setTimeEstimate] = useState<{ min: number; max: number; label: string } | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -350,51 +352,6 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
       <CardContent>
         {state === 'idle' && (
           <div className="space-y-4">
-            {/* Extraction Mode Selector - Always visible */}
-            <div className="p-4 bg-[#FDF3EC] rounded-lg border border-[#E8D5C4]">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-[#C2703E]" />
-                  <p className="text-sm font-medium text-[#A05A32]">
-                    Extraction Mode
-                  </p>
-                </div>
-                <span className="text-xs text-[#C2703E] bg-[#F5E6DA] px-2 py-1 rounded">
-                  {EXTRACTION_MODES.find(m => m.value === extractionMode)?.label}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {EXTRACTION_MODES.map((mode) => (
-                  <button
-                    key={mode.value}
-                    onClick={() => setExtractionMode(mode.value)}
-                    className={cn(
-                      'p-3 rounded-lg border text-left transition-all relative',
-                      extractionMode === mode.value
-                        ? 'border-[#C2703E] bg-white ring-2 ring-[#C2703E] shadow-sm'
-                        : 'border-[#F5E6DA] bg-white/50 hover:border-[#C2703E] hover:bg-white'
-                    )}
-                  >
-                    {mode.recommended && (
-                      <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
-                        Best
-                      </span>
-                    )}
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn(
-                        'font-medium text-sm',
-                        extractionMode === mode.value ? 'text-[#A05A32]' : 'text-gray-700'
-                      )}>{mode.label}</span>
-                      {extractionMode === mode.value && (
-                        <Check className="h-4 w-4 text-[#C2703E]" />
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500">{mode.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Drop zone */}
             <div
               className={cn(
@@ -423,6 +380,65 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
                 className="hidden"
               />
             </div>
+
+            {/* Advanced options - collapsible extraction mode selector */}
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors group w-full">
+                <ChevronRight className={cn(
+                  'h-3.5 w-3.5 transition-transform duration-200',
+                  showAdvanced && 'rotate-90'
+                )} />
+                <Settings2 className="h-3.5 w-3.5" />
+                <span>Advanced options</span>
+                {extractionMode !== 'auto' && (
+                  <span className="ml-auto text-[10px] text-[#C2703E] bg-[#FDF3EC] px-1.5 py-0.5 rounded font-medium">
+                    {EXTRACTION_MODES.find(m => m.value === extractionMode)?.label}
+                  </span>
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <div className="p-4 bg-[#FDF3EC] rounded-lg border border-[#E8D5C4]">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-[#A05A32]">
+                      Extraction Mode
+                    </p>
+                    <span className="text-xs text-[#C2703E] bg-[#F5E6DA] px-2 py-1 rounded">
+                      {EXTRACTION_MODES.find(m => m.value === extractionMode)?.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EXTRACTION_MODES.map((mode) => (
+                      <button
+                        key={mode.value}
+                        onClick={() => setExtractionMode(mode.value)}
+                        className={cn(
+                          'p-3 rounded-lg border text-left transition-all relative',
+                          extractionMode === mode.value
+                            ? 'border-[#C2703E] bg-white ring-2 ring-[#C2703E] shadow-sm'
+                            : 'border-[#F5E6DA] bg-white/50 hover:border-[#C2703E] hover:bg-white'
+                        )}
+                      >
+                        {mode.recommended && (
+                          <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+                            Recommended
+                          </span>
+                        )}
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={cn(
+                            'font-medium text-sm',
+                            extractionMode === mode.value ? 'text-[#A05A32]' : 'text-gray-700'
+                          )}>{mode.label}</span>
+                          {extractionMode === mode.value && (
+                            <Check className="h-4 w-4 text-[#C2703E]" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">{mode.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         )}
 

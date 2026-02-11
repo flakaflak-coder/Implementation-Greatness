@@ -223,6 +223,32 @@ export function DEWorkspace({
     }
   }
 
+  // Scope Guardian: batch resolve multiple ambiguous scope items via API
+  const handleBatchScopeResolve = async (
+    ids: string[],
+    classification: 'IN_SCOPE' | 'OUT_OF_SCOPE',
+  ) => {
+    try {
+      const response = await fetch('/api/scope-items/batch-resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, classification }),
+      })
+      if (response.ok) {
+        toast.success(`${ids.length} items marked as ${classification === 'IN_SCOPE' ? 'In Scope' : 'Out of Scope'}`)
+        onRefresh?.()
+      } else {
+        const result = await response.json()
+        toast.error(result.error || 'Failed to batch resolve scope items')
+        onRefresh?.()
+      }
+    } catch (error) {
+      console.error('Failed to batch resolve scope items:', error)
+      toast.error('Failed to resolve some scope items')
+      onRefresh?.()
+    }
+  }
+
   // Map scope items to include evidence (defaults to empty array when absent)
   const scopeItemsForGuardian = useMemo(() => {
     return designWeek.scopeItems.map((item) => ({
@@ -324,18 +350,18 @@ export function DEWorkspace({
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-6 mb-6">
-        <TabsTrigger value="handover" className="gap-2 relative group" title="Sales context and client expectations from the sales handover">
+        <TabsTrigger value="handover" className="gap-2 relative group" title="Sales context and client expectations from the sales handover" aria-label="Handover">
           <FileSignature className="h-4 w-4" />
           <span className="hidden sm:inline">Handover</span>
         </TabsTrigger>
-        <TabsTrigger value="progress" className="gap-2 relative group" title="Design Week progress, session guide, and profile completeness overview">
+        <TabsTrigger value="progress" className="gap-2 relative group" title="Design Week progress, session guide, and profile completeness overview" aria-label="Progress">
           <Rocket className="h-4 w-4" />
           <span className="hidden sm:inline">Progress</span>
           {pendingItems.length > 0 && (
             <span className="ml-1 w-2 h-2 rounded-full bg-amber-500 inline-block" title={`${pendingItems.length} items need review`} />
           )}
         </TabsTrigger>
-        <TabsTrigger value="scope" className="gap-2 relative group" title="Scope items: what the DE will and will not handle">
+        <TabsTrigger value="scope" className="gap-2 relative group" title="Scope items: what the DE will and will not handle" aria-label="Scope">
           <Shield className="h-4 w-4" />
           <span className="hidden sm:inline">Scope</span>
           {ambiguousItems.length > 0 && (
@@ -344,7 +370,7 @@ export function DEWorkspace({
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="business" className="gap-2 relative group" title="Business profile: identity, process, skills, guardrails, KPIs">
+        <TabsTrigger value="business" className="gap-2 relative group" title="Business profile: identity, process, skills, guardrails, KPIs" aria-label="Business Profile">
           <Briefcase className="h-4 w-4" />
           <span className="hidden sm:inline">Business</span>
           {profileCompleteness.business.overall < 100 && (
@@ -353,7 +379,7 @@ export function DEWorkspace({
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="technical" className="gap-2 relative group" title="Technical profile: integrations, data fields, APIs, security">
+        <TabsTrigger value="technical" className="gap-2 relative group" title="Technical profile: integrations, data fields, APIs, security" aria-label="Technical Profile">
           <Wrench className="h-4 w-4" />
           <span className="hidden sm:inline">Technical</span>
           {profileCompleteness.technical.overall < 100 && (
@@ -362,7 +388,7 @@ export function DEWorkspace({
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="testplan" className="gap-2 relative group" title="Test plan: test cases, launch criteria, and UAT preparation">
+        <TabsTrigger value="testplan" className="gap-2 relative group" title="Test plan: test cases, launch criteria, and UAT preparation" aria-label="Test Plan">
           <ClipboardCheck className="h-4 w-4" />
           <span className="hidden sm:inline">Test Plan</span>
         </TabsTrigger>
@@ -393,6 +419,7 @@ export function DEWorkspace({
           skills={uniqueSkills}
           onResolve={handleScopeResolve}
           onUnresolve={handleScopeUnresolve}
+          onBatchResolve={handleBatchScopeResolve}
         />
       </TabsContent>
 

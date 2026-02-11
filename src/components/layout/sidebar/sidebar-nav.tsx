@@ -24,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { NotificationBell } from '@/components/layout/sidebar/notification-bell'
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -137,6 +138,9 @@ export function SidebarNav() {
     <nav className="flex flex-col gap-1 px-2" role="navigation" aria-label="Main navigation">
       {/* Search button */}
       <SearchButton isCollapsed={isCollapsed} />
+
+      {/* Notifications */}
+      <NotificationBell />
 
       <div className="my-2 border-t border-gray-100" />
 

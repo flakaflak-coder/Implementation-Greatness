@@ -151,14 +151,15 @@ describe('ScopeGuardian', () => {
   it('handles empty scope items', () => {
     render(<ScopeGuardian scopeItems={[]} />)
 
-    // Should render with zero counts
-    expect(screen.getByText('No ambiguous items!')).toBeInTheDocument()
+    // Should render the empty state (no items at all)
+    expect(screen.getByText('No scope items yet')).toBeInTheDocument()
   })
 
   it('shows empty message when all items are resolved', () => {
     const resolvedItems = mockScopeItems.filter(i => i.classification !== 'AMBIGUOUS')
     render(<ScopeGuardian scopeItems={resolvedItems} />)
 
+    // Items exist but no ambiguous ones - shows the ambiguous tab empty state
     expect(screen.getByText('No ambiguous items!')).toBeInTheDocument()
   })
 })

@@ -447,7 +447,7 @@ describe('POST /api/sessions/[id]/extract', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('transcript and sessionType are required')
+    expect(data.error).toBe('Invalid input')
   })
 
   it('returns 400 when sessionType is missing', async () => {
@@ -460,7 +460,7 @@ describe('POST /api/sessions/[id]/extract', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('transcript and sessionType are required')
+    expect(data.error).toBe('Invalid input')
   })
 
   it('returns 404 when session not found', async () => {
@@ -541,7 +541,7 @@ describe('POST /api/sessions/[id]/extract', () => {
     expect(mockedPrisma.observatoryLLMOperation.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         pipelineName: 'extract_technical',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         success: true,
       }),
     })

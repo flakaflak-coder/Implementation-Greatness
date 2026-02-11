@@ -235,7 +235,7 @@ ${buildWritingGuidelines(ctx.companyName)}
 ${QUALITY_REQUIREMENTS_SECTION}`
 }
 
-const DOCUMENT_GENERATION_MODEL = 'claude-sonnet-4-20250514'
+const DOCUMENT_GENERATION_MODEL = 'claude-sonnet-4-5-20250929'
 
 /**
  * Validate that generated KPIs match extracted KPIs

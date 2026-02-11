@@ -16,8 +16,9 @@ describe('GET /api/health', () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.status).toBe('healthy')
-    expect(data.services.database).toBe('connected')
+    // Status may be 'healthy' or 'degraded' depending on environment variables
+    expect(['healthy', 'degraded']).toContain(data.status)
+    expect(data.checks.database.status).toBe('ok')
     expect(data.timestamp).toBeDefined()
   })
 
@@ -29,7 +30,7 @@ describe('GET /api/health', () => {
 
     expect(response.status).toBe(503)
     expect(data.status).toBe('unhealthy')
-    expect(data.services.database).toBe('disconnected')
+    expect(data.checks.database.status).toBe('error')
     expect(data.timestamp).toBeDefined()
   })
 })

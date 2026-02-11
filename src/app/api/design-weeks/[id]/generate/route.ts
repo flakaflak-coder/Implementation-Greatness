@@ -29,6 +29,10 @@ export async function POST(
             },
           },
         },
+        scopeItems: {
+          where: { excludeFromDocument: false },
+        },
+        integrations: true,
       },
     })
 
@@ -40,10 +44,8 @@ export async function POST(
     }
 
     // Check if there are approved items
-    const approvedCount = designWeek.sessions.reduce(
-      (sum, s) => sum + s.extractedItems.length,
-      0
-    )
+    const allItems = designWeek.sessions.flatMap(s => s.extractedItems)
+    const approvedCount = allItems.length
 
     if (approvedCount === 0) {
       return NextResponse.json(
@@ -51,6 +53,16 @@ export async function POST(
         { status: 400 }
       )
     }
+
+    // Detect missing fields
+    const missingFields: string[] = []
+    if (!allItems.some(i => i.type === 'STAKEHOLDER')) missingFields.push('Stakeholders')
+    if (!allItems.some(i => i.type === 'GOAL' || i.type === 'BUSINESS_CASE')) missingFields.push('Goals')
+    if (!allItems.some(i => i.type === 'KPI_TARGET')) missingFields.push('KPIs')
+    if (!allItems.some(i => i.type === 'HAPPY_PATH_STEP')) missingFields.push('Process Steps')
+    if (designWeek.scopeItems.length === 0) missingFields.push('Scope Items')
+    if (designWeek.integrations.length === 0 && !allItems.some(i => i.type === 'SYSTEM_INTEGRATION')) missingFields.push('Technical Integrations')
+    if (!allItems.some(i => i.type === 'SECURITY_REQUIREMENT' || i.type === 'COMPLIANCE_REQUIREMENT')) missingFields.push('Security Requirements')
 
     // Get existing version count
     const existingDoc = await prisma.generatedDocument.findFirst({
@@ -79,7 +91,7 @@ export async function POST(
     await prisma.observatoryLLMOperation.create({
       data: {
         pipelineName: `generate_${documentType.toLowerCase()}`,
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         inputTokens: result.inputTokens,
         outputTokens: result.outputTokens,
         latencyMs: result.latencyMs,
@@ -106,6 +118,7 @@ export async function POST(
         outputTokens: result.outputTokens,
         latencyMs: result.latencyMs,
       },
+      missingFields,
     })
   } catch (error) {
     console.error('Document generation error:', error)

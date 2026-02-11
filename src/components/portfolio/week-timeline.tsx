@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Circle,
-  Clock,
   Rocket,
   Milestone,
   Building2,
@@ -17,8 +16,10 @@ import {
   Cpu,
   Signature,
   Sparkles,
+  Keyboard,
 } from 'lucide-react'
 import { startOfISOWeek, setISOWeek, format, getMonth } from 'date-fns'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -28,10 +29,21 @@ import {
 } from '@/components/ui/tooltip'
 import { type TimelineDE, type TimelineCompany, type TrackerStatus, type RiskLevel } from './gantt-timeline'
 
+/** Stored previous values for undo after a drag operation */
+interface UndoState {
+  deId: string
+  deName: string
+  previousStartWeek: number
+  previousEndWeek: number
+}
+
+/** Callback signature for week changes — async to support undo + toast */
+type WeekChangeHandler = (deId: string, startWeek: number, endWeek: number) => Promise<void>
+
 interface WeekTimelineProps {
   companies: TimelineCompany[]
   currentWeek: number
-  onWeekChange?: (deId: string, startWeek: number, endWeek: number) => Promise<void>
+  onWeekChange?: WeekChangeHandler
   onPhaseToggle?: (designWeekId: string, phase: number, completed: boolean) => Promise<void>
   className?: string
 }
@@ -125,7 +137,7 @@ function TimelineBar({
   weeksToShow: number
   startWeekOffset: number
   currentWeek: number
-  onDragEnd?: (deId: string, startWeek: number, endWeek: number) => void
+  onDragEnd?: (deId: string, deName: string, startWeek: number, endWeek: number, prevStart: number, prevEnd: number) => void
 }) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragType, setDragType] = useState<'start' | 'end' | 'move' | null>(null)
@@ -249,7 +261,7 @@ function TimelineBar({
       rawDeltaRef.current = 0
 
       if (newStart !== iStart || newEnd !== iEnd) {
-        onDragEnd?.(de.id, newStart, newEnd)
+        onDragEnd?.(de.id, de.name, newStart, newEnd, iStart, iEnd)
       }
     }
 
@@ -259,7 +271,7 @@ function TimelineBar({
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, weeksToShow, onDragEnd, de.id])
+  }, [isDragging, weeksToShow, onDragEnd, de.id, de.name])
 
   // Only show bar if it's visible in the current range
   if (barWidth <= 0) {
@@ -591,19 +603,68 @@ function DERow({
   weeksToShow: number
   startWeekOffset: number
   currentWeek: number
-  onWeekChange?: (deId: string, startWeek: number, endWeek: number) => void
+  onWeekChange?: (deId: string, deName: string, startWeek: number, endWeek: number, prevStart: number, prevEnd: number) => void
   onPhaseToggle?: (designWeekId: string, phase: number, completed: boolean) => void
 }) {
   const [showPhases, setShowPhases] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
   const statusConfig = STATUS_COLORS[de.trackerStatus]
+
+  // Keyboard handler for timeline adjustments
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onWeekChange) return
+
+    const startWeek = de.startWeek ?? currentWeek
+    const endWeek = de.endWeek ?? currentWeek + 8
+    const goLiveWeek = de.goLiveWeek
+
+    // Alt+Arrow: Move goLiveWeek (not supported via this callback shape, skip if no goLiveWeek)
+    // Shift+Arrow: Move endWeek by 1
+    // Arrow alone: Move startWeek by 1
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      const direction = e.key === 'ArrowRight' ? 1 : -1
+
+      if (e.altKey && goLiveWeek != null) {
+        // Alt+Arrow: shift the entire bar (same as move) to adjust go-live alignment
+        e.preventDefault()
+        const newStart = startWeek + direction
+        const newEnd = endWeek + direction
+        onWeekChange(de.id, de.name, newStart, newEnd, startWeek, endWeek)
+      } else if (e.shiftKey) {
+        // Shift+Arrow: adjust endWeek
+        e.preventDefault()
+        const newEnd = endWeek + direction
+        // Prevent endWeek from going before startWeek
+        if (newEnd > startWeek) {
+          onWeekChange(de.id, de.name, startWeek, newEnd, startWeek, endWeek)
+        }
+      } else if (!e.metaKey && !e.ctrlKey) {
+        // Arrow alone: adjust startWeek
+        e.preventDefault()
+        const newStart = startWeek + direction
+        // Prevent startWeek from going past endWeek
+        if (newStart < endWeek) {
+          onWeekChange(de.id, de.name, newStart, endWeek, startWeek, endWeek)
+        }
+      }
+    }
+  }, [de.id, de.name, de.startWeek, de.endWeek, de.goLiveWeek, currentWeek, onWeekChange])
 
   return (
     <div>
       <div
         className={cn(
           'flex items-center border-b border-gray-100 hover:bg-gray-50/50 transition-colors',
-          statusConfig.bg
+          statusConfig.bg,
+          isFocused && 'ring-2 ring-inset ring-[#C2703E]/30'
         )}
+        tabIndex={0}
+        role="row"
+        aria-label={`${de.name} timeline row. Use arrow keys to adjust start week, Shift+arrows for end week, Alt+arrows to shift entire range.`}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       >
         {/* DE info column */}
         <div className="w-64 flex-shrink-0 px-3 py-2 border-r border-gray-200">
@@ -694,7 +755,7 @@ function DERow({
         </div>
 
         {/* Timeline column */}
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <TimelineBar
             de={de}
             weeksToShow={weeksToShow}
@@ -709,6 +770,18 @@ function DERow({
               startWeekOffset={startWeekOffset}
               currentWeek={currentWeek}
             />
+          )}
+
+          {/* Keyboard hint — visible when row is focused */}
+          {isFocused && (
+            <div className="absolute top-0 right-1 flex items-center gap-1 text-[9px] text-gray-400 bg-white/90 px-1.5 py-0.5 rounded-b border border-t-0 border-gray-200 z-10">
+              <Keyboard className="w-2.5 h-2.5" />
+              <span>Arrow: start</span>
+              <span className="text-gray-300">|</span>
+              <span>Shift: end</span>
+              <span className="text-gray-300">|</span>
+              <span>Alt: shift all</span>
+            </div>
           )}
         </div>
       </div>
@@ -735,7 +808,7 @@ function CompanyGroup({
   weeksToShow: number
   startWeekOffset: number
   currentWeek: number
-  onWeekChange?: (deId: string, startWeek: number, endWeek: number) => void
+  onWeekChange?: (deId: string, deName: string, startWeek: number, endWeek: number, prevStart: number, prevEnd: number) => void
   onPhaseToggle?: (designWeekId: string, phase: number, completed: boolean) => void
   defaultExpanded?: boolean
 }) {
@@ -875,6 +948,62 @@ export function WeekTimeline({
 }: WeekTimelineProps) {
   const weeksToShow = 12
   const startWeekOffset = currentWeek - 2 // Show 2 weeks before current
+  const undoRef = useRef<UndoState | null>(null)
+
+  // Wrapped handler: calls parent, shows toast with undo on success, error toast on failure
+  const handleWeekChangeWithUndo = useCallback(
+    async (
+      deId: string,
+      deName: string,
+      newStartWeek: number,
+      newEndWeek: number,
+      previousStartWeek: number,
+      previousEndWeek: number,
+    ): Promise<void> => {
+      if (!onWeekChange) return
+
+      // Store undo state before the change
+      undoRef.current = {
+        deId,
+        deName,
+        previousStartWeek,
+        previousEndWeek,
+      }
+
+      try {
+        await onWeekChange(deId, newStartWeek, newEndWeek)
+
+        // Success toast with undo action
+        const undo = undoRef.current
+        toast.success(`Timeline updated for ${deName}`, {
+          description: `W${newStartWeek}\u2013W${newEndWeek}`,
+          duration: 5000,
+          action: undo
+            ? {
+                label: 'Undo',
+                onClick: async () => {
+                  try {
+                    await onWeekChange(undo.deId, undo.previousStartWeek, undo.previousEndWeek)
+                    toast.success(`Reverted timeline for ${undo.deName}`, {
+                      description: `W${undo.previousStartWeek}\u2013W${undo.previousEndWeek}`,
+                      duration: 3000,
+                    })
+                  } catch {
+                    toast.error('Failed to undo timeline change. Please try again.')
+                  }
+                },
+              }
+            : undefined,
+        })
+      } catch {
+        toast.error(`Failed to update timeline for ${deName}`, {
+          description: 'Please try again.',
+          duration: 5000,
+        })
+      }
+    },
+    [onWeekChange],
+  )
 
   if (companies.length === 0) {
     return (
@@ -922,7 +1051,7 @@ export function WeekTimeline({
             weeksToShow={weeksToShow}
             startWeekOffset={startWeekOffset}
             currentWeek={currentWeek}
-            onWeekChange={onWeekChange}
+            onWeekChange={onWeekChange ? handleWeekChangeWithUndo : undefined}
             onPhaseToggle={onPhaseToggle}
           />
         ))}

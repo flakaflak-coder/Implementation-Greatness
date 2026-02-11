@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Upload, FileVideo, FileText, X, Loader2, Link as LinkIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,6 +46,14 @@ export function SessionUpload({
   const [recordingUrl, setRecordingUrl] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const activeIntervals = useRef<Set<ReturnType<typeof setInterval>>>(new Set())
+
+  // Clean up all active intervals on unmount
+  useEffect(() => {
+    return () => {
+      activeIntervals.current.forEach(clearInterval)
+    }
+  }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -78,6 +86,7 @@ export function SessionUpload({
       if (progress >= 100) {
         progress = 100
         clearInterval(interval)
+        activeIntervals.current.delete(interval)
         setFiles((prev) =>
           prev.map((f) =>
             f.id === fileId ? { ...f, progress: 100, status: 'complete' as const } : f
@@ -89,6 +98,7 @@ export function SessionUpload({
         )
       }
     }, 200)
+    activeIntervals.current.add(interval)
   }, [])
 
   const handleFiles = useCallback((newFiles: File[]) => {

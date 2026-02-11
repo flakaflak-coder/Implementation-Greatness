@@ -26,6 +26,8 @@ import {
   Target,
   Milestone,
   CalendarDays,
+  CheckCircle2,
+  Rocket,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,6 +44,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 // ============================================
 // TYPES
@@ -497,7 +500,7 @@ function MilestoneCard({
       <div className="flex items-start gap-3">
         <button
           onClick={cycleStatus}
-          className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+          className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
             milestone.status === 'ACHIEVED'
               ? 'bg-emerald-500 border-emerald-500 text-white'
               : milestone.status === 'IN_PROGRESS'
@@ -555,6 +558,264 @@ function MilestoneCard({
         </div>
       </div>
     </div>
+  )
+}
+
+// ============================================
+// CLIENT PROGRESS CARD COMPONENT
+// ============================================
+
+const CLIENT_PHASE_LABELS: Record<string, string> = {
+  SALES_HANDOVER: 'Getting Started',
+  KICKOFF: 'Kickoff Meetings',
+  DESIGN_WEEK: 'Design Week',
+  ONBOARDING: 'Building & Configuration',
+  UAT: 'Testing',
+  GO_LIVE: 'Going Live',
+  HYPERCARE: 'Early Support',
+  HANDOVER_TO_SUPPORT: 'Fully Operational',
+}
+
+const PHASE_ORDER = [
+  'SALES_HANDOVER',
+  'KICKOFF',
+  'DESIGN_WEEK',
+  'ONBOARDING',
+  'UAT',
+  'GO_LIVE',
+  'HYPERCARE',
+  'HANDOVER_TO_SUPPORT',
+]
+
+function getNextPhaseLabel(currentPhase: string): string {
+  const idx = PHASE_ORDER.indexOf(currentPhase)
+  if (idx === -1 || idx >= PHASE_ORDER.length - 1) return 'Wrapping Up'
+  return CLIENT_PHASE_LABELS[PHASE_ORDER[idx + 1]] || 'Next Phase'
+}
+
+function getCurrentPhase(des: DigitalEmployee[]): string {
+  if (!des.length) return 'SALES_HANDOVER'
+
+  // Count how many DEs are in each phase
+  const phaseCounts: Record<string, number> = {}
+  des.forEach((de) => {
+    const phase = de.currentJourneyPhase
+    phaseCounts[phase] = (phaseCounts[phase] || 0) + 1
+  })
+
+  // Return the most common phase; ties broken by latest phase in order
+  let maxCount = 0
+  let dominantPhase = 'SALES_HANDOVER'
+  for (const phase of PHASE_ORDER) {
+    if ((phaseCounts[phase] || 0) >= maxCount && phaseCounts[phase]) {
+      maxCount = phaseCounts[phase]
+      dominantPhase = phase
+    }
+  }
+  return dominantPhase
+}
+
+function getActionItems(company: Company): number {
+  let count = 0
+  // Blocked milestones
+  count += company.milestones.filter((m) => m.status === 'BLOCKED').length
+  // DEs pending sign-off
+  count += company.digitalEmployees.filter(
+    (de) => de.designWeek?.status === 'PENDING_SIGNOFF'
+  ).length
+  return count
+}
+
+interface ActivityItem {
+  type: 'completed' | 'in_progress' | 'blocked'
+  label: string
+}
+
+function getRecentActivity(company: Company): ActivityItem[] {
+  const items: ActivityItem[] = []
+
+  company.digitalEmployees.forEach((de) => {
+    // Completed journey phases
+    const completedPhases = de.journeyPhases
+      .filter((p) => p.status === 'COMPLETE')
+      .sort((a, b) => {
+        const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0
+        const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0
+        return dateB - dateA
+      })
+
+    if (completedPhases.length > 0) {
+      const latestCompleted = completedPhases[0]
+      const phaseLabel =
+        CLIENT_PHASE_LABELS[latestCompleted.phaseType] ||
+        latestCompleted.phaseType
+      items.push({
+        type: 'completed',
+        label: `${phaseLabel} completed for ${de.name}`,
+      })
+    }
+
+    // In-progress phases
+    const inProgressPhases = de.journeyPhases.filter(
+      (p) => p.status === 'IN_PROGRESS'
+    )
+    inProgressPhases.forEach((p) => {
+      const phaseLabel = CLIENT_PHASE_LABELS[p.phaseType] || p.phaseType
+      items.push({
+        type: 'in_progress',
+        label: `${phaseLabel} in progress for ${de.name}`,
+      })
+    })
+  })
+
+  // Blocked milestones
+  company.milestones
+    .filter((m) => m.status === 'BLOCKED')
+    .forEach((m) => {
+      items.push({
+        type: 'blocked',
+        label: `Waiting on: ${m.title}`,
+      })
+    })
+
+  // Limit to 4 items for readability
+  return items.slice(0, 4)
+}
+
+function ClientProgressCard({ company }: { company: Company }) {
+  const progress = getOverallProgress(company.digitalEmployees)
+  const currentPhase = getCurrentPhase(company.digitalEmployees)
+  const currentPhaseLabel = CLIENT_PHASE_LABELS[currentPhase] || currentPhase
+  const nextStepLabel = getNextPhaseLabel(currentPhase)
+  const actionCount = getActionItems(company)
+  const activity = getRecentActivity(company)
+  const deCount = company.digitalEmployees.length
+
+  const summaryText =
+    deCount === 1
+      ? `We're in the ${currentPhaseLabel} phase for your Digital Employee`
+      : `We're in the ${currentPhaseLabel} phase for ${deCount} Digital Employees`
+
+  return (
+    <Card className="overflow-hidden border-0 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      {/* Gradient top border */}
+      <div className="h-1 bg-linear-to-r from-[#C2703E] via-[#D4956A] to-[#C2703E]" />
+
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <Rocket className="w-5 h-5 text-[#C2703E]" />
+          <CardTitle className="text-lg text-gray-900">
+            Implementation Progress
+          </CardTitle>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Progress bar + percentage */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">
+              Overall completion
+            </span>
+            <span className="text-2xl font-bold text-[#C2703E]">
+              {progress}%
+            </span>
+          </div>
+          <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-linear-to-r from-[#C2703E] to-[#D4956A] transition-all duration-700 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-2 text-sm text-gray-500">{summaryText}</p>
+        </div>
+
+        {/* Three info cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Current Phase */}
+          <div className="rounded-lg border border-[#F5E6DA] bg-[#FDF3EC] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-[#C2703E]" />
+              <span className="text-xs font-medium text-[#A05A32] uppercase tracking-wide">
+                Current Phase
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              {currentPhaseLabel}
+            </p>
+          </div>
+
+          {/* Next Step */}
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ArrowRight className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">
+                Next Step
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              {nextStepLabel}
+            </p>
+          </div>
+
+          {/* Needs From You */}
+          <div
+            className={cn(
+              'rounded-lg border p-4',
+              actionCount > 0
+                ? 'border-red-200 bg-red-50'
+                : 'border-emerald-100 bg-emerald-50'
+            )}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {actionCount > 0 ? (
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              )}
+              <span
+                className={cn(
+                  'text-xs font-medium uppercase tracking-wide',
+                  actionCount > 0 ? 'text-red-700' : 'text-emerald-700'
+                )}
+              >
+                Needs From You
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              {actionCount > 0
+                ? `${actionCount} item${actionCount !== 1 ? 's' : ''}`
+                : 'All clear'}
+            </p>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        {activity.length > 0 && (
+          <div>
+            <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+              Recent Activity
+            </h4>
+            <div className="space-y-2">
+              {activity.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-2.5">
+                  {item.type === 'completed' && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                  )}
+                  {item.type === 'in_progress' && (
+                    <ArrowRight className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  )}
+                  {item.type === 'blocked' && (
+                    <Clock className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                  )}
+                  <span className="text-sm text-gray-700">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -894,6 +1155,13 @@ export default function CompanyDetailPage({
       <div className="mb-6">
         <VisionBanner company={company} onSave={handleSaveVision} />
       </div>
+
+      {/* Client-Friendly Progress */}
+      {company.digitalEmployees.length > 0 && (
+        <div className="mb-6">
+          <ClientProgressCard company={company} />
+        </div>
+      )}
 
       {/* Progress summary */}
       <div className="mb-6">

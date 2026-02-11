@@ -699,6 +699,337 @@ async function main() {
   console.log('✅ Created', extractedItems.length, 'extracted items')
 
   // ============================================
+  // 14. GEMINI PROMPT TEMPLATES
+  // ============================================
+  const geminiPromptTemplates = [
+    {
+      name: 'gemini_extract_kickoff',
+      type: 'GEMINI_EXTRACT_KICKOFF' as const,
+      description: 'Gemini multimodal extraction prompt for Design Week Kickoff sessions. Extracts business context, volumes, KPIs, stakeholders, and decision trees from audio/video recordings.',
+      prompt: `You are an AI assistant extracting information from a Design Week KICKOFF session for Digital Employee onboarding.
+
+Focus on extracting: **Business Context, Volumes, and Success Metrics**
+
+Extract the following:
+
+1. **Business Context**
+   - What problem are they solving? Why now?
+   - Current cost per case/transaction (FTE time + tools)
+   - Target cost after automation
+   - Monthly volume (cases/emails/documents)
+   - Peak periods (month-end, seasonality)
+   - What does success look like?
+   - Proposed DE name and role
+
+2. **KPI Targets**
+   - Automation rate target (% fully handled by DE)
+   - Accuracy target (% responses approved without edits)
+   - Response time targets
+   - Customer satisfaction targets
+   - How will these be measured?
+
+3. **Stakeholders**
+   - Who are the key people involved?
+   - Decision makers, business owners, technical contacts
+   - Only include WORK email addresses, not personal ones
+
+Respond in JSON with structure:
+{
+  "transcript": "full transcript",
+  "businessContext": {
+    "problem": "description of problem",
+    "currentCost": "cost per case",
+    "targetCost": "target cost",
+    "monthlyVolume": 1234,
+    "peakPeriods": "when are peak times",
+    "successMetrics": "what success looks like",
+    "deName": "proposed DE name",
+    "quote": "relevant quote from transcript"
+  },
+  "kpis": [{"name": "KPI name", "targetValue": "target", "unit": "optional unit", "measurementMethod": "how measured", "owner": "who monitors this KPI (optional)", "alertThreshold": "when to escalate (optional)", "frequency": "daily|weekly|monthly (optional)", "quote": "exact quote"}],
+  "stakeholders": [{"name": "Full Name", "role": "Their Role", "email": "work@company.com (optional)", "isDecisionMaker": true/false, "quote": "exact quote"}],
+  "decisionTree": [{"questionType": "type of question/request", "volumePercent": 25, "automationFeasibility": "full|partial|never", "action": "what the DE should do", "escalate": false, "reason": "why this routing", "quote": "exact quote"}]
+}
+
+Also extract a decision tree if discussed: what types of questions/requests come in, what % each represents, and whether each is fully automatable, partially automatable, or should never be automated.
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+    {
+      name: 'gemini_extract_process',
+      type: 'GEMINI_EXTRACT_PROCESS' as const,
+      description: 'Gemini multimodal extraction prompt for Design Week Process Design sessions (phase 1). Extracts process steps, case types, channels, exceptions, and scope items from audio/video recordings.',
+      prompt: `You are an AI assistant extracting information from a Design Week PROCESS DESIGN session for Digital Employee onboarding.
+
+Focus on extracting: **The Process, Channels, Case Types, Exceptions**
+
+Extract the following:
+
+1. **Process Happy Path**
+   - Walk through the typical case from start to finish
+   - Step-by-step actions
+   - Information needed at each step
+
+2. **Case Types**
+   - What types of cases/requests come in?
+   - Volume distribution (% per type)
+   - Complexity level: LOW, MEDIUM, HIGH
+   - Which are automatable?
+
+3. **Channels**
+   - Which channels: EMAIL, WEB_FORM, API, PORTAL, OTHER
+   - Volume % per channel
+   - Current SLA vs. Target SLA
+   - Any channel-specific rules
+
+4. **Exceptions & Escalation**
+   - Exception rate (% non-standard)
+   - When MUST this go to a human?
+   - Escalation triggers
+
+5. **Scope Items**
+   - What should DE handle (IN_SCOPE)
+   - What should DE NOT handle (OUT_OF_SCOPE)
+   - Unclear items (AMBIGUOUS)
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "processSteps": [{"step": "description", "order": 1, "quote": "exact quote"}],
+  "caseTypes": [{"type": "case type name", "volumePercent": 25, "complexity": "LOW|MEDIUM|HIGH", "automatable": true, "automationFeasibility": "full|partial|never", "quote": "exact quote"}],
+  "channels": [{"type": "EMAIL|WEB_FORM|API|PORTAL|OTHER", "volumePercent": 30, "currentSLA": "current", "targetSLA": "target", "rules": "any rules", "quote": "exact quote"}],
+  "escalationRules": [{"triggerCondition": "when to escalate", "action": "what to do", "targetTeam": "optional team", "slaMinutes": 30, "quote": "exact quote"}],
+  "scopeItems": [{"statement": "scope item", "classification": "IN_SCOPE|OUT_OF_SCOPE|AMBIGUOUS", "quote": "exact quote"}]
+}
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+    {
+      name: 'gemini_extract_skills_guardrails',
+      type: 'GEMINI_EXTRACT_SKILLS_GUARDRAILS' as const,
+      description: 'Gemini multimodal extraction prompt for Design Week Process Design phase 2 sessions. Extracts skills, brand tone, and guardrails from audio/video recordings.',
+      prompt: `You are an AI assistant extracting information from a Design Week PROCESS DESIGN session (phase 2) for Digital Employee onboarding.
+
+Focus on extracting: **Skills, Brand Tone, Guardrails**
+
+Extract the following:
+
+1. **Skills Needed**
+   - What actions does the DE need to perform?
+   - Types: ANSWER (answer questions), ROUTE (route/escalate), APPROVE_REJECT (make decisions), REQUEST_INFO (ask for missing info), NOTIFY (send confirmations), OTHER
+   - Knowledge source for each skill (KB, manuals, policies, rules, templates)
+   - Which phase (1 or 2)?
+
+2. **Brand Tone & Communication**
+   - Brand tone description (professional, warm, friendly, etc.)
+   - Formality: FORMAL or INFORMAL (u vs. je in Dutch)
+   - Languages
+   - Empathy level
+   - Can DE be proactive?
+
+3. **Guardrails**
+   - NEVER: What should the DE absolutely NEVER do or say? (with reason)
+   - ALWAYS: What should the DE ALWAYS do? (with reason)
+   - Financial limits (can't approve > amount, can't promise refunds)
+   - Legal or compliance restrictions
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "skills": [{"name": "skill name", "type": "ANSWER|ROUTE|APPROVE_REJECT|REQUEST_INFO|NOTIFY|OTHER", "description": "what it does", "knowledgeSource": "where info comes from", "phase": 1, "quote": "exact quote"}],
+  "brandTone": {"tone": "description", "formality": "FORMAL|INFORMAL", "language": ["Dutch", "English"], "empathyLevel": "description", "quote": "exact quote"},
+  "guardrails": {
+    "never": [{"item": "what to never do", "reason": "why", "quote": "exact quote"}],
+    "always": [{"item": "what to always do", "reason": "why", "quote": "exact quote"}],
+    "financialLimits": "any limits mentioned",
+    "legalRestrictions": "any legal requirements"
+  }
+}
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+    {
+      name: 'gemini_extract_technical',
+      type: 'GEMINI_EXTRACT_TECHNICAL' as const,
+      description: 'Gemini multimodal extraction prompt for Design Week Technical sessions. Extracts system integrations, data fields, security requirements, and monitoring metrics from audio/video recordings.',
+      prompt: `You are an AI assistant extracting information from a Design Week TECHNICAL session for Digital Employee onboarding.
+
+Focus on extracting: **Integrations, Systems, Data Fields**
+
+Extract the following:
+
+1. **System Integrations**
+   - What systems does this process touch? (list all)
+   - Purpose of each system
+   - Access type: READ, WRITE, or READ_WRITE
+   - Specific data fields needed (field names)
+   - Is there API access? Documentation?
+   - Who's the technical contact? (work contact only)
+
+2. **Security & Compliance**
+   - Security requirements (SSO, encryption, etc.)
+   - Compliance requirements (GDPR, audit trails, etc.)
+   - Authentication methods
+
+WARNING: SENSITIVE DATA: Do NOT extract actual credentials, API keys, or passwords mentioned.
+Only extract system names, authentication METHODS (not actual credentials), and contact NAMES.
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "integrations": [{"systemName": "System Name", "purpose": "what it's used for", "accessType": "READ|WRITE|READ_WRITE", "dataFields": ["field1", "field2"], "technicalContact": "Name (optional)", "apiAvailable": true, "fallbackBehavior": "what happens when system is down (optional)", "retryStrategy": "retry approach (optional)", "dataFreshness": "sync frequency (optional)", "quote": "exact quote"}],
+  "securityRequirements": [{"requirement": "what's required", "type": "category", "quote": "exact quote"}],
+  "monitoringMetrics": [{"name": "metric name", "target": "target value", "perspective": "user_experience|operational|knowledge_quality|financial", "frequency": "daily|weekly|monthly", "owner": "who monitors", "alertThreshold": "when to alert", "actionTrigger": "what to do if threshold breached", "quote": "exact quote"}]
+}
+
+Also extract any monitoring metrics or KPIs discussed in the technical context (system uptime, API latency, error rates, etc.).
+
+3. **Fallback Behaviors**
+   - What happens when each system is unavailable?
+   - Retry strategies (exponential backoff, max retries)
+   - Data freshness requirements (how often to sync)
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+    {
+      name: 'gemini_extract_signoff',
+      type: 'GEMINI_EXTRACT_SIGNOFF' as const,
+      description: 'Gemini multimodal extraction prompt for Design Week Sign-off sessions. Extracts open items, decisions, risks, approvals, and launch criteria from audio/video recordings.',
+      prompt: `You are an AI assistant extracting information from a Design Week SIGN-OFF session for Digital Employee onboarding.
+
+Focus on extracting: **Open Items, Decisions, Approvals, Risks**
+
+Extract the following:
+
+1. **Open Items**
+   - What still needs to be resolved?
+   - Who owns each item?
+
+2. **Decisions Made**
+   - What decisions were finalized?
+   - Who approved?
+
+3. **Risks Identified**
+   - What are the risks or concerns?
+   - Mitigation plans?
+
+4. **Final Approvals**
+   - Who signed off?
+   - Any conditions?
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "openItems": [{"item": "what needs to be done", "owner": "who owns it", "quote": "exact quote"}],
+  "decisions": [{"decision": "what was decided", "approvedBy": "who approved", "quote": "exact quote"}],
+  "risks": [{"risk": "risk description", "mitigation": "how to mitigate", "quote": "exact quote"}],
+  "approvals": [{"stakeholder": "who signed off", "status": "approved/pending", "conditions": "any conditions", "quote": "exact quote"}],
+  "launchCriteria": [{"criterion": "go/no-go criterion", "phase": "soft_launch|full_launch|hypercare", "owner": "who owns this", "softTarget": "soft launch threshold (optional)", "fullTarget": "full launch threshold (optional)", "quote": "exact quote"}]
+}
+
+5. **Launch Criteria**
+   - Go/no-go criteria per launch phase
+   - Soft launch vs full launch thresholds
+   - Hypercare requirements
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+    {
+      name: 'gemini_extract_persona',
+      type: 'GEMINI_EXTRACT_PERSONA' as const,
+      description: 'Gemini multimodal extraction prompt for Persona & Conversational Design sessions. Extracts personality traits, tone rules, do\'s/don\'ts, example dialogues, escalation scripts, and feedback mechanisms from audio/video recordings.',
+      prompt: `You are an AI assistant extracting PERSONA & CONVERSATIONAL DESIGN information from a Design Week session for Digital Employee onboarding.
+
+Focus on extracting: **Personality, Tone of Voice, Do's/Don'ts, Example Dialogues, Escalation Scripts**
+
+Extract the following:
+
+1. **Persona Traits**
+   - Named personality characteristics (e.g., Helpful, Clear, Patient, Honest, Empathetic, Proactive)
+   - Description of each trait
+   - Example phrase demonstrating the trait
+
+2. **Tone of Voice Rules**
+   - Reading level (e.g., B1 Dutch, plain English)
+   - Formality (u vs. je, formal/informal)
+   - Max sentence length
+   - Vocabulary rules (jargon replacements)
+   - Active/passive voice preference
+
+3. **Do's & Don'ts**
+   - Wrong/right conversation pairs
+   - What the DE should NEVER say (with better alternative)
+   - Category: tone, clarity, empathy, jargon, actionability
+
+4. **Opening Message**
+   - Exact greeting text
+   - AI transparency disclaimer
+   - Question prompt
+
+5. **Conversation Structure**
+   - Step-by-step flow (e.g., Acknowledge > Understand > Clarify > Answer > Proactive next > Close)
+
+6. **Escalation Scripts**
+   - Exact language per context: office_hours, after_hours, unknown_topic, emotional
+   - Whether conversation context is passed to the human agent ("warm handover")
+
+7. **Example Dialogues**
+   - Full multi-turn conversations for scenarios: happy_path, clarification, edge_case, angry_customer, complex
+   - Each message with speaker (user/de) and text
+
+8. **Edge Case Responses**
+   - How to handle: profanity, spam, legal questions, timeout, sexual remarks, repeated abuse
+
+9. **Feedback Mechanism**
+   - Collection methods (thumbs up/down, CSAT 1-5, comment field)
+   - Improvement cycle (e.g., "Weekly top-5 improvements reviewed by project team")
+
+Respond in JSON:
+{
+  "transcript": "full transcript",
+  "personaTraits": [{"name": "Helpful", "description": "Always tries to find an answer", "examplePhrase": "Let me see what I can find for you", "quote": "exact quote"}],
+  "toneRules": [{"rule": "Max 15-20 words per sentence", "category": "sentence_structure", "examples": "Short sentences are clearer", "quote": "exact quote"}],
+  "dosAndDonts": [{"wrong": "I'm a chatbot and don't know everything", "right": "I don't have reliable information on that topic", "category": "tone", "quote": "exact quote"}],
+  "openingMessage": {"greeting": "Hello! I'm Dani, the digital assistant of...", "aiDisclaimer": "I am an AI assistant. I can help with...", "quote": "exact quote"},
+  "exampleDialogues": [{"scenario": "Simple parking question", "category": "happy_path", "messages": [{"speaker": "user", "text": "..."}, {"speaker": "de", "text": "..."}], "quote": "discussed at..."}],
+  "escalationScripts": [{"context": "office_hours", "label": "During office hours", "script": "I'll connect you with a colleague who can see our conversation...", "includesContext": true, "quote": "exact quote"}],
+  "feedbackMechanism": {"methods": ["thumbs_up_down", "csat_1_5"], "improvementCycle": "Weekly review by project team", "quote": "exact quote"},
+  "escalationRules": [{"triggerCondition": "when to escalate", "action": "what to do", "quote": "exact quote"}],
+  "guardrails": {
+    "never": [{"item": "what to never do", "reason": "why", "quote": "exact quote"}],
+    "always": [{"item": "what to always do", "reason": "why", "quote": "exact quote"}]
+  },
+  "brandTone": {"tone": "description", "formality": "FORMAL|INFORMAL", "language": ["Dutch"], "empathyLevel": "description", "quote": "exact quote"}
+}
+
+Include exact quotes. Only include items with confidence >= 0.50.`,
+    },
+  ]
+
+  for (const template of geminiPromptTemplates) {
+    await prisma.promptTemplate.upsert({
+      where: { name: template.name },
+      update: {
+        type: template.type,
+        description: template.description,
+        prompt: template.prompt,
+        model: 'gemini-3-pro-preview',
+      },
+      create: {
+        name: template.name,
+        type: template.type,
+        description: template.description,
+        prompt: template.prompt,
+        model: 'gemini-3-pro-preview',
+        temperature: 0.3,
+        maxTokens: 8192,
+        isActive: true,
+      },
+    })
+  }
+  console.log('✅ Created', geminiPromptTemplates.length, 'Gemini prompt templates')
+
+  // ============================================
   // SUMMARY
   // ============================================
   console.log('')
@@ -718,6 +1049,7 @@ async function main() {
   console.log('   Integrations:   ' + integrations.length + ' (all ready)')
   console.log('   Prerequisites:  ' + prerequisites.length + ' (all received)')
   console.log('   Sign-offs:      ' + signOffs.length + ' (all approved)')
+  console.log('   Gemini Prompts: ' + geminiPromptTemplates.length)
   console.log('')
   console.log('🔗 Test URLs:')
   console.log(`   Dashboard:  http://localhost:3001`)

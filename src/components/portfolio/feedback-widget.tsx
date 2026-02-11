@@ -112,6 +112,13 @@ export function PortfolioFeedbackWidget({
     setResult(null)
   }
 
+  const examplePrompts = [
+    'Acme Insurance is blocked on API access',
+    'Move BankCo to week 12 go-live',
+    'Sophie is overloaded, reassign TechCorp to Jan',
+    'Mark all UAT items as high risk',
+  ]
+
   return (
     <div className={cn('bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden', className)}>
       {/* Header */}
@@ -137,6 +144,21 @@ export function PortfolioFeedbackWidget({
               className="min-h-[80px] resize-none text-sm"
               disabled={loading}
             />
+            {!feedback && !loading && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-gray-400">Try:</span>
+                {examplePrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setFeedback(prompt)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs rounded-full px-3 py-1 cursor-pointer transition-colors"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-400">
                 {digitalEmployees.length} DE{digitalEmployees.length !== 1 ? 's' : ''} available

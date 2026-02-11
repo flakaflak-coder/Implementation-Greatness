@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         type,
         description,
         prompt,
-        model: model || 'claude-sonnet-4-20250514',
+        model: model || 'claude-sonnet-4-5-20250929',
         temperature: temperature ?? 0.3,
         maxTokens: maxTokens ?? 4096,
         version: existing ? existing.version + 1 : 1,

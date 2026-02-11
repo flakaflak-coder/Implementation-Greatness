@@ -90,7 +90,7 @@ export async function POST(
       await prisma.observatoryLLMOperation.create({
         data: {
           pipelineName: `extract_${sessionType}`,
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5-20250929',
           inputTokens: result.inputTokens,
           outputTokens: result.outputTokens,
           latencyMs: result.latencyMs,
@@ -123,7 +123,7 @@ export async function POST(
       await prisma.observatoryLLMOperation.create({
         data: {
           pipelineName: `extract_${sessionType}`,
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5-20250929',
           inputTokens: 0,
           outputTokens: 0,
           latencyMs: 0,

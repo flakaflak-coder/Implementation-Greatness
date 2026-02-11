@@ -273,7 +273,7 @@ DO NOT include: text, logos, harsh colors, scary expressions, photorealistic hum
     id: 'pdf-master-prompt',
     name: 'PDF Document Generation',
     description: 'Master prompt for generating comprehensive DE Design Documents (460+ lines)',
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5-20250929',
     file: 'src/lib/documents/generate-document.ts',
     languages: ['en', 'nl', 'de', 'fr', 'es'],
     sections: [

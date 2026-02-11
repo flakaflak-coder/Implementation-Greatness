@@ -118,7 +118,7 @@ describe('extractFromTranscript', () => {
       id: 'template-1',
       type: 'EXTRACT_KICKOFF',
       prompt: 'Custom extraction prompt',
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       temperature: 0.1,
       maxTokens: 2048,
       version: 1,

@@ -316,10 +316,80 @@ describe('runExtractionPipeline', () => {
 
       expect(mockOnProgress).toHaveBeenCalledWith(
         expect.objectContaining({
+          stage: 'CLASSIFICATION',
           status: 'error',
-          message: 'Pipeline error',
+          message: 'Classification failed: Pipeline error',
         })
       )
+    })
+
+    it('returns actionable warning when specialized extraction fails', async () => {
+      vi.mocked(extractSpecializedEntities).mockRejectedValue(new Error('Model timeout'))
+
+      const ctx = createMockContext()
+
+      const result = await runExtractionPipeline(ctx)
+
+      expect(result.success).toBe(true)
+      expect(result.warnings).toBeDefined()
+      expect(result.warnings).toHaveLength(1)
+      expect(result.warnings![0]).toBe(
+        'Completed with basic extraction (specialized analysis was skipped due to an error)'
+      )
+    })
+
+    it('returns actionable warning when tab population fails', async () => {
+      vi.mocked(populateTabs).mockRejectedValue(new Error('DB write error'))
+
+      const ctx = createMockContext()
+
+      const result = await runExtractionPipeline(ctx)
+
+      // Tab population failure without results is a critical failure
+      expect(result.success).toBe(false)
+    })
+
+    it('returns multiple warnings when multiple stages fail', async () => {
+      vi.mocked(extractSpecializedEntities).mockRejectedValue(new Error('Model timeout'))
+      vi.mocked(populateTabs).mockRejectedValue(new Error('DB write error'))
+
+      const ctx = createMockContext()
+
+      const result = await runExtractionPipeline(ctx)
+
+      // Both Stage 3 and Stage 4 failed, but raw extraction exists so it's partial success
+      // However populationResult is undefined, so this is a critical failure
+      expect(result.success).toBe(false)
+    })
+
+    it('sends warnings in COMPLETE progress details when specialized extraction fails', async () => {
+      vi.mocked(extractSpecializedEntities).mockRejectedValue(new Error('Model timeout'))
+
+      const ctx = createMockContext()
+
+      await runExtractionPipeline(ctx)
+
+      expect(mockOnProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stage: 'COMPLETE',
+          status: 'complete',
+          message: 'Completed with basic extraction (specialized analysis was skipped due to an error)',
+          details: {
+            warnings: [
+              'Completed with basic extraction (specialized analysis was skipped due to an error)',
+            ],
+          },
+        })
+      )
+    })
+
+    it('returns no warnings on full success', async () => {
+      const ctx = createMockContext()
+
+      const result = await runExtractionPipeline(ctx)
+
+      expect(result.success).toBe(true)
+      expect(result.warnings).toBeUndefined()
     })
   })
 

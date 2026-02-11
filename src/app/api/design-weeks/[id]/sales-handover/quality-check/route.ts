@@ -67,7 +67,7 @@ ${JSON.stringify(profile, null, 2)}`
 
     const startTime = Date.now()
     const response = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }],
@@ -91,7 +91,7 @@ ${JSON.stringify(profile, null, 2)}`
     // Track the LLM operation
     await trackLLMOperationServer({
       pipelineName: 'sales-handover-quality-check',
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
       latencyMs,

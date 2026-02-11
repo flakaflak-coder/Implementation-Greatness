@@ -42,9 +42,28 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false
+
+      const closeController = () => {
+        if (!closed) {
+          closed = true
+          try {
+            controller.close()
+          } catch {
+            // Controller may already be closed by the consumer (e.g., reader.cancel())
+          }
+        }
+      }
+
       const sendEvent = (data: object) => {
-        const message = `data: ${JSON.stringify(data)}\n\n`
-        controller.enqueue(encoder.encode(message))
+        if (closed) return
+        try {
+          const message = `data: ${JSON.stringify(data)}\n\n`
+          controller.enqueue(encoder.encode(message))
+        } catch {
+          // Stream may have been cancelled by the consumer
+          closed = true
+        }
       }
 
       // Send initial status
@@ -65,7 +84,7 @@ export async function GET(
           if (!job) {
             sendEvent({ error: 'Job not found' })
             clearInterval(pollInterval)
-            controller.close()
+            closeController()
             return
           }
 
@@ -104,20 +123,20 @@ export async function GET(
             })
 
             clearInterval(pollInterval)
-            controller.close()
+            closeController()
           }
         } catch (error) {
           console.error('SSE poll error:', error)
           sendEvent({ error: 'Failed to fetch job status' })
           clearInterval(pollInterval)
-          controller.close()
+          closeController()
         }
       }, 1000) // Poll every second
 
       // Handle client disconnect
       request.signal.addEventListener('abort', () => {
         clearInterval(pollInterval)
-        controller.close()
+        closeController()
       })
     },
   })

@@ -11,7 +11,7 @@ import { extractText } from 'unpdf'
 
 // Configuration
 const GEMINI_MODEL = 'gemini-3-pro-preview'
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
+const CLAUDE_MODEL = 'claude-sonnet-4-5-20250929'
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 1000
 const DEFAULT_MAX_TOKENS = 16384 // Max without requiring streaming

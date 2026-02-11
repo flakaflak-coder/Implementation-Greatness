@@ -21,6 +21,7 @@ import {
   formatRelativeTime,
   type SupportDE,
 } from './types'
+import { TrendIndicator } from './trend-indicator'
 
 interface DEHealthCardProps {
   de: SupportDE
@@ -199,6 +200,9 @@ export function DEHealthCard({ de, onSelect }: DEHealthCardProps) {
                 {formatRelativeTime(de.updatedAt)}
               </span>
               <TrackerBadge trackerStatus={de.trackerStatus} />
+              {de.healthTrend && (
+                <TrendIndicator trend={de.healthTrend} />
+              )}
             </div>
 
             {/* Blocker notice */}

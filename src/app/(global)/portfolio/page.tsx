@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   RefreshCw,
   Filter,
@@ -297,17 +298,217 @@ function HealthCard({ green, yellow, red, total }: { green: number; yellow: numb
   )
 }
 
-export default function PortfolioPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('weeks')
+// Skeleton for a single stat card
+function StatCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100/50">
+      <div className="h-24 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      <div className="p-4">
+        <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2" />
+        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </div>
+    </div>
+  )
+}
+
+// Skeleton cards for the main content area
+function ContentSkeleton({ viewMode }: { viewMode: ViewMode }) {
+  if (viewMode === 'cards') {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl bg-white border border-gray-100/50 shadow-sm p-6"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-3">
+                <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="flex gap-2 mt-3">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div
+                      key={j}
+                      className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse shrink-0" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Gantt / Weeks timeline skeleton
+  return (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm p-4">
+      {/* Header row */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="flex-1 flex gap-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-5 flex-1 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+      {/* Timeline rows */}
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-4 mb-4">
+          <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse shrink-0" />
+          <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Full page skeleton used for Suspense fallback
+function PortfolioPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Page header skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2" />
+            <div className="h-4 w-72 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          </div>
+        </div>
+        {/* Sub-navigation skeleton */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+          <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+        </div>
+        {/* Stat cards skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+        {/* Filter bar skeleton */}
+        <div className="flex items-center gap-4 mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+          <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+          <div className="h-8 w-36 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+          <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+        </div>
+        {/* Content skeleton */}
+        <ContentSkeleton viewMode="weeks" />
+      </div>
+    </div>
+  )
+}
+
+// Valid values for URL param parsing
+const VALID_VIEW_MODES: ViewMode[] = ['cards', 'gantt', 'weeks']
+const VALID_FILTER_TYPES: FilterType[] = ['all', 'issues', 'prereq-blocked', 'design_week', 'configuration', 'uat']
+const VALID_GANTT_SORTS: GanttSortKey[] = ['company', 'status', 'go-live', 'progress']
+
+function PortfolioPageContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Initialize state from URL params with fallbacks
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const param = searchParams.get('view')
+    return param && VALID_VIEW_MODES.includes(param as ViewMode) ? (param as ViewMode) : 'weeks'
+  })
   const [cardData, setCardData] = useState<PortfolioData | null>(null)
   const [timelineData, setTimelineData] = useState<TimelineData | null>(null)
   const [predictionData, setPredictionData] = useState<PredictionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filterType, setFilterType] = useState<FilterType>('all')
-  const [selectedConsultant, setSelectedConsultant] = useState<string | null>(null)
-  const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
-  const [ganttSort, setGanttSort] = useState<GanttSortKey>('company')
+  const [filterType, setFilterType] = useState<FilterType>(() => {
+    const param = searchParams.get('filter')
+    return param && VALID_FILTER_TYPES.includes(param as FilterType) ? (param as FilterType) : 'all'
+  })
+  const [selectedConsultant, setSelectedConsultant] = useState<string | null>(
+    () => searchParams.get('consultant') || null
+  )
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(
+    () => searchParams.get('company') || null
+  )
+  const [ganttSort, setGanttSort] = useState<GanttSortKey>(() => {
+    const param = searchParams.get('sort')
+    return param && VALID_GANTT_SORTS.includes(param as GanttSortKey) ? (param as GanttSortKey) : 'company'
+  })
+
+  // Sync filter state to URL search params
+  const updateSearchParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null || value === '') {
+          params.delete(key)
+        } else {
+          params.set(key, value)
+        }
+      }
+      const queryString = params.toString()
+      router.replace(queryString ? `?${queryString}` : '/portfolio', { scroll: false })
+    },
+    [searchParams, router]
+  )
+
+  // Wrapped setters that also update URL params
+  const handleSetViewMode = useCallback(
+    (value: ViewMode) => {
+      setViewMode(value)
+      updateSearchParams({ view: value === 'weeks' ? null : value })
+    },
+    [updateSearchParams]
+  )
+
+  const handleSetFilterType = useCallback(
+    (value: FilterType) => {
+      setFilterType(value)
+      updateSearchParams({ filter: value === 'all' ? null : value })
+    },
+    [updateSearchParams]
+  )
+
+  const handleSetSelectedConsultant = useCallback(
+    (value: string | null) => {
+      setSelectedConsultant(value)
+      updateSearchParams({ consultant: value })
+    },
+    [updateSearchParams]
+  )
+
+  const handleSetSelectedCompany = useCallback(
+    (value: string | null) => {
+      setSelectedCompany(value)
+      updateSearchParams({ company: value })
+    },
+    [updateSearchParams]
+  )
+
+  const handleSetGanttSort = useCallback(
+    (value: GanttSortKey) => {
+      setGanttSort(value)
+      updateSearchParams({ sort: value === 'company' ? null : value })
+    },
+    [updateSearchParams]
+  )
+
+  const handleClearFilters = useCallback(() => {
+    setFilterType('all')
+    setSelectedConsultant(null)
+    setSelectedCompany(null)
+    updateSearchParams({ filter: null, consultant: null, company: null })
+  }, [updateSearchParams])
 
   // Fetch all data sets
   const fetchData = async () => {
@@ -470,20 +671,17 @@ export default function PortfolioPage() {
 
   const currentWeek = timelineData?.currentWeek ?? 1
 
-  // Handler for week changes (drag-drop)
+  // Handler for week changes (drag-drop) — throws on failure so the timeline component can show error toast
   const handleWeekChange = async (deId: string, startWeek: number, endWeek: number) => {
-    try {
-      const response = await fetch('/api/portfolio/timeline', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: deId, startWeek, endWeek }),
-      })
-      if (response.ok) {
-        fetchData()
-      }
-    } catch (error) {
-      console.error('Failed to update week:', error)
+    const response = await fetch('/api/portfolio/timeline', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: deId, startWeek, endWeek }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update timeline')
     }
+    fetchData()
   }
 
   // Handler for manual phase toggle
@@ -515,7 +713,7 @@ export default function PortfolioPage() {
           </div>
           <div className="flex items-center gap-3">
             {/* View mode toggle */}
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+            <Tabs value={viewMode} onValueChange={(v) => handleSetViewMode(v as ViewMode)}>
               <TabsList className="bg-white/80 backdrop-blur-sm border border-gray-200/50">
                 <TabsTrigger value="weeks" className="gap-2 data-[state=active]:bg-white">
                   <CalendarDays className="w-4 h-4" />
@@ -589,54 +787,62 @@ export default function PortfolioPage() {
         )}
 
         {/* Summary stats with vibrant mesh gradients - click to filter */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <StatCard
-            label="Total DEs"
-            value={summary.total}
-            icon={FileText}
-            meshGradient="gray"
-            onClick={() => setFilterType('all')}
-            active={filterType === 'all'}
-          />
-          <StatCard
-            label="Design Week"
-            value={summary.byStage.designWeek}
-            icon={FileText}
-            meshGradient="blue"
-            onClick={() => setFilterType(filterType === 'design_week' ? 'all' : 'design_week')}
-            active={filterType === 'design_week'}
-          />
-          <StatCard
-            label="Configuration"
-            value={summary.byStage.configuration}
-            icon={Settings}
-            meshGradient="sienna"
-            onClick={() => setFilterType(filterType === 'configuration' ? 'all' : 'configuration')}
-            active={filterType === 'configuration'}
-          />
-          <StatCard
-            label="UAT"
-            value={summary.byStage.uat}
-            icon={TestTube}
-            meshGradient="amber"
-            onClick={() => setFilterType(filterType === 'uat' ? 'all' : 'uat')}
-            active={filterType === 'uat'}
-          />
-          <StatCard
-            label="Prereq Blocked"
-            value={summary.prerequisitesBlocked}
-            icon={Key}
-            meshGradient="rose"
-            onClick={() => setFilterType(filterType === 'prereq-blocked' ? 'all' : 'prereq-blocked')}
-            active={filterType === 'prereq-blocked'}
-          />
-          <HealthCard
-            green={summary.byTrafficLight.green}
-            yellow={summary.byTrafficLight.yellow}
-            red={summary.byTrafficLight.red}
-            total={summary.total}
-          />
-        </div>
+        {loading && !timelineData ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <StatCard
+              label="Total DEs"
+              value={summary.total}
+              icon={FileText}
+              meshGradient="gray"
+              onClick={() => handleSetFilterType('all')}
+              active={filterType === 'all'}
+            />
+            <StatCard
+              label="Design Week"
+              value={summary.byStage.designWeek}
+              icon={FileText}
+              meshGradient="blue"
+              onClick={() => handleSetFilterType(filterType === 'design_week' ? 'all' : 'design_week')}
+              active={filterType === 'design_week'}
+            />
+            <StatCard
+              label="Configuration"
+              value={summary.byStage.configuration}
+              icon={Settings}
+              meshGradient="sienna"
+              onClick={() => handleSetFilterType(filterType === 'configuration' ? 'all' : 'configuration')}
+              active={filterType === 'configuration'}
+            />
+            <StatCard
+              label="UAT"
+              value={summary.byStage.uat}
+              icon={TestTube}
+              meshGradient="amber"
+              onClick={() => handleSetFilterType(filterType === 'uat' ? 'all' : 'uat')}
+              active={filterType === 'uat'}
+            />
+            <StatCard
+              label="Prereq Blocked"
+              value={summary.prerequisitesBlocked}
+              icon={Key}
+              meshGradient="rose"
+              onClick={() => handleSetFilterType(filterType === 'prereq-blocked' ? 'all' : 'prereq-blocked')}
+              active={filterType === 'prereq-blocked'}
+            />
+            <HealthCard
+              green={summary.byTrafficLight.green}
+              yellow={summary.byTrafficLight.yellow}
+              red={summary.byTrafficLight.red}
+              total={summary.total}
+            />
+          </div>
+        )}
 
         {/* Deadline Predictions */}
         {predictionData && predictionData.predictions.length > 0 && (
@@ -654,7 +860,7 @@ export default function PortfolioPage() {
 
           {/* Issues filter */}
           <button
-            onClick={() => setFilterType(filterType === 'issues' ? 'all' : 'issues')}
+            onClick={() => handleSetFilterType(filterType === 'issues' ? 'all' : 'issues')}
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all',
               filterType === 'issues'
@@ -679,7 +885,7 @@ export default function PortfolioPage() {
               <Building2 className="w-4 h-4 text-gray-400" />
               <select
                 value={selectedCompany || ''}
-                onChange={(e) => setSelectedCompany(e.target.value || null)}
+                onChange={(e) => handleSetSelectedCompany(e.target.value || null)}
                 className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
               >
                 <option value="">All Companies</option>
@@ -698,7 +904,7 @@ export default function PortfolioPage() {
               <Users className="w-4 h-4 text-gray-400" />
               <select
                 value={selectedConsultant || ''}
-                onChange={(e) => setSelectedConsultant(e.target.value || null)}
+                onChange={(e) => handleSetSelectedConsultant(e.target.value || null)}
                 className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
               >
                 <option value="">All Leads</option>
@@ -719,7 +925,7 @@ export default function PortfolioPage() {
                 <TrendingUp className="w-4 h-4 text-gray-400" />
                 <select
                   value={ganttSort}
-                  onChange={(e) => setGanttSort(e.target.value as GanttSortKey)}
+                  onChange={(e) => handleSetGanttSort(e.target.value as GanttSortKey)}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E8D5C4]"
                 >
                   <option value="company">Sort by Company</option>
@@ -743,11 +949,7 @@ export default function PortfolioPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setFilterType('all')
-                  setSelectedConsultant(null)
-                  setSelectedCompany(null)
-                }}
+                onClick={handleClearFilters}
                 className="text-xs hover:bg-gray-100"
               >
                 Clear filters
@@ -759,9 +961,7 @@ export default function PortfolioPage() {
 
         {/* Content based on view mode */}
         {loading && !cardData && !timelineData ? (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-[#C2703E]" />
-          </div>
+          <ContentSkeleton viewMode={viewMode} />
         ) : viewMode === 'weeks' ? (
           /* Week Timeline View */
           sortedTimelineCompanies.length === 0 ? (
@@ -777,11 +977,7 @@ export default function PortfolioPage() {
                     <Button
                       variant="outline"
                       className="mt-4"
-                      onClick={() => {
-                        setFilterType('all')
-                        setSelectedConsultant(null)
-                        setSelectedCompany(null)
-                      }}
+                      onClick={handleClearFilters}
                     >
                       Clear filters
                     </Button>
@@ -826,11 +1022,7 @@ export default function PortfolioPage() {
                     <Button
                       variant="outline"
                       className="mt-4"
-                      onClick={() => {
-                        setFilterType('all')
-                        setSelectedConsultant(null)
-                        setSelectedCompany(null)
-                      }}
+                      onClick={handleClearFilters}
                     >
                       Clear filters
                     </Button>
@@ -870,7 +1062,7 @@ export default function PortfolioPage() {
                     <Button
                       variant="outline"
                       className="mt-4"
-                      onClick={() => setFilterType('all')}
+                      onClick={() => handleSetFilterType('all')}
                     >
                       Show all Design Weeks
                     </Button>
@@ -902,5 +1094,13 @@ export default function PortfolioPage() {
       {/* Freddy AI Assistant - floating button */}
       <PortfolioFreddy onChangesApplied={fetchData} />
     </div>
+  )
+}
+
+export default function PortfolioPage() {
+  return (
+    <Suspense fallback={<PortfolioPageSkeleton />}>
+      <PortfolioPageContent />
+    </Suspense>
   )
 }

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  ArrowRightLeft,
   RefreshCw,
   Users,
   BarChart3,
@@ -14,7 +15,9 @@ import {
   AlertTriangle,
   TrendingUp,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,6 +27,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 // Types matching the timeline API response
 type LifecycleStage = 'design_week' | 'configuration' | 'uat' | 'live'
@@ -355,24 +366,101 @@ function WorkloadStatus({ count }: { count: number }) {
 }
 
 // Single DE mini-row within a consultant card
-function DEMiniRow({ de }: { de: ConsultantCapacity['des'][number] }) {
+function DEMiniRow({
+  de,
+  allConsultants,
+  currentConsultant,
+  onReassign,
+  reassigningDeId,
+}: {
+  de: ConsultantCapacity['des'][number]
+  allConsultants: string[]
+  currentConsultant: string
+  onReassign: (deId: string, deName: string, newConsultant: string) => void
+  reassigningDeId: string | null
+}) {
   const stageConfig = STAGE_CONFIG[de.stage]
+  const isReassigning = reassigningDeId === de.id
+  const otherConsultants = allConsultants.filter((c) => c !== currentConsultant)
+
   return (
-    <Link
-      href={`/companies/${de.companyId}/digital-employees/${de.id}`}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#FAF9F6] transition-colors group"
-    >
-      <div className={cn('w-2 h-2 rounded-full shrink-0', TRAFFIC_LIGHT_DOT[de.trafficLight])} />
-      <span className="text-sm font-medium text-gray-800 truncate group-hover:text-[#C2703E] transition-colors">
-        {de.name}
-      </span>
-      <span className="text-xs text-gray-400 truncate shrink-0">
-        {de.companyName}
-      </span>
-      <span className={cn('ml-auto text-xs font-medium shrink-0', stageConfig.text)}>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#FAF9F6] transition-colors group">
+      <Link
+        href={`/companies/${de.companyId}/digital-employees/${de.id}`}
+        className="flex items-center gap-2 flex-1 min-w-0"
+      >
+        <div className={cn('w-2 h-2 rounded-full shrink-0', TRAFFIC_LIGHT_DOT[de.trafficLight])} />
+        <span className="text-sm font-medium text-gray-800 truncate group-hover:text-[#C2703E] transition-colors">
+          {de.name}
+        </span>
+        <span className="text-xs text-gray-400 truncate shrink-0">
+          {de.companyName}
+        </span>
+      </Link>
+      <span className={cn('text-xs font-medium shrink-0', stageConfig.text)}>
         {stageConfig.shortLabel}
       </span>
-    </Link>
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  'shrink-0 p-1 rounded-md transition-colors',
+                  'text-gray-400 hover:text-[#C2703E] hover:bg-[#FDF3EC]',
+                  'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                  isReassigning && 'opacity-100'
+                )}
+                disabled={isReassigning}
+              >
+                {isReassigning ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p className="text-xs">Reassign to another lead</p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel className="text-xs text-gray-500">
+            Reassign to
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {otherConsultants.length > 0 ? (
+            otherConsultants.map((consultant) => (
+              <DropdownMenuItem
+                key={consultant}
+                onClick={() => onReassign(de.id, de.name, consultant)}
+                className="cursor-pointer text-sm"
+              >
+                <UserCircle className="w-4 h-4 mr-2 text-gray-400" />
+                {consultant}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <DropdownMenuItem disabled className="text-xs text-gray-400">
+              No other leads available
+            </DropdownMenuItem>
+          )}
+          {currentConsultant !== 'Unassigned' && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onReassign(de.id, de.name, '')}
+                className="cursor-pointer text-sm text-gray-500"
+              >
+                <AlertCircle className="w-4 h-4 mr-2 text-gray-400" />
+                Unassign
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }
 
@@ -381,10 +469,16 @@ function ConsultantCard({
   consultant,
   maxCount,
   isUnassigned = false,
+  allConsultants,
+  onReassign,
+  reassigningDeId,
 }: {
   consultant: ConsultantCapacity
   maxCount: number
   isUnassigned?: boolean
+  allConsultants: string[]
+  onReassign: (deId: string, deName: string, newConsultant: string) => void
+  reassigningDeId: string | null
 }) {
   const [expanded, setExpanded] = useState(false)
   const hasIssues = consultant.byTrafficLight.red > 0 || consultant.byTrafficLight.yellow > 0
@@ -466,7 +560,14 @@ function ConsultantCard({
         {expanded && (
           <div className="border-t border-gray-100 pt-2 -mx-2 space-y-0.5">
             {consultant.des.map((de) => (
-              <DEMiniRow key={de.id} de={de} />
+              <DEMiniRow
+                key={de.id}
+                de={de}
+                allConsultants={allConsultants}
+                currentConsultant={consultant.name}
+                onReassign={onReassign}
+                reassigningDeId={reassigningDeId}
+              />
             ))}
           </div>
         )}
@@ -479,6 +580,7 @@ export default function CapacityPlanningPage() {
   const [timelineData, setTimelineData] = useState<TimelineData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reassigningDeId, setReassigningDeId] = useState<string | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
@@ -507,6 +609,39 @@ export default function CapacityPlanningPage() {
     if (!timelineData) return { assigned: [], unassigned: null }
     return buildConsultantCapacities(timelineData.companies)
   }, [timelineData])
+
+  // All consultant names for the reassign dropdown
+  const allConsultantNames = useMemo(() => {
+    return assigned.map((c) => c.name)
+  }, [assigned])
+
+  // Handle reassigning a DE to a different consultant
+  const handleReassign = useCallback(async (deId: string, deName: string, newConsultant: string) => {
+    setReassigningDeId(deId)
+    try {
+      const response = await fetch('/api/portfolio/timeline', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: deId,
+          assignedTo: newConsultant || null,
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        const targetLabel = newConsultant || 'Unassigned'
+        toast.success(`Reassigned "${deName}" to ${targetLabel}`)
+        await fetchData()
+      } else {
+        toast.error(result.error || 'Failed to reassign')
+      }
+    } catch {
+      toast.error('Failed to reassign Digital Employee')
+    } finally {
+      setReassigningDeId(null)
+    }
+  }, [])
 
   // Summary metrics
   const totalDEs = timelineData?.summary.total ?? 0
@@ -681,6 +816,9 @@ export default function CapacityPlanningPage() {
                       key={consultant.name}
                       consultant={consultant}
                       maxCount={maxCount}
+                      allConsultants={allConsultantNames}
+                      onReassign={handleReassign}
+                      reassigningDeId={reassigningDeId}
                     />
                   ))}
                 </div>
@@ -698,6 +836,9 @@ export default function CapacityPlanningPage() {
                     consultant={unassigned}
                     maxCount={maxCount}
                     isUnassigned
+                    allConsultants={allConsultantNames}
+                    onReassign={handleReassign}
+                    reassigningDeId={reassigningDeId}
                   />
                 </div>
               </div>

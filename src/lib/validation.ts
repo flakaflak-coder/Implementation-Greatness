@@ -6,7 +6,7 @@
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus, PrerequisiteCategory, PrerequisiteOwner, PrerequisiteStatus, Priority, ExtractedItemType, GeneratedDocType, JourneyPhaseType } from '@prisma/client'
+import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus, PrerequisiteCategory, PrerequisiteOwner, PrerequisiteStatus, Priority, ExtractedItemType, GeneratedDocType, JourneyPhaseType, NotificationType } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMMON SCHEMAS
@@ -325,6 +325,41 @@ export const JourneyPhaseTransitionSchema = z.object({
   (data) => data.action !== 'set' || data.targetPhase !== undefined,
   { message: 'targetPhase is required when action is "set"', path: ['targetPhase'] }
 )
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATION SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CreateNotificationSchema = z.object({
+  type: z.nativeEnum(NotificationType),
+  title: z.string().min(1).max(500).trim(),
+  message: z.string().min(1).max(2000).trim(),
+  link: z.string().max(1000).trim().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+})
+
+export const MarkNotificationsReadSchema = z.union([
+  z.object({
+    ids: z.array(IdSchema).min(1).max(100),
+    all: z.undefined().optional(),
+  }),
+  z.object({
+    all: z.literal(true),
+    ids: z.undefined().optional(),
+  }),
+])
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCOPE ITEM BATCH SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const BatchResolveScopeItemsSchema = z.object({
+  ids: z.array(IdSchema).min(1, 'At least one ID is required').max(100, 'Maximum 100 items per batch'),
+  classification: z.enum(['IN_SCOPE', 'OUT_OF_SCOPE'], {
+    error: 'classification must be IN_SCOPE or OUT_OF_SCOPE',
+  }),
+  notes: z.string().max(5000).trim().optional(),
+})
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION HELPERS
