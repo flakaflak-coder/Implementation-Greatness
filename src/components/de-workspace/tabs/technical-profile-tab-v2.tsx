@@ -45,23 +45,23 @@ interface TechnicalProfileTabV2Props {
   className?: string
 }
 
-// Section colors
+// Section colors - left accent border style
 const sectionColors: Record<string, string> = {
-  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
-  blue: 'border-blue-200 bg-blue-50/50',
-  cyan: 'border-cyan-200 bg-cyan-50/50',
-  rose: 'border-rose-200 bg-rose-50/50',
-  emerald: 'border-emerald-200 bg-emerald-50/50',
-  orange: 'border-orange-200 bg-orange-50/50',
+  violet: 'border-l-2 border-[#C2703E] pl-4',
+  blue: 'border-l-2 border-blue-400 pl-4',
+  cyan: 'border-l-2 border-cyan-400 pl-4',
+  rose: 'border-l-2 border-rose-400 pl-4',
+  emerald: 'border-l-2 border-emerald-400 pl-4',
+  orange: 'border-l-2 border-orange-400 pl-4',
 }
 
 const iconColors: Record<string, string> = {
-  violet: 'text-[#C2703E]',
-  blue: 'text-blue-600',
-  cyan: 'text-cyan-600',
-  rose: 'text-rose-600',
-  emerald: 'text-emerald-600',
-  orange: 'text-orange-600',
+  violet: 'text-stone-500',
+  blue: 'text-stone-500',
+  cyan: 'text-stone-500',
+  rose: 'text-stone-500',
+  emerald: 'text-stone-500',
+  orange: 'text-stone-500',
 }
 
 // Section icons
@@ -190,7 +190,7 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
     <div className={cn('space-y-4', className)}>
       {/* Saving indicator */}
       {saving && (
-        <div className="fixed top-4 right-4 bg-gray-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
+        <div className="fixed top-4 right-4 bg-stone-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
           <Loader2 className="h-4 w-4 animate-spin" />
           Saving...
         </div>
@@ -292,8 +292,8 @@ export function TechnicalProfileTabV2({ designWeekId, className }: TechnicalProf
       </TechnicalSection>
 
       {/* Notes Section */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-        <h4 className="font-medium text-gray-900 mb-3">Technical Notes</h4>
+      <div className="rounded-lg border border-stone-200 bg-stone-50/50 p-4">
+        <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Technical Notes</h4>
         <TagList
           tags={profile.notes}
           onChange={(notes) => updateProfile((p) => ({ ...p, notes }))}
@@ -315,49 +315,37 @@ interface TechnicalSectionProps {
   children: React.ReactNode
 }
 
-const accentGradients: Record<string, string> = {
-  violet: 'from-[#D4956A] to-[#C2703E]',
-  blue: 'from-blue-400 to-blue-600',
-  cyan: 'from-cyan-400 to-cyan-600',
-  rose: 'from-rose-400 to-rose-600',
-  emerald: 'from-emerald-400 to-emerald-600',
-  orange: 'from-orange-400 to-orange-600',
-}
-
 function TechnicalSection({ sectionKey, config, expanded, onToggle, children }: TechnicalSectionProps) {
   const colorClass = sectionColors[config.color] || sectionColors.violet
   const iconColor = iconColors[config.color] || iconColors.violet
-  const gradient = accentGradients[config.color] || accentGradients.violet
 
   return (
     <div
       id={`section-${sectionKey}`}
       className={cn(
-        'rounded-lg border overflow-hidden transition-all duration-200',
+        'rounded-lg overflow-hidden transition-all duration-200',
         colorClass,
         expanded ? 'shadow-sm' : 'hover:shadow-sm',
       )}
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/30 transition-colors"
+        className="w-full flex items-center gap-3 py-3 pr-4 text-left hover:bg-stone-50/50 transition-colors"
       >
-        {/* Gradient accent bar */}
-        <div className={cn('w-1 self-stretch -ml-4 mr-3 rounded-r-full bg-gradient-to-b', gradient)} />
         <div className={iconColor}>
           <SectionIcon name={config.icon} className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{config.title}</h3>
-          <p className="text-sm text-gray-500">{config.description}</p>
+          <h3 className="text-base font-semibold tracking-tight text-stone-900">{config.title}</h3>
+          <p className="text-[11px] uppercase tracking-wider text-stone-400">{config.description}</p>
         </div>
         <ChevronDown className={cn(
-          'h-5 w-5 text-gray-400 transition-transform duration-200',
+          'h-5 w-5 text-stone-400 transition-transform duration-200',
           !expanded && '-rotate-90'
         )} />
       </button>
       {expanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-white/50 animate-accordion-down">
+        <div className="pb-4 pt-2 pr-4 border-t border-stone-100 animate-accordion-down">
           {children}
         </div>
       )}
@@ -390,7 +378,7 @@ const authMethodLabels: Record<AuthMethod, string> = {
 }
 
 const statusLabels: Record<IntegrationStatus, { label: string; color: string }> = {
-  identified: { label: 'Identified', color: 'bg-gray-100 text-gray-700' },
+  identified: { label: 'Identified', color: 'bg-stone-100 text-stone-700' },
   spec_complete: { label: 'Spec Complete', color: 'bg-blue-100 text-blue-700' },
   credentials_received: { label: 'Credentials Received', color: 'bg-amber-100 text-amber-700' },
   tested: { label: 'Tested', color: 'bg-cyan-100 text-cyan-700' },
@@ -451,23 +439,23 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
         <div
           key={integration.id}
           className={cn(
-            "p-4 bg-white rounded-lg border border-gray-200 group",
+            "p-4 bg-white rounded-lg border border-stone-200 group",
             "animate-fade-in-up",
             index < 6 && `stagger-${index + 1}`
           )}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
+              <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
                 <Server className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="font-medium text-gray-900">{integration.systemName}</h4>
+                <h4 className="font-medium text-stone-900">{integration.systemName}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                  <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded">
                     {integrationTypeLabels[integration.type]}
                   </span>
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                  <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded">
                     {authMethodLabels[integration.authMethod]}
                   </span>
                   <select
@@ -489,23 +477,23 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
             </div>
             <button
               onClick={() => handleRemove(integration.id)}
-              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           {integration.purpose && (
-            <p className="mt-2 text-sm text-gray-600">{integration.purpose}</p>
+            <p className="mt-2 text-sm text-stone-600">{integration.purpose}</p>
           )}
           {(integration.fieldsRead.length > 0 || integration.fieldsWrite.length > 0) && (
             <div className="mt-2 flex gap-4 text-xs">
               {integration.fieldsRead.length > 0 && (
-                <span className="text-gray-500">
+                <span className="text-stone-500">
                   Read: {integration.fieldsRead.join(', ')}
                 </span>
               )}
               {integration.fieldsWrite.length > 0 && (
-                <span className="text-gray-500">
+                <span className="text-stone-500">
                   Write: {integration.fieldsWrite.join(', ')}
                 </span>
               )}
@@ -536,19 +524,19 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
         </div>
       ))}
       {isAdding ? (
-        <div className="p-4 bg-white rounded-lg border-2 border-[#D4956A] space-y-3">
+        <div className="p-4 bg-white rounded-lg border-2 border-stone-300 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="System name"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as IntegrationType)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             >
               {Object.entries(integrationTypeLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -562,13 +550,13 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
             value={newPurpose}
             onChange={(e) => setNewPurpose(e.target.value)}
             placeholder="Purpose (what data/functionality does it provide?)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <div className="flex items-center gap-3">
             <select
               value={newAuth}
               onChange={(e) => setNewAuth(e.target.value as AuthMethod)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             >
               {Object.entries(authMethodLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -579,13 +567,13 @@ function IntegrationsList({ integrations, onUpdate }: IntegrationsListProps) {
             <div className="flex-1" />
             <button
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -661,11 +649,11 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 font-medium text-gray-700">Field</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-700">Source</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-700">Type</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-700">Required</th>
+              <tr className="border-b border-stone-200">
+                <th className="text-left py-2 px-3 font-medium text-stone-700">Field</th>
+                <th className="text-left py-2 px-3 font-medium text-stone-700">Source</th>
+                <th className="text-left py-2 px-3 font-medium text-stone-700">Type</th>
+                <th className="text-left py-2 px-3 font-medium text-stone-700">Required</th>
                 <th className="py-2 px-3"></th>
               </tr>
             </thead>
@@ -674,13 +662,13 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
                 <tr
                   key={field.id}
                   className={cn(
-                    "border-b border-gray-100 group",
+                    "border-b border-stone-100 group",
                     "animate-fade-in-up",
                     index < 6 && `stagger-${index + 1}`
                   )}
                 >
-                  <td className="py-2 px-3 font-medium text-gray-900">{field.name}</td>
-                  <td className="py-2 px-3 text-gray-600">{field.source || '-'}</td>
+                  <td className="py-2 px-3 font-medium text-stone-900">{field.name}</td>
+                  <td className="py-2 px-3 text-stone-600">{field.source || '-'}</td>
                   <td className="py-2 px-3">
                     <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
                       {field.type}
@@ -690,13 +678,13 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
                     {field.required ? (
                       <span className="text-emerald-600">Yes</span>
                     ) : (
-                      <span className="text-gray-400">No</span>
+                      <span className="text-stone-400">No</span>
                     )}
                   </td>
                   <td className="py-2 px-3">
                     <button
                       onClick={() => handleRemove(field.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -714,19 +702,19 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Field name"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <input
             type="text"
             value={newSource}
             onChange={(e) => setNewSource(e.target.value)}
             placeholder="Source"
-            className="w-32 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-32 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <select
             value={newType}
             onChange={(e) => setNewType(e.target.value)}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           >
             <option value="string">string</option>
             <option value="number">number</option>
@@ -740,19 +728,19 @@ function DataFieldsList({ dataFields, onUpdate }: DataFieldsListProps) {
               type="checkbox"
               checked={newRequired}
               onChange={(e) => setNewRequired(e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-stone-300"
             />
             Required
           </label>
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
           <button
             onClick={() => setIsAdding(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -835,12 +823,12 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
         <div
           key={endpoint.id}
           className={cn(
-            "flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+            "flex items-start gap-3 p-3 bg-white rounded-lg border border-stone-200 group",
             "animate-fade-in-up",
             index < 6 && `stagger-${index + 1}`
           )}
         >
-          <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
+          <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
             <FileCode className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
@@ -848,28 +836,28 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
               <span className={cn('text-xs px-2 py-0.5 rounded font-mono', methodColors[endpoint.method])}>
                 {endpoint.method}
               </span>
-              <code className="text-sm text-gray-700 font-mono">{endpoint.path}</code>
+              <code className="text-sm text-stone-700 font-mono">{endpoint.path}</code>
             </div>
-            <p className="font-medium text-gray-900 mt-1">{endpoint.name}</p>
+            <p className="font-medium text-stone-900 mt-1">{endpoint.name}</p>
             {endpoint.description && (
-              <p className="text-sm text-gray-500 mt-0.5">{endpoint.description}</p>
+              <p className="text-sm text-stone-500 mt-0.5">{endpoint.description}</p>
             )}
           </div>
           <button
             onClick={() => handleRemove(endpoint.id)}
-            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       ))}
       {isAdding ? (
-        <div className="p-4 bg-white rounded-lg border-2 border-cyan-300 space-y-3">
+        <div className="p-4 bg-white rounded-lg border-2 border-stone-300 space-y-3">
           <div className="flex items-center gap-2">
             <select
               value={newMethod}
               onChange={(e) => setNewMethod(e.target.value as APIEndpoint['method'])}
-              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono"
+              className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 font-mono"
             >
               <option value="GET">GET</option>
               <option value="POST">POST</option>
@@ -882,7 +870,7 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
               value={newPath}
               onChange={(e) => setNewPath(e.target.value)}
               placeholder="/api/v1/endpoint"
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono"
+              className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 font-mono"
             />
           </div>
           <input
@@ -890,25 +878,25 @@ function APIEndpointsList({ endpoints, onUpdate }: APIEndpointsListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Endpoint name"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <input
             type="text"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -952,7 +940,7 @@ const categoryColors: Record<SecurityRequirement['category'], string> = {
   encryption: 'bg-emerald-100 text-emerald-700',
   compliance: 'bg-amber-100 text-amber-700',
   data_handling: 'bg-cyan-100 text-cyan-700',
-  other: 'bg-gray-100 text-gray-700',
+  other: 'bg-stone-100 text-stone-700',
 }
 
 function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequirementsListProps) {
@@ -997,7 +985,7 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
         <div
           key={req.id}
           className={cn(
-            "flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+            "flex items-start gap-3 p-3 bg-white rounded-lg border border-stone-200 group",
             "animate-fade-in-up",
             index < 6 && `stagger-${index + 1}`
           )}
@@ -1005,10 +993,10 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
           <span className={cn('text-xs px-2 py-0.5 rounded', categoryColors[req.category])}>
             {categoryLabels[req.category]}
           </span>
-          <p className="flex-1 text-gray-700">{req.requirement}</p>
+          <p className="flex-1 text-stone-700">{req.requirement}</p>
           <button
             onClick={() => handleRemove(req.id)}
-            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1019,7 +1007,7 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
           <select
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value as SecurityRequirement['category'])}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           >
             {Object.entries(categoryLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -1032,17 +1020,17 @@ function SecurityRequirementsList({ requirements, onUpdate }: SecurityRequiremen
             value={newRequirement}
             onChange={(e) => setNewRequirement(e.target.value)}
             placeholder="Security requirement"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
           <button
             onClick={() => setIsAdding(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1118,26 +1106,26 @@ function TechnicalContactsList({ contacts, onUpdate }: TechnicalContactsListProp
           <div
             key={contact.id}
             className={cn(
-              "flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group",
+              "flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 group",
               "animate-fade-in-up",
               index < 6 && `stagger-${index + 1}`
             )}
           >
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+            <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
               <Users className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">{contact.name}</p>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="font-medium text-stone-900 truncate">{contact.name}</p>
+              <p className="text-sm text-stone-500 truncate">
                 {contact.role} {contact.system && `• ${contact.system}`}
               </p>
               {contact.email && (
-                <p className="text-xs text-gray-400 truncate">{contact.email}</p>
+                <p className="text-xs text-stone-400 truncate">{contact.email}</p>
               )}
             </div>
             <button
               onClick={() => handleRemove(contact.id)}
-              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1151,39 +1139,39 @@ function TechnicalContactsList({ contacts, onUpdate }: TechnicalContactsListProp
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Name"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <input
             type="text"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
             placeholder="Role"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <input
             type="text"
             value={newSystem}
             onChange={(e) => setNewSystem(e.target.value)}
             placeholder="System"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <input
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder="Email"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
           <div className="col-span-2 flex justify-end gap-2">
             <button
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1294,17 +1282,17 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
             const config = perspectiveLabels[perspective as MonitoringMetric['perspective']]
             return (
               <div key={perspective}>
-                <h5 className={cn('text-xs font-medium px-2 py-1 rounded-t inline-block', config?.color || 'bg-gray-100 text-gray-700')}>
+                <h5 className={cn('text-xs font-medium px-2 py-1 rounded-t inline-block', config?.color || 'bg-stone-100 text-stone-700')}>
                   {config?.label || perspective}
                 </h5>
                 <div className="overflow-x-auto border rounded-lg rounded-tl-none">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-50 border-b">
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">Metric</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">Target</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">Owner</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">Frequency</th>
+                      <tr className="bg-stone-50 border-b">
+                        <th className="text-left py-2 px-3 font-medium text-stone-700">Metric</th>
+                        <th className="text-left py-2 px-3 font-medium text-stone-700">Target</th>
+                        <th className="text-left py-2 px-3 font-medium text-stone-700">Owner</th>
+                        <th className="text-left py-2 px-3 font-medium text-stone-700">Frequency</th>
                         <th className="text-left py-2 px-3 font-medium text-amber-600">Alert</th>
                         <th className="py-2 px-3 w-8"></th>
                       </tr>
@@ -1314,16 +1302,16 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
                         <tr
                           key={metric.id}
                           className={cn(
-                            "border-b border-gray-100 group",
+                            "border-b border-stone-100 group",
                             "animate-fade-in-up",
                             index < 6 && `stagger-${index + 1}`
                           )}
                         >
-                          <td className="py-2 px-3 font-medium text-gray-900">{metric.name}</td>
+                          <td className="py-2 px-3 font-medium text-stone-900">{metric.name}</td>
                           <td className="py-2 px-3 text-emerald-600 font-medium">{metric.target || '-'}</td>
-                          <td className="py-2 px-3 text-gray-600">{metric.owner || '-'}</td>
+                          <td className="py-2 px-3 text-stone-600">{metric.owner || '-'}</td>
                           <td className="py-2 px-3">
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                            <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded">
                               {frequencyLabels[metric.frequency]}
                             </span>
                           </td>
@@ -1331,7 +1319,7 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
                           <td className="py-2 px-3">
                             <button
                               onClick={() => handleRemove(metric.id)}
-                              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -1347,33 +1335,33 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
         </div>
       )}
       {isAdding ? (
-        <div className="p-4 bg-white rounded-lg border-2 border-orange-300 space-y-3">
+        <div className="p-4 bg-white rounded-lg border-2 border-stone-300 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Metric name (e.g., First Response Time)"
-              className="col-span-2 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="col-span-2 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
             <input
               type="text"
               value={newTarget}
               onChange={(e) => setNewTarget(e.target.value)}
               placeholder="Target (e.g., < 30 seconds)"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
             <input
               type="text"
               value={newOwner}
               onChange={(e) => setNewOwner(e.target.value)}
               placeholder="Owner (e.g., Operations Lead)"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
             <select
               value={newPerspective}
               onChange={(e) => setNewPerspective(e.target.value as MonitoringMetric['perspective'])}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             >
               {Object.entries(perspectiveLabels).map(([value, { label }]) => (
                 <option key={value} value={value}>
@@ -1384,7 +1372,7 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
             <select
               value={newFrequency}
               onChange={(e) => setNewFrequency(e.target.value as MonitoringMetric['frequency'])}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             >
               {Object.entries(frequencyLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -1397,7 +1385,7 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
               value={newAlertThreshold}
               onChange={(e) => setNewAlertThreshold(e.target.value)}
               placeholder="Alert threshold (e.g., > 60 seconds)"
-              className="col-span-2 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="col-span-2 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
           </div>
           <div className="flex justify-end gap-2">
@@ -1409,13 +1397,13 @@ function MonitoringMetricsList({ metrics, onUpdate }: MonitoringMetricsListProps
                 setNewOwner('')
                 setNewAlertThreshold('')
               }}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>

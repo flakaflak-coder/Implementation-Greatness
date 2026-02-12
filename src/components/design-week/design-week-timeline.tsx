@@ -32,70 +32,75 @@ export function DesignWeekTimeline({
   className,
 }: DesignWeekTimelineProps) {
   return (
-    <div className={cn('flex items-center justify-between gap-4', className)}>
-      {phases.map((phase) => {
+    <div className={cn('flex items-center', className)}>
+      {phases.map((phase, index) => {
         const isSelected = selectedPhase === phase.number
         const hasData = phase.completedSessions > 0
         const isManual = phase.isManuallyCompleted && !hasData
         const isComplete = hasData || phase.isManuallyCompleted
+        const isLast = index === phases.length - 1
+
+        // Check if previous phase is complete for connector line color
+        const prevPhase = index > 0 ? phases[index - 1] : null
+        const prevComplete = prevPhase ? (prevPhase.completedSessions > 0 || prevPhase.isManuallyCompleted) : false
 
         return (
-          <button
-            key={phase.number}
-            onClick={() => onPhaseSelect(phase.number)}
-            className={cn(
-              'group flex flex-col items-center flex-1 transition-all duration-200',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2703E] focus-visible:ring-offset-2 rounded-xl p-2',
-            )}
-          >
-            {/* Topic circle */}
-            <div className="relative mb-2">
-              {/* Selection ring */}
-              {isSelected && (
-                <div className="absolute inset-0 -m-1.5 rounded-full border-2 border-[#C2703E] bg-[#FDF3EC]" />
+          <div key={phase.number} className="flex items-center flex-1">
+            <button
+              onClick={() => onPhaseSelect(phase.number)}
+              className={cn(
+                'flex flex-col items-center gap-2 transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2703E] focus-visible:ring-offset-2 rounded-lg',
               )}
+            >
+              {/* Phase circle */}
+              <div className="relative">
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                    'border-2',
+                    isSelected && 'ring-2 ring-[#C2703E] ring-offset-2',
+                    isComplete
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : hasData
+                      ? 'bg-[#C2703E] text-white border-[#C2703E]'
+                      : 'bg-white text-stone-400 border-stone-200',
+                  )}
+                >
+                  {isComplete ? (
+                    <Check className="w-4 h-4" strokeWidth={3} />
+                  ) : (
+                    <span className="text-sm font-semibold">{phase.number}</span>
+                  )}
+                </div>
 
-              <div
-                className={cn(
-                  'relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200',
-                  'border-2',
-                  hasData
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : isManual
-                    ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
-                    : isSelected
-                    ? 'bg-[#C2703E] border-[#C2703E] text-white'
-                    : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400',
-                )}
-              >
-                {hasData ? (
-                  <Check className="w-5 h-5" strokeWidth={3} />
-                ) : isManual ? (
-                  <Check className="w-5 h-5" strokeWidth={2.5} />
-                ) : (
-                  <span className="text-lg font-semibold">{phase.number}</span>
+                {/* Manual completion indicator dot */}
+                {isManual && (
+                  <div className="absolute bottom-0 right-0 w-1.5 h-1.5 rounded-full bg-stone-400" />
                 )}
               </div>
 
-              {/* Manual indicator dot */}
-              {isManual && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-                </div>
-              )}
-            </div>
+              {/* Phase name */}
+              <p
+                className={cn(
+                  'text-[11px] font-medium uppercase tracking-wider text-center',
+                  isSelected ? 'text-[#C2703E]' : 'text-stone-500',
+                )}
+              >
+                {phase.name}
+              </p>
+            </button>
 
-            {/* Topic name */}
-            <p
-              className={cn(
-                'text-sm font-medium transition-colors text-center',
-                isSelected ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700',
-                isComplete && 'text-emerald-600'
-              )}
-            >
-              {phase.name}
-            </p>
-          </button>
+            {/* Connecting line */}
+            {!isLast && (
+              <div
+                className={cn(
+                  'flex-1 h-0.5 mx-1 transition-colors',
+                  isComplete ? 'bg-emerald-400' : 'bg-stone-200',
+                )}
+              />
+            )}
+          </div>
         )
       })}
     </div>

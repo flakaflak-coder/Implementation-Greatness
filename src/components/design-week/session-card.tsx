@@ -37,28 +37,24 @@ const statusConfig = {
     label: 'Pending',
     color: 'text-gray-500',
     bg: 'bg-gray-100',
-    border: 'border-gray-200',
   },
   processing: {
     icon: Loader2,
     label: 'Processing',
     color: 'text-[#C2703E]',
     bg: 'bg-[#FDF3EC]',
-    border: 'border-[#E8D5C4]',
   },
   complete: {
     icon: CheckCircle2,
     label: 'Extracted',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
   },
   failed: {
     icon: AlertCircle,
     label: 'Failed',
     color: 'text-red-600',
     bg: 'bg-red-50',
-    border: 'border-red-200',
   },
 }
 
@@ -83,66 +79,31 @@ export function SessionCard({
     <div
       onClick={onSelect}
       className={cn(
-        'group relative rounded-xl border-2 transition-all duration-200 cursor-pointer bg-white',
-        'hover:shadow-lg hover:shadow-gray-200/50',
-        isSelected
-          ? 'border-[#C2703E] shadow-lg shadow-[#FDF3EC] ring-4 ring-[#FDF3EC]'
-          : 'border-gray-200 hover:border-gray-300'
+        'group relative rounded-lg border transition-all duration-200 cursor-pointer bg-white',
+        'hover:border-stone-300',
+        isSelected ? 'border-[#C2703E]' : 'border-gray-200'
       )}
     >
-      {/* Top accent bar for selected */}
-      {isSelected && (
-        <div className="absolute inset-x-0 top-0 h-1 bg-[#C2703E] rounded-t-lg" />
-      )}
-
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'w-12 h-12 rounded-xl flex items-center justify-center shadow-sm',
-                isSelected
-                  ? 'bg-[#C2703E]'
-                  : 'bg-gradient-to-br from-gray-100 to-gray-200'
-              )}
-            >
-              <FileAudio
-                className={cn(
-                  'w-6 h-6',
-                  isSelected ? 'text-white' : 'text-gray-500'
-                )}
-              />
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-900">
-                {phaseName} #{sessionNumber}
-              </h4>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{date}</span>
-                {duration && (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <span>{duration}</span>
-                  </>
-                )}
-              </div>
-            </div>
+      <div className="p-3.5">
+        {/* Header: phase name + status badge */}
+        <div className="flex items-start justify-between gap-3 mb-1.5">
+          <div className="flex items-center gap-2">
+            <FileAudio className="w-4 h-4 text-stone-500 shrink-0" />
+            <h4 className="font-semibold text-sm text-gray-900">
+              {phaseName} #{sessionNumber}
+            </h4>
           </div>
 
           {/* Status badge */}
           <div
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
-              config.bg,
-              config.border,
-              'border'
+              'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0',
+              config.bg
             )}
           >
             <StatusIcon
               className={cn(
-                'w-3.5 h-3.5',
+                'w-3 h-3',
                 config.color,
                 status === 'processing' && 'animate-spin'
               )}
@@ -151,29 +112,33 @@ export function SessionCard({
           </div>
         </div>
 
+        {/* Date & duration */}
+        <div className="flex items-center gap-1.5 text-xs text-stone-500 mb-2.5">
+          <Clock className="w-3 h-3" />
+          <span>{date}</span>
+          {duration && (
+            <>
+              <span>•</span>
+              <span>{duration}</span>
+            </>
+          )}
+        </div>
+
         {/* Extraction stats for completed sessions */}
         {status === 'complete' && (
-          <div className="flex items-center gap-4 mb-4 px-4 py-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#F5E6DA] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-[#C2703E]" />
-              </div>
-              <div>
-                <span className="text-lg font-bold text-gray-900">{extractedCount}</span>
-                <span className="text-xs text-gray-500 ml-1">items</span>
-              </div>
+          <div className="flex items-center gap-3 mb-2.5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#C2703E]" />
+              <span className="font-semibold text-gray-900">{extractedCount}</span>
+              <span className="text-gray-500">items</span>
             </div>
             {unresolvedCount > 0 && (
               <>
-                <div className="h-8 w-px bg-gray-200" />
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <AlertCircle className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <span className="text-lg font-bold text-amber-600">{unresolvedCount}</span>
-                    <span className="text-xs text-gray-500 ml-1">to review</span>
-                  </div>
+                <span className="text-gray-300">•</span>
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="font-semibold text-amber-600">{unresolvedCount}</span>
+                  <span className="text-gray-500">to review</span>
                 </div>
               </>
             )}
@@ -182,17 +147,17 @@ export function SessionCard({
 
         {/* Topics covered */}
         {topicsCovered.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-2.5">
             {topicsCovered.slice(0, 3).map((topic, i) => (
               <span
                 key={i}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200"
+                className="text-[11px] bg-stone-100 text-stone-600 rounded px-1.5 py-0.5"
               >
                 {topic}
               </span>
             ))}
             {topicsCovered.length > 3 && (
-              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-400">
+              <span className="text-[11px] bg-stone-50 text-stone-400 rounded px-1.5 py-0.5">
                 +{topicsCovered.length - 3} more
               </span>
             )}
@@ -200,41 +165,44 @@ export function SessionCard({
         )}
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-          {onPlay && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onPlay()
-              }}
-              className="flex-1 h-9 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <Play className="w-4 h-4 mr-1.5" />
-              Play
-            </Button>
-          )}
-          {onExtract && status !== 'processing' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onExtract()
-              }}
-              className={cn(
-                'flex-1 h-9',
-                status === 'complete'
-                  ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  : 'text-[#C2703E] hover:text-[#A05A32] hover:bg-[#FDF3EC]'
-              )}
-            >
-              <Wand2 className="w-4 h-4 mr-1.5" />
-              {status === 'complete' ? 'Re-extract' : 'Extract'}
-            </Button>
-          )}
-        </div>
+        {(onPlay || (onExtract && status !== 'processing')) && (
+          <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+            {onPlay && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onPlay()
+                }}
+                className="flex-1 h-7 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                aria-label="Play"
+              >
+                <Play className="w-3.5 h-3.5 mr-1" />
+                Play
+              </Button>
+            )}
+            {onExtract && status !== 'processing' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onExtract()
+                }}
+                className={cn(
+                  'flex-1 h-7 text-xs',
+                  status === 'complete'
+                    ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-[#C2703E] hover:text-[#A05A32] hover:bg-[#FDF3EC]'
+                )}
+              >
+                <Wand2 className="w-3.5 h-3.5 mr-1" />
+                {status === 'complete' ? 'Re-extract' : 'Extract'}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

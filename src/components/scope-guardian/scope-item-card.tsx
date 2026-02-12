@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { FileText, Clock, CheckCircle2, XCircle, AlertTriangle, ExternalLink, Undo2, CheckSquare, Square } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+// Card removed — using plain div wrapper
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -98,16 +98,15 @@ export function ScopeItemCard({
 
   return (
     <>
-      <Card
+      <div
         className={cn(
-          'transition-all',
-          isAmbiguous && 'border-amber-300 bg-amber-50/50',
-          selectable && 'cursor-pointer hover:shadow-md',
+          'rounded-lg border border-stone-200/60 px-4 py-3 transition-all',
+          isAmbiguous && 'border-amber-300 bg-amber-50/30',
+          selectable && 'cursor-pointer hover:bg-stone-50',
           selectable && selected && 'ring-2 ring-[#C2703E] border-[#C2703E] bg-orange-50/30'
         )}
         onClick={handleCardClick}
       >
-        <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Selection checkbox */}
             {selectable && (
@@ -115,7 +114,7 @@ export function ScopeItemCard({
                 {selected ? (
                   <CheckSquare className="w-5 h-5 text-[#C2703E]" />
                 ) : (
-                  <Square className="w-5 h-5 text-gray-400" />
+                  <Square className="w-5 h-5 text-stone-400" />
                 )}
               </div>
             )}
@@ -127,9 +126,9 @@ export function ScopeItemCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-medium text-gray-900">{statement}</p>
+                  <p className="font-medium text-stone-900">{statement}</p>
                   {conditions && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-stone-600 mt-1">
                       <span className="font-medium">Condition:</span> {conditions}
                     </p>
                   )}
@@ -144,7 +143,7 @@ export function ScopeItemCard({
 
               {/* Notes */}
               {notes && (
-                <p className="text-sm text-gray-500 mt-2 italic">{notes}</p>
+                <p className="text-sm text-stone-500 mt-2 italic">{notes}</p>
               )}
 
               {/* Evidence */}
@@ -157,7 +156,7 @@ export function ScopeItemCard({
                         e.stopPropagation()
                         onViewEvidence?.(ev)
                       }}
-                      className="flex items-start gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors group w-full text-left"
+                      className="flex items-start gap-2 text-sm text-stone-600 hover:text-blue-600 transition-colors group w-full text-left"
                     >
                       {ev.sourceType === 'RECORDING' ? (
                         <Clock className="w-4 h-4 mt-0.5 shrink-0" />
@@ -227,7 +226,7 @@ export function ScopeItemCard({
 
               {/* Unresolve button for resolved items */}
               {!isAmbiguous && onUnresolve && (
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200">
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-stone-200">
                   <Button
                     size="sm"
                     variant="outline"
@@ -235,7 +234,7 @@ export function ScopeItemCard({
                       e.stopPropagation()
                       onUnresolve(id)
                     }}
-                    className="text-gray-600 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50"
+                    className="text-stone-600 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50"
                   >
                     <Undo2 className="w-4 h-4 mr-1" />
                     Move back to Ambiguous
@@ -244,8 +243,7 @@ export function ScopeItemCard({
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Resolve with notes dialog */}
       <Dialog open={showResolveDialog} onOpenChange={setShowResolveDialog}>
@@ -254,14 +252,14 @@ export function ScopeItemCard({
             <DialogTitle>Resolve Scope Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-stone-50 rounded-lg">
               <p className="text-sm font-medium">{statement}</p>
               {conditions && (
-                <p className="text-xs text-gray-500 mt-1">Condition: {conditions}</p>
+                <p className="text-xs text-stone-500 mt-1">Condition: {conditions}</p>
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-stone-600 mb-2">
                 Add notes to explain the rationale for this decision. This will be included in the design documents for audit purposes.
               </p>
               <Textarea

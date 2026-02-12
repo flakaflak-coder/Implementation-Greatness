@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import { Rocket, Briefcase, Wrench, ClipboardCheck, Upload, FileSignature, Shield, Zap, X } from 'lucide-react'
+import { Rocket, Briefcase, Wrench, ClipboardCheck, Upload, FileSignature, Shield, Zap, X, FileText, CheckCircle2 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,8 @@ import { TechnicalProfileTabV2 } from './tabs/technical-profile-tab-v2'
 import { TestPlanTabV2 } from './tabs/test-plan-tab-v2'
 import { SalesHandoverTab } from './tabs/sales-handover-tab'
 import { ScopeGuardian } from '@/components/scope-guardian/scope-guardian'
+import { DocumentsTab } from './tabs/documents-tab'
+import { SignOffTab } from './tabs/sign-off-tab'
 import { UnifiedUpload, UploadHistory } from '@/components/upload'
 import { toast } from 'sonner'
 import {
@@ -277,10 +279,10 @@ export function DEWorkspace({
   }, [designWeek.scopeItems])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Auto-progress notification banner */}
       {phaseAdvanceBanner && (
-        <div className="flex items-center justify-between gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl animate-fade-in-up">
+        <div className="flex items-center justify-between gap-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg animate-fade-in-up">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-emerald-100 rounded-full">
               <Zap className="w-5 h-5 text-emerald-600" />
@@ -309,29 +311,20 @@ export function DEWorkspace({
         </div>
       )}
 
-      {/* Centralized Upload Section - Always visible */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#C2703E]">
-              <Upload className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Upload Sessions & Documents</CardTitle>
-              <CardDescription>
-                Drop any recording, transcript, or document. AI will automatically extract and categorize the information.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <UnifiedUpload
-            designWeekId={designWeek.id}
-            onComplete={onRefresh}
-          />
+      {/* Upload Section */}
+      <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50/40 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Upload className="w-4 h-4 text-stone-400" />
+          <span className="text-sm font-medium text-stone-700">Upload Sessions & Documents</span>
+        </div>
+        <UnifiedUpload
+          designWeekId={designWeek.id}
+          onComplete={onRefresh}
+        />
 
-          {/* Upload History */}
-          {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
+        {/* Upload History */}
+        {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
+          <div className="mt-3">
             <UploadHistory
               uploads={designWeek.uploadJobs}
               onRetry={async (jobId) => {
@@ -339,9 +332,9 @@ export function DEWorkspace({
                 onRefresh?.()
               }}
             />
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
 
       {/* Tabs Section */}
       <Tabs
@@ -349,48 +342,56 @@ export function DEWorkspace({
         onValueChange={(value) => handleTabChange(value as WorkspaceTab)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-6 mb-6">
-        <TabsTrigger value="handover" className="gap-2 relative group" title="Sales context and client expectations from the sales handover" aria-label="Handover">
+        <TabsList className="w-full justify-start mb-8">
+        <TabsTrigger value="handover" className="gap-1.5" title="Sales context and client expectations from the sales handover" aria-label="Handover">
           <FileSignature className="h-4 w-4" />
           <span className="hidden sm:inline">Handover</span>
         </TabsTrigger>
-        <TabsTrigger value="progress" className="gap-2 relative group" title="Design Week progress, session guide, and profile completeness overview" aria-label="Progress">
+        <TabsTrigger value="progress" className="gap-1.5" title="Design Week progress, session guide, and profile completeness overview" aria-label="Progress">
           <Rocket className="h-4 w-4" />
           <span className="hidden sm:inline">Progress</span>
           {pendingItems.length > 0 && (
             <span className="ml-1 w-2 h-2 rounded-full bg-amber-500 inline-block" title={`${pendingItems.length} items need review`} />
           )}
         </TabsTrigger>
-        <TabsTrigger value="scope" className="gap-2 relative group" title="Scope items: what the DE will and will not handle" aria-label="Scope">
+        <TabsTrigger value="scope" className="gap-1.5" title="Scope items: what the DE will and will not handle" aria-label="Scope">
           <Shield className="h-4 w-4" />
           <span className="hidden sm:inline">Scope</span>
           {ambiguousItems.length > 0 && (
-            <Badge variant="secondary" className="ml-1 text-xs bg-amber-100 text-amber-700">
+            <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-700">
               {ambiguousItems.length}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="business" className="gap-2 relative group" title="Business profile: identity, process, skills, guardrails, KPIs" aria-label="Business Profile">
+        <TabsTrigger value="business" className="gap-1.5" title="Business profile: identity, process, skills, guardrails, KPIs" aria-label="Business Profile">
           <Briefcase className="h-4 w-4" />
           <span className="hidden sm:inline">Business</span>
           {profileCompleteness.business.overall < 100 && (
-            <Badge variant="secondary" className="ml-1 text-xs">
+            <Badge variant="secondary" className="ml-1">
               {profileCompleteness.business.overall}%
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="technical" className="gap-2 relative group" title="Technical profile: integrations, data fields, APIs, security" aria-label="Technical Profile">
+        <TabsTrigger value="technical" className="gap-1.5" title="Technical profile: integrations, data fields, APIs, security" aria-label="Technical Profile">
           <Wrench className="h-4 w-4" />
           <span className="hidden sm:inline">Technical</span>
           {profileCompleteness.technical.overall < 100 && (
-            <Badge variant="secondary" className="ml-1 text-xs">
+            <Badge variant="secondary" className="ml-1">
               {profileCompleteness.technical.overall}%
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="testplan" className="gap-2 relative group" title="Test plan: test cases, launch criteria, and UAT preparation" aria-label="Test Plan">
+        <TabsTrigger value="testplan" className="gap-1.5" title="Test plan: test cases, launch criteria, and UAT preparation" aria-label="Test Plan">
           <ClipboardCheck className="h-4 w-4" />
           <span className="hidden sm:inline">Test Plan</span>
+        </TabsTrigger>
+        <TabsTrigger value="documents" className="gap-1.5" title="Generate and manage design documents, exports, and PDFs" aria-label="Documents">
+          <FileText className="h-4 w-4" />
+          <span className="hidden sm:inline">Documents</span>
+        </TabsTrigger>
+        <TabsTrigger value="signoff" className="gap-1.5" title="Stakeholder sign-off approvals for Design Week completion" aria-label="Sign-off">
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="hidden sm:inline">Sign-off</span>
         </TabsTrigger>
       </TabsList>
 
@@ -433,6 +434,14 @@ export function DEWorkspace({
 
       <TabsContent value="testplan">
         <TestPlanTabV2 key={`testplan-${refreshKey}`} designWeekId={designWeek.id} />
+      </TabsContent>
+
+      <TabsContent value="documents">
+        <DocumentsTab key={`documents-${refreshKey}`} designWeekId={designWeek.id} />
+      </TabsContent>
+
+      <TabsContent value="signoff">
+        <SignOffTab key={`signoff-${refreshKey}`} designWeekId={designWeek.id} />
       </TabsContent>
       </Tabs>
     </div>

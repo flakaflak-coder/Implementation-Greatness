@@ -30,6 +30,7 @@ import {
   ArrowRight,
   FileSignature,
   Shield,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -343,6 +344,8 @@ const tabIcons: Record<WorkspaceTab, React.ReactNode> = {
   business: <Briefcase className="w-3 h-3" />,
   technical: <Wrench className="w-3 h-3" />,
   testplan: <ClipboardCheck className="w-3 h-3" />,
+  documents: <FileText className="w-3 h-3" />,
+  signoff: <CheckCircle2 className="w-3 h-3" />,
 }
 
 // Format relative time (using UTC for consistent server/client rendering)

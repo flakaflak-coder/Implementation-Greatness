@@ -13,10 +13,9 @@ describe('RocketProgress', () => {
   // --- Basic rendering ---
 
   it('renders without crashing', () => {
-    render(<RocketProgress progress={50} />)
-    // Should render the start and end labels
-    expect(screen.getByText('Start')).toBeInTheDocument()
-    expect(screen.getByText('Launch Ready')).toBeInTheDocument()
+    const { container } = render(<RocketProgress progress={50} />)
+    // Should render the progress bar
+    expect(container.querySelector('.rounded-full')).toBeInTheDocument()
   })
 
   it('renders the label when provided', () => {
@@ -41,11 +40,10 @@ describe('RocketProgress', () => {
     expect(screen.queryByText('75%')).not.toBeInTheDocument()
   })
 
-  it('does not show percentage when label is not provided even if showPercentage is true', () => {
+  it('shows percentage even when label is not provided if showPercentage is true', () => {
     render(<RocketProgress progress={75} animate={false} />)
-    // The percentage is rendered inside the label container, which is conditionally rendered
-    // When no label is provided, the entire label+percentage section is not rendered
-    expect(screen.queryByText('75%')).not.toBeInTheDocument()
+    // Percentage renders independently of label
+    expect(screen.getByText('75%')).toBeInTheDocument()
   })
 
   // --- Progress clamping ---
@@ -72,14 +70,14 @@ describe('RocketProgress', () => {
 
   // --- Launch indicator ---
 
-  it('shows "Launch!" text when progress is 100%', () => {
-    render(<RocketProgress progress={100} animate={false} />)
-    expect(screen.getByText('Launch!')).toBeInTheDocument()
+  it('shows 100% when progress is complete', () => {
+    render(<RocketProgress progress={100} label="Progress" animate={false} />)
+    expect(screen.getByText('100%')).toBeInTheDocument()
   })
 
-  it('does not show "Launch!" text when progress is below 100%', () => {
-    render(<RocketProgress progress={99} animate={false} />)
-    expect(screen.queryByText('Launch!')).not.toBeInTheDocument()
+  it('shows 99% when progress is not yet complete', () => {
+    render(<RocketProgress progress={99} label="Progress" animate={false} />)
+    expect(screen.getByText('99%')).toBeInTheDocument()
   })
 
   // --- Animation behavior ---
@@ -102,15 +100,12 @@ describe('RocketProgress', () => {
     expect(screen.getByText('80%')).toBeInTheDocument()
   })
 
-  // --- Milestone markers ---
+  // --- Progress bar ---
 
-  it('renders milestone markers at 25%, 50%, and 75%', () => {
+  it('renders progress bar with correct width', () => {
     const { container } = render(<RocketProgress progress={50} animate={false} />)
-
-    // There should be 3 milestone marker divs
-    // They are positioned at specific percentages
-    const milestoneMarkers = container.querySelectorAll('.h-5.w-0\\.5')
-    expect(milestoneMarkers.length).toBe(3)
+    const bar = container.querySelector('.h-full.rounded-full')
+    expect(bar).toHaveStyle({ width: '50%' })
   })
 
   // --- Custom className ---
@@ -124,16 +119,16 @@ describe('RocketProgress', () => {
 
   // --- Variants ---
 
-  it('renders with dark variant styling', () => {
+  it('renders with dark variant without crashing', () => {
     render(<RocketProgress progress={50} label="Progress" variant="dark" animate={false} />)
     const label = screen.getByText('Progress')
-    expect(label).toHaveClass('text-space-200')
+    expect(label).toHaveClass('text-stone-600')
   })
 
   it('renders with light variant styling (default)', () => {
     render(<RocketProgress progress={50} label="Progress" variant="light" animate={false} />)
     const label = screen.getByText('Progress')
-    expect(label).toHaveClass('text-gray-600')
+    expect(label).toHaveClass('text-stone-600')
   })
 
   // --- Rounding ---

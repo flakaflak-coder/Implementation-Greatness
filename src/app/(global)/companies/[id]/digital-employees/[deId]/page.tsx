@@ -356,24 +356,20 @@ export default function DigitalEmployeeDetailPage({
       <div className={`flex-1 overflow-auto transition-all duration-300 ${assistantOpen ? 'mr-0' : ''}`}>
         <div className="container mx-auto px-4 py-8">
           {/* Breadcrumb navigation */}
-          <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
-            <Link href="/" className="hover:text-gray-900 transition-colors">
+          <nav className="flex items-center gap-1.5 text-[13px] text-stone-400 mb-4">
+            <Link href="/" className="hover:text-stone-900 transition-colors">
               Dashboard
             </Link>
-            <span>/</span>
-            <Link href="/companies" className="hover:text-gray-900 transition-colors">
-              Companies
-            </Link>
-            <span>/</span>
-            <Link href={`/companies/${companyId}`} className="hover:text-gray-900 transition-colors">
+            <span className="text-stone-300">&middot;</span>
+            <Link href={`/companies/${companyId}`} className="hover:text-stone-900 transition-colors">
               {de.company.name}
             </Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">{de.name}</span>
+            <span className="text-stone-300">&middot;</span>
+            <span className="text-stone-800 font-medium">{de.name}</span>
           </nav>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center justify-between">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="w-5 h-5 text-red-500 shrink-0" />
             <span>{error}</span>
@@ -396,21 +392,20 @@ export default function DigitalEmployeeDetailPage({
       )}
 
       {/* DE Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl bg-[#C2703E] flex items-center justify-center">
-            <Bot className="w-8 h-8 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#C2703E]/10 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-[#C2703E]" />
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">{de.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-stone-900">{de.name}</h1>
               {getStatusBadge(de.status)}
             </div>
-            <p className="text-gray-500">{de.company.name}</p>
-            {de.description && <p className="text-gray-600 mt-1">{de.description}</p>}
+            <p className="text-[13px] text-stone-500">{de.company.name}{de.description ? ` \u2014 ${de.description}` : ''}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <AssistantTrigger
             onClick={() => {
               setAssistantAutoTrigger(undefined)
@@ -423,19 +418,18 @@ export default function DigitalEmployeeDetailPage({
               setAssistantAutoTrigger('client-update')
               setAssistantOpen(true)
             }}
-            variant="outline"
+            variant="ghost"
             size="sm"
+            title="Draft client update"
           >
-            <Share2 className="w-4 h-4 mr-2" />
-            Draft Update
+            <Share2 className="w-4 h-4" />
           </Button>
-          <Button onClick={() => fetchDE(true)} variant="outline" size="sm" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+          <Button onClick={() => fetchDE(true)} variant="ghost" size="sm" disabled={loading} title="Refresh data">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="ghost" size="sm">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -478,19 +472,19 @@ export default function DigitalEmployeeDetailPage({
         />
       ) : (
         /* No Design Week state -- guide Sophie to get started */
-        <div className="mt-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
-            <Upload className="w-8 h-8 text-[#D4956A]" />
+        <div className="mt-4 rounded-lg border border-dashed border-stone-300 p-10 text-center">
+          <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center mx-auto mb-3">
+            <Upload className="w-5 h-5 text-stone-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-base font-semibold text-stone-900 mb-1">
             No Design Week yet
           </h3>
-          <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+          <p className="text-sm text-stone-500 max-w-sm mx-auto mb-5">
             A Design Week is automatically created when you add a Digital Employee.
-            If this DE was imported or created differently, you may need to initialize the Design Week.
+            If this DE was imported or created differently, you may need to initialize it.
           </p>
-          <Button onClick={() => fetchDE(true)} variant="outline">
-            <RefreshCw className="w-4 h-4 mr-2" />
+          <Button onClick={() => fetchDE(true)} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-1.5" />
             Refresh to check again
           </Button>
         </div>

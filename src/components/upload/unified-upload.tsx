@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Upload, FileAudio, FileText, FileVideo, X, RefreshCw, CheckCircle2, AlertCircle, Settings2, Check, Clock, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+// Card imports removed — parent provides wrapper
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { PipelineProgress, createPipelineStages } from './pipeline-progress'
@@ -342,34 +342,26 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
     : []
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Upload className="h-4 w-4 text-[#C2703E]" />
-          Upload Session Material
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className={cn('space-y-3', className)}>
         {state === 'idle' && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Drop zone */}
             <div
               className={cn(
-                'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
+                'border-2 border-dashed rounded-lg p-5 text-center transition-colors cursor-pointer',
                 isDragging
                   ? 'border-[#C2703E] bg-[#FDF3EC]'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-stone-200 hover:border-stone-300'
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => document.getElementById('file-input')?.click()}
             >
-              <Upload className="h-10 w-10 mx-auto text-gray-400 mb-3" />
-              <p className="text-sm text-gray-600 mb-1">
+              <p className="text-sm text-stone-600 mb-1">
                 Drop recording, transcript, or document
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-stone-400">
                 Supports: MP4, MP3, WAV, PDF, DOCX, TXT
               </p>
               <input
@@ -599,8 +591,7 @@ export function UnifiedUpload({ designWeekId, onComplete, className }: UnifiedUp
         {error && state === 'idle' && (
           <p className="text-sm text-red-600 mt-2">{error}</p>
         )}
-      </CardContent>
-    </Card>
+    </div>
   )
 }
 

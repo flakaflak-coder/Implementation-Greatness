@@ -56,19 +56,19 @@ interface ChecklistItem {
 
 // Section colors
 const sectionColors: Record<string, string> = {
-  blue: 'border-blue-200 bg-blue-50/50',
-  amber: 'border-amber-200 bg-amber-50/50',
-  rose: 'border-rose-200 bg-rose-50/50',
-  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
-  emerald: 'border-emerald-200 bg-emerald-50/50',
+  blue: 'border-l-2 border-blue-400 pl-4',
+  amber: 'border-l-2 border-amber-400 pl-4',
+  rose: 'border-l-2 border-rose-400 pl-4',
+  violet: 'border-l-2 border-[#C2703E] pl-4',
+  emerald: 'border-l-2 border-emerald-400 pl-4',
 }
 
 const iconColors: Record<string, string> = {
-  blue: 'text-blue-600',
-  amber: 'text-amber-600',
-  rose: 'text-rose-600',
-  violet: 'text-[#C2703E]',
-  emerald: 'text-emerald-600',
+  blue: 'text-stone-500',
+  amber: 'text-stone-500',
+  rose: 'text-stone-500',
+  violet: 'text-stone-500',
+  emerald: 'text-stone-500',
 }
 
 const SectionIcon = ({ name, className }: { name: string; className?: string }) => {
@@ -94,7 +94,7 @@ const categoryColors = {
   technical: 'bg-cyan-100 text-cyan-700',
   timeline: 'bg-orange-100 text-orange-700',
   scope: 'bg-emerald-100 text-emerald-700',
-  other: 'bg-gray-100 text-gray-700',
+  other: 'bg-stone-100 text-stone-700',
 }
 
 const deadlineTypeColors = {
@@ -102,7 +102,7 @@ const deadlineTypeColors = {
   go_live: 'bg-green-100 text-green-700',
   milestone: 'bg-blue-100 text-blue-700',
   review: 'bg-amber-100 text-amber-700',
-  other: 'bg-gray-100 text-gray-700',
+  other: 'bg-stone-100 text-stone-700',
 }
 
 const priorityColors = {
@@ -318,8 +318,8 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading sales handover...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
+        <span className="ml-2 text-stone-500">Loading sales handover...</span>
       </div>
     )
   }
@@ -340,7 +340,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
     <div className={cn('space-y-4', className)}>
       {/* Saving indicator */}
       {saving && (
-        <div className="fixed top-4 right-4 bg-gray-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
+        <div className="fixed top-4 right-4 bg-stone-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
           <Loader2 className="h-4 w-4 animate-spin" />
           Saving...
         </div>
@@ -353,14 +353,14 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
 
       {/* Status Banner */}
       {handoverStatus === 'submitted' && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between gap-4">
+        <div className="p-4 border-l-2 border-blue-400 pl-4 bg-white rounded-lg flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Send className="h-5 w-5 text-blue-600 shrink-0" />
+            <Send className="h-5 w-5 text-stone-500 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-blue-700">
+              <p className="text-sm font-medium text-stone-700">
                 Handover submitted{profile.submittedBy ? ` by ${profile.submittedBy}` : ''}{profile.submittedAt ? ` on ${new Date(profile.submittedAt).toLocaleDateString()}` : ''}
               </p>
-              <p className="text-xs text-blue-600">Review the handover and accept, or request changes.</p>
+              <p className="text-xs text-stone-500">Review the handover and accept, or request changes.</p>
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -385,29 +385,29 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
       )}
 
       {handoverStatus === 'accepted' && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+        <div className="p-4 border-l-2 border-emerald-400 pl-4 bg-white rounded-lg flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-stone-500 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-emerald-700">
+            <p className="text-sm font-medium text-stone-700">
               Handover accepted{profile.reviewedBy ? ` by ${profile.reviewedBy}` : ''}{profile.reviewedAt ? ` on ${new Date(profile.reviewedAt).toLocaleDateString()}` : ''}
             </p>
             {profile.reviewComment && (
-              <p className="text-xs text-emerald-600 mt-0.5">{profile.reviewComment}</p>
+              <p className="text-xs text-stone-500 mt-0.5">{profile.reviewComment}</p>
             )}
           </div>
         </div>
       )}
 
       {handoverStatus === 'changes_requested' && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-4">
+        <div className="p-4 border-l-2 border-amber-400 pl-4 bg-white rounded-lg flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <MessageSquare className="h-5 w-5 text-amber-600 shrink-0" />
+            <MessageSquare className="h-5 w-5 text-stone-500 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-700">
+              <p className="text-sm font-medium text-stone-700">
                 Changes requested{profile.reviewedBy ? ` by ${profile.reviewedBy}` : ''}{profile.reviewedAt ? ` on ${new Date(profile.reviewedAt).toLocaleDateString()}` : ''}
               </p>
               {profile.reviewComment && (
-                <p className="text-xs text-amber-600 mt-0.5">&ldquo;{profile.reviewComment}&rdquo;</p>
+                <p className="text-xs text-stone-500 mt-0.5">&ldquo;{profile.reviewComment}&rdquo;</p>
               )}
             </div>
           </div>
@@ -424,19 +424,19 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
 
       {/* Review Comment Dialog (inline) */}
       {showReviewDialog && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
-          <h4 className="text-sm font-semibold text-amber-800">What changes are needed?</h4>
+        <div className="p-4 border-l-2 border-amber-400 pl-4 bg-white rounded-lg space-y-3">
+          <h4 className="text-sm font-semibold text-stone-800">What changes are needed?</h4>
           <textarea
             value={reviewComment}
             onChange={(e) => setReviewComment(e.target.value)}
             placeholder="Describe what needs to be added or changed..."
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => { setShowReviewDialog(false); setReviewComment('') }}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
             >
               Cancel
             </button>
@@ -452,12 +452,12 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
       )}
 
       {/* Completeness Meter */}
-      <div className="p-4 bg-white border border-gray-200 rounded-lg">
+      <div className="p-4 bg-white border border-stone-200 rounded-lg">
         <div className="flex items-center gap-6">
           {/* Main score */}
           <div className="flex flex-col items-center gap-1 shrink-0">
             <CircularProgress percentage={completeness.overall} size={64} strokeWidth={5} />
-            <span className="text-xs font-medium text-gray-500">Completeness</span>
+            <span className="text-xs font-medium text-stone-500">Completeness</span>
           </div>
 
           {/* Section breakdown */}
@@ -465,10 +465,10 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
             {completeness.sections.map((section) => (
               <div key={section.section}>
                 <div className="flex justify-between text-xs mb-0.5">
-                  <span className="text-gray-600">{section.label}</span>
-                  <span className="font-medium text-gray-500">{section.percentage}%</span>
+                  <span className="text-stone-600">{section.label}</span>
+                  <span className="font-medium text-stone-500">{section.percentage}%</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full">
+                <div className="h-1.5 bg-stone-100 rounded-full">
                   <div
                     className={cn(
                       'h-full rounded-full transition-all',
@@ -505,14 +505,14 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
       {qualityCheckResult && (
         <div
           className={cn(
-            'p-4 rounded-lg border',
+            'p-4 rounded-lg bg-white',
             qualityCheckResult.rating === 'excellent'
-              ? 'bg-emerald-50 border-emerald-200'
+              ? 'border-l-2 border-emerald-400 pl-4'
               : qualityCheckResult.rating === 'good'
-                ? 'bg-blue-50 border-blue-200'
+                ? 'border-l-2 border-blue-400 pl-4'
                 : qualityCheckResult.rating === 'needs_work'
-                  ? 'bg-amber-50 border-amber-200'
-                  : 'bg-red-50 border-red-200'
+                  ? 'border-l-2 border-amber-400 pl-4'
+                  : 'border-l-2 border-red-400 pl-4'
           )}
         >
           <div className="flex items-start justify-between">
@@ -522,16 +522,16 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
             </h4>
             <button
               onClick={() => setQualityCheckResult(null)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-stone-400 hover:text-stone-600"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">{qualityCheckResult.summary}</p>
+          <p className="text-sm text-stone-600 mt-1">{qualityCheckResult.summary}</p>
           {qualityCheckResult.missingItems.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs font-medium text-gray-500 mb-1">Missing:</p>
-              <ul className="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+              <p className="text-xs font-medium text-stone-500 mb-1">Missing:</p>
+              <ul className="list-disc list-inside text-sm text-stone-600 space-y-0.5">
                 {qualityCheckResult.missingItems.map((item, i) => (
                   <li key={i}>{item}</li>
                 ))}
@@ -540,8 +540,8 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
           )}
           {qualityCheckResult.suggestions.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs font-medium text-gray-500 mb-1">Suggestions:</p>
-              <ul className="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+              <p className="text-xs font-medium text-stone-500 mb-1">Suggestions:</p>
+              <ul className="list-disc list-inside text-sm text-stone-600 space-y-0.5">
                 {qualityCheckResult.suggestions.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
@@ -553,8 +553,8 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
 
       {/* Info banner */}
       {handoverStatus === 'draft' && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
+        <div className="p-4 border-l-2 border-blue-400 pl-4 bg-white rounded-lg">
+          <p className="text-sm text-stone-600">
             <strong>Sales Handover</strong> captures the deal context, watch-outs, deadlines, and special notes from the sales team. Upload sales documents (proposals, SOWs) via the upload section above — AI will automatically extract relevant information.
           </p>
         </div>
@@ -562,18 +562,18 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
 
       {/* Handover Checklist */}
       {checklist.length > 0 && (
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="p-4 bg-white border border-stone-200 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-600" />
+            <h3 className="text-base font-semibold tracking-tight text-stone-900 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-stone-500" />
               Handover Checklist
             </h3>
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-[11px] uppercase tracking-wider text-stone-400">
               {completedCount}/{totalCount} complete
             </span>
           </div>
           {/* Progress bar */}
-          <div className="h-1.5 bg-gray-100 rounded-full mb-3">
+          <div className="h-1.5 bg-stone-100 rounded-full mb-3">
             <div
               className="h-full bg-blue-500 rounded-full transition-all"
               style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }}
@@ -583,7 +583,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
             {checklist.map((item) => (
               <label
                 key={item.id}
-                className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-stone-50 cursor-pointer transition-colors"
               >
                 <button
                   onClick={() => toggleChecklistItem(item.id, !item.isCompleted)}
@@ -591,7 +591,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
                     'h-5 w-5 rounded border-2 flex items-center justify-center transition-colors shrink-0',
                     item.isCompleted
                       ? 'bg-blue-500 border-blue-500 text-white'
-                      : 'border-gray-300 hover:border-blue-400'
+                      : 'border-stone-300 hover:border-blue-400'
                   )}
                 >
                   {item.isCompleted && <Check className="h-3 w-3" />}
@@ -599,7 +599,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
                 <span
                   className={cn(
                     'text-sm transition-colors',
-                    item.isCompleted ? 'text-gray-400 line-through' : 'text-gray-700'
+                    item.isCompleted ? 'text-stone-400 line-through' : 'text-stone-700'
                   )}
                 >
                   {item.label}
@@ -807,7 +807,7 @@ export function SalesHandoverTab({ designWeekId, className }: SalesHandoverTabPr
 
           {/* Promised Capabilities */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-stone-600 mb-2">
               Promised Capabilities
             </label>
             <div className="space-y-2">
@@ -976,7 +976,7 @@ function TextInput({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-stone-600 mb-1">{label}</label>
       <input
         type="text"
         value={value}
@@ -985,8 +985,8 @@ function TextInput({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-          disabled && 'bg-gray-50 text-gray-500 cursor-not-allowed'
+          'w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+          disabled && 'bg-stone-50 text-stone-500 cursor-not-allowed'
         )}
       />
     </div>
@@ -1008,7 +1008,7 @@ function TextArea({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-stone-600 mb-1">{label}</label>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -1016,8 +1016,8 @@ function TextArea({
         rows={3}
         disabled={disabled}
         className={cn(
-          'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y',
-          disabled && 'bg-gray-50 text-gray-500 cursor-not-allowed'
+          'w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y',
+          disabled && 'bg-stone-50 text-stone-500 cursor-not-allowed'
         )}
       />
     </div>
@@ -1030,7 +1030,7 @@ function TextArea({
 
 function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    NOT_STARTED: { label: 'Not Started', color: 'bg-gray-100 text-gray-600', icon: <Circle className="h-3 w-3" /> },
+    NOT_STARTED: { label: 'Not Started', color: 'bg-stone-100 text-stone-600', icon: <Circle className="h-3 w-3" /> },
     IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', icon: <Clock className="h-3 w-3" /> },
     PENDING_SIGNOFF: { label: 'Pending Sign-off', color: 'bg-amber-100 text-amber-700', icon: <AlertTriangle className="h-3 w-3" /> },
     COMPLETE: { label: 'Complete', color: 'bg-emerald-100 text-emerald-700', icon: <Check className="h-3 w-3" /> },
@@ -1042,17 +1042,17 @@ function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
   return (
     <div
       className={cn(
-        'p-4 rounded-lg border',
-        hasRedFlags ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
+        'p-4 rounded-lg',
+        hasRedFlags ? 'border-l-2 border-red-400 pl-4 bg-white' : 'border-l-2 border-stone-300 pl-4 bg-white'
       )}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <Rocket className="h-4 w-4 text-[#C2703E]" />
+        <h3 className="text-base font-semibold tracking-tight text-stone-900 flex items-center gap-2">
+          <Rocket className="h-4 w-4 text-stone-500" />
           Implementation Progress
         </h3>
         {data.daysSinceAccepted !== null && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-stone-500">
             {data.daysSinceAccepted === 0 ? 'Accepted today' : `${data.daysSinceAccepted}d since handover`}
           </span>
         )}
@@ -1061,7 +1061,7 @@ function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
       <div className="grid grid-cols-4 gap-4">
         {/* Design Week Status */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Design Week</p>
+          <p className="text-xs text-stone-500 mb-1">Design Week</p>
           <span
             className={cn(
               'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium',
@@ -1074,26 +1074,26 @@ function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
 
         {/* Current Phase */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Phase</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-xs text-stone-500 mb-1">Phase</p>
+          <p className="text-sm font-medium text-stone-900">
             {data.currentPhase}/4 — {data.phaseName}
           </p>
         </div>
 
         {/* Sessions Processed */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Sessions</p>
-          <p className="text-sm font-medium text-gray-900">{data.sessionsProcessed} processed</p>
+          <p className="text-xs text-stone-500 mb-1">Sessions</p>
+          <p className="text-sm font-medium text-stone-900">{data.sessionsProcessed} processed</p>
         </div>
 
         {/* Profile Status */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Profiles</p>
+          <p className="text-xs text-stone-500 mb-1">Profiles</p>
           <div className="flex gap-1">
             <span
               className={cn(
                 'text-xs px-1.5 py-0.5 rounded',
-                data.hasBusinessProfile ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                data.hasBusinessProfile ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'
               )}
             >
               Biz {data.hasBusinessProfile ? '✓' : '—'}
@@ -1101,7 +1101,7 @@ function ImplementationPulse({ data }: { data: ImplementationPulseData }) {
             <span
               className={cn(
                 'text-xs px-1.5 py-0.5 rounded',
-                data.hasTechnicalProfile ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                data.hasTechnicalProfile ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'
               )}
             >
               Tech {data.hasTechnicalProfile ? '✓' : '—'}
@@ -1149,7 +1149,7 @@ function CollapsibleSection({
   children: React.ReactNode
 }) {
   return (
-    <div className={cn('rounded-lg border', sectionColors[config.color] || 'border-gray-200 bg-gray-50/50')}>
+    <div className={cn('rounded-lg', sectionColors[config.color] || 'border-l-2 border-stone-400 pl-4')}>
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left"
@@ -1157,19 +1157,19 @@ function CollapsibleSection({
         <div className="flex items-center gap-3">
           <SectionIcon name={config.icon} className={cn('h-5 w-5', iconColors[config.color])} />
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-base font-semibold tracking-tight text-stone-900">
               {config.title}
               {count !== undefined && count > 0 && (
-                <span className="ml-2 text-xs font-normal text-gray-500">({count})</span>
+                <span className="ml-2 text-[11px] uppercase tracking-wider font-normal text-stone-400">({count})</span>
               )}
             </h3>
-            <p className="text-xs text-gray-500">{config.description}</p>
+            <p className="text-[11px] uppercase tracking-wider text-stone-400">{config.description}</p>
           </div>
         </div>
         {expanded ? (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <ChevronDown className="h-4 w-4 text-stone-400" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <ChevronRight className="h-4 w-4 text-stone-400" />
         )}
       </button>
       {expanded && <div className="px-4 pb-4">{children}</div>}
@@ -1191,18 +1191,18 @@ function WatchOutItem({
   onRemove: () => void
 }) {
   return (
-    <div className="p-3 bg-white rounded-lg border border-gray-200 space-y-2">
+    <div className="p-3 bg-white rounded-lg border border-stone-200 space-y-2">
       <div className="flex items-start gap-2">
         <textarea
           value={watchOut.description}
           onChange={(e) => onUpdate({ ...watchOut, description: e.target.value })}
           placeholder="What should we look out for?"
           rows={2}
-          className="flex-1 px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+          className="flex-1 px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
         />
         <button
           onClick={onRemove}
-          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1 text-stone-400 hover:text-red-500 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -1211,7 +1211,7 @@ function WatchOutItem({
         <select
           value={watchOut.severity}
           onChange={(e) => onUpdate({ ...watchOut, severity: e.target.value as SalesWatchOut['severity'] })}
-          className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="text-xs px-2 py-1 border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <option value="info">Info</option>
           <option value="warning">Warning</option>
@@ -1220,7 +1220,7 @@ function WatchOutItem({
         <select
           value={watchOut.category}
           onChange={(e) => onUpdate({ ...watchOut, category: e.target.value as SalesWatchOut['category'] })}
-          className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="text-xs px-2 py-1 border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <option value="political">Political</option>
           <option value="technical">Technical</option>
@@ -1253,7 +1253,7 @@ function DeadlineItem({
   onRemove: () => void
 }) {
   return (
-    <div className="p-3 bg-white rounded-lg border border-gray-200 space-y-2">
+    <div className="p-3 bg-white rounded-lg border border-stone-200 space-y-2">
       <div className="flex items-start gap-2">
         <div className="flex-1 grid grid-cols-2 gap-2">
           <div>
@@ -1261,7 +1261,7 @@ function DeadlineItem({
               type="date"
               value={deadline.date}
               onChange={(e) => onUpdate({ ...deadline, date: e.target.value })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
           <div>
@@ -1270,13 +1270,13 @@ function DeadlineItem({
               value={deadline.description}
               onChange={(e) => onUpdate({ ...deadline, description: e.target.value })}
               placeholder="What's the deadline for?"
-              className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
         </div>
         <button
           onClick={onRemove}
-          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1 text-stone-400 hover:text-red-500 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -1285,7 +1285,7 @@ function DeadlineItem({
         <select
           value={deadline.type}
           onChange={(e) => onUpdate({ ...deadline, type: e.target.value as SalesDeadline['type'] })}
-          className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+          className="text-xs px-2 py-1 border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
         >
           <option value="contract">Contract</option>
           <option value="go_live">Go-Live</option>
@@ -1293,12 +1293,12 @@ function DeadlineItem({
           <option value="review">Review</option>
           <option value="other">Other</option>
         </select>
-        <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer">
           <input
             type="checkbox"
             checked={deadline.isHard}
             onChange={(e) => onUpdate({ ...deadline, isHard: e.target.checked })}
-            className="rounded border-gray-300"
+            className="rounded border-stone-300"
           />
           Hard deadline
         </label>
@@ -1330,25 +1330,25 @@ function PromisedCapabilityItem({
   onRemove: () => void
 }) {
   return (
-    <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
+    <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-stone-200">
       <input
         type="text"
         value={capability.description}
         onChange={(e) => onUpdate({ ...capability, description: e.target.value })}
         placeholder="What was promised?"
-        className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+        className="flex-1 px-2 py-1 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       />
       <input
         type="text"
         value={capability.source}
         onChange={(e) => onUpdate({ ...capability, source: e.target.value })}
         placeholder="Source"
-        className="w-28 px-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+        className="w-28 px-2 py-1 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       />
       <select
         value={capability.priority}
         onChange={(e) => onUpdate({ ...capability, priority: e.target.value as PromisedCapability['priority'] })}
-        className="text-xs px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+        className="text-xs px-2 py-1 border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
       >
         <option value="must_have">Must Have</option>
         <option value="should_have">Should Have</option>
@@ -1356,7 +1356,7 @@ function PromisedCapabilityItem({
       </select>
       <button
         onClick={onRemove}
-        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+        className="p-1 text-stone-400 hover:text-red-500 transition-colors"
       >
         <X className="h-4 w-4" />
       </button>
@@ -1378,7 +1378,7 @@ function StakeholderItem({
   onRemove: () => void
 }) {
   return (
-    <div className="p-3 bg-white rounded-lg border border-gray-200">
+    <div className="p-3 bg-white rounded-lg border border-stone-200">
       <div className="flex items-start gap-2">
         <div className="flex-1 grid grid-cols-3 gap-2">
           <input
@@ -1386,37 +1386,37 @@ function StakeholderItem({
             value={stakeholder.name}
             onChange={(e) => onUpdate({ ...stakeholder, name: e.target.value })}
             placeholder="Name"
-            className="px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           <input
             type="text"
             value={stakeholder.role}
             onChange={(e) => onUpdate({ ...stakeholder, role: e.target.value })}
             placeholder="Role"
-            className="px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           <input
             type="email"
             value={stakeholder.email || ''}
             onChange={(e) => onUpdate({ ...stakeholder, email: e.target.value })}
             placeholder="Email"
-            className="px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-2 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
         <button
           onClick={onRemove}
-          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1 text-stone-400 hover:text-red-500 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
       <div className="mt-2">
-        <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer">
           <input
             type="checkbox"
             checked={stakeholder.isDecisionMaker || false}
             onChange={(e) => onUpdate({ ...stakeholder, isDecisionMaker: e.target.checked })}
-            className="rounded border-gray-300"
+            className="rounded border-stone-300"
           />
           Decision maker
         </label>

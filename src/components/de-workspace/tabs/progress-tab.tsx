@@ -8,22 +8,20 @@ import {
   FileText,
   CheckCircle2,
   Circle,
-  Upload,
   Sparkles,
   Target,
   MessageSquare,
   Cpu,
   Signature,
   Key,
-  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+// Card imports removed — using lightweight divs
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { RocketProgress } from '@/components/journey/rocket-progress'
 import { DesignWeekTimeline, PhaseData, SessionCard, ProcessingStatus } from '@/components/design-week'
-import { CircularProgress } from '../shared/completeness-badge'
+// CircularProgress removed — using inline percentage text
 import { GenerateDocButton } from '../shared/generate-doc-button'
 import { ExportPDFButton } from '../shared/export-pdf-button'
 import { MissingQuestionsCard } from '../shared/missing-questions-card'
@@ -492,77 +490,67 @@ export function ProgressTab({
     (!designWeek.uploadJobs || designWeek.uploadJobs.length === 0)
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-8', className)}>
       {/* Getting Started guide -- shown only when no data exists */}
       {hasNoData && (
-        <Card className="border-[#E8D5C4] bg-[#FDF3EC]/30">
-          <CardContent className="py-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C2703E] to-[#A05A32] flex items-center justify-center shrink-0">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Welcome to Design Week</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  This is where you define the Digital Employee. Start by uploading a session recording or
-                  transcript from your Kickoff call. The AI will automatically extract goals, stakeholders,
-                  KPIs, and more.
-                </p>
-                <div className="flex flex-col gap-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span className="w-5 h-5 rounded-full bg-[#C2703E] text-white text-xs flex items-center justify-center font-medium">1</span>
-                    Upload your Kickoff session recording or transcript above
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span className="w-5 h-5 rounded-full bg-[#C2703E]/60 text-white text-xs flex items-center justify-center font-medium">2</span>
-                    Review the AI-extracted items in the Business and Technical tabs
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span className="w-5 h-5 rounded-full bg-[#C2703E]/30 text-white text-xs flex items-center justify-center font-medium">3</span>
-                    Continue with Process Design, Technical, and Sign-off sessions
-                  </div>
+        <div className="border border-[#E8D5C4] bg-[#FDF3EC]/30 rounded-lg p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#C2703E] flex items-center justify-center shrink-0">
+              <Sparkles className="w-4.5 h-4.5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-stone-900 text-[15px] mb-1">Welcome to Design Week</h3>
+              <p className="text-sm text-stone-600 mb-3">
+                Start by uploading a session recording or transcript from your Kickoff call.
+                The AI will automatically extract goals, stakeholders, KPIs, and more.
+              </p>
+              <div className="flex flex-col gap-1.5 text-sm">
+                <div className="flex items-center gap-2 text-stone-700">
+                  <span className="w-5 h-5 rounded-full bg-[#C2703E] text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                  Upload your Kickoff session recording or transcript above
+                </div>
+                <div className="flex items-center gap-2 text-stone-600">
+                  <span className="w-5 h-5 rounded-full bg-[#C2703E]/50 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                  Review extracted items in the Business and Technical tabs
+                </div>
+                <div className="flex items-center gap-2 text-stone-500">
+                  <span className="w-5 h-5 rounded-full bg-[#C2703E]/25 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                  Continue with Process Design, Technical, and Sign-off sessions
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Overall Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle>DE Profile Completeness</CardTitle>
-          <CardDescription>How complete is the Digital Employee definition? Fill in all required data to be ready for sign-off.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Rocket progress bar */}
-          <RocketProgress
-            progress={overallProgress}
-            label="Overall Completion"
-            showPercentage
-            animate
-          />
+      {/* Overall Progress — no card wrapper */}
+      <div className="space-y-4">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-xl font-bold tracking-tight text-stone-900">DE Profile Completeness</h2>
+          <span className="text-2xl font-bold tabular-nums text-[#C2703E]">{overallProgress}%</span>
+        </div>
 
-          {/* Session Topic Selector */}
-          <DesignWeekTimeline
-            phases={phases}
-            selectedPhase={selectedPhase}
-            onPhaseSelect={setSelectedPhase}
-            onPhaseToggle={togglePhaseCompletion}
-          />
+        <RocketProgress
+          progress={overallProgress}
+          animate
+        />
 
-          {/* Data stats */}
-          <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">
-            <span>
-              {extractedItems.filter(i => i.status === 'APPROVED').length} approved items from {totalCompletedSessions} sessions
-            </span>
-            <span>
-              {designWeek.scopeItems.filter((s) => s.classification !== 'AMBIGUOUS').length} scope
-              items confirmed
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+        <DesignWeekTimeline
+          phases={phases}
+          selectedPhase={selectedPhase}
+          onPhaseSelect={setSelectedPhase}
+          onPhaseToggle={togglePhaseCompletion}
+        />
+
+        <div className="flex items-center justify-between text-[13px] text-stone-500 pt-3 border-t border-stone-100">
+          <span>
+            {extractedItems.filter(i => i.status === 'APPROVED').length} approved items from {totalCompletedSessions} sessions
+          </span>
+          <span>
+            {designWeek.scopeItems.filter((s) => s.classification !== 'AMBIGUOUS').length} scope items confirmed
+          </span>
+        </div>
+      </div>
 
       {/* Prerequisites Gate - blocks phase transitions when prerequisites are incomplete */}
       <PrerequisitesGate
@@ -570,30 +558,27 @@ export function ProgressTab({
         onPhaseTransition={onRefresh}
       />
 
-      {/* Session Planning Guide - Helps Sophie know what to ask when */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br',
-                  selectedPhaseConfig.gradient
-                )}
-              >
-                <PhaseIcon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {selectedPhaseConfig.name} Session Guide
-                </CardTitle>
-                <CardDescription>Suggested topics and questions for {selectedPhaseConfig.name.toLowerCase()} sessions</CardDescription>
-              </div>
+      {/* Two-column: Session Guide (left) + Profile Summary (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Left — Session Guide */}
+        <div className="lg:col-span-3 space-y-5">
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br',
+                selectedPhaseConfig.gradient
+              )}
+            >
+              <PhaseIcon className="w-4 h-4 text-white" />
             </div>
-{/* Upload button moved to unified upload below */}
+            <div>
+              <h3 className="text-base font-semibold tracking-tight text-stone-900">
+                {selectedPhaseConfig.name} Session Guide
+              </h3>
+              <p className="text-[13px] text-stone-500">Topics for {selectedPhaseConfig.name.toLowerCase()} sessions</p>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          <div className="space-y-5">
           {/* Manual completion toggle */}
           {phaseSessions.length === 0 && (
             <div className={cn(
@@ -719,191 +704,124 @@ export function ProgressTab({
                 )
               })}
             </div>
-            <p className="text-xs text-gray-500 mt-3">
-              Use these as a guide during sessions. Questions auto-mark when relevant data is extracted and approved.
+            <p className="text-xs text-stone-400 mt-3">
+              Questions auto-mark when relevant data is extracted and approved.
             </p>
           </div>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
 
-      {/* Profile Completeness Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Business Profile Card */}
-        <Card
-          className="cursor-pointer hover:border-[#D4956A] hover:shadow-md transition-all"
-          onClick={() => onTabChange('business')}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#C2703E]" />
+        {/* Right — Profile & Prerequisites */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Business Profile */}
+          <div
+            className="rounded-lg border border-stone-200/60 p-4 cursor-pointer hover:border-[#C2703E]/40 transition-colors"
+            onClick={() => onTabChange('business')}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-[#C2703E]" />
                 Business Profile
-              </CardTitle>
-              <CircularProgress percentage={profileCompleteness.business.overall} size={44} />
+              </h4>
+              <span className="text-sm font-bold tabular-nums text-stone-600">{profileCompleteness.business.overall}%</span>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {businessSections.map(([section, data]) => (
-                <div key={section} className="group relative">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
-                      {data.missingTypes.length > 0 && (
-                        <AlertCircle className="h-3 w-3 text-amber-500" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {data.pendingCount > 0 && (
-                        <span className="text-xs text-amber-500">{data.pendingCount}⏳</span>
-                      )}
-                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            'h-full rounded-full transition-all',
-                            data.percentage >= 80
-                              ? 'bg-emerald-500'
-                              : data.percentage >= 50
-                              ? 'bg-amber-500'
-                              : 'bg-red-500'
-                          )}
-                          style={{ width: `${data.percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400 w-8">{data.percentage}%</span>
-                    </div>
-                  </div>
-                  {/* Tooltip on hover showing details */}
-                  {data.missingTypes.length > 0 && (
-                    <div className="hidden group-hover:block absolute left-0 top-full z-10 mt-1 p-2 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs">
-                      <p className="font-medium mb-1">Missing types:</p>
-                      <p>{data.missingTypes.slice(0, 3).map(t => t.replace(/_/g, ' ').toLowerCase()).join(', ')}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3 gap-2">
-              View Business Profile
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Technical Profile Card */}
-        <Card
-          className="cursor-pointer hover:border-[#D4956A] hover:shadow-md transition-all"
-          onClick={() => onTabChange('technical')}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#C2703E]" />
-                Technical Profile
-              </CardTitle>
-              <CircularProgress percentage={profileCompleteness.technical.overall} size={44} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {technicalSections.map(([section, data]) => (
-                <div key={section} className="group relative">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-600 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
-                      {data.missingTypes.length > 0 && (
-                        <AlertCircle className="h-3 w-3 text-amber-500" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {data.pendingCount > 0 && (
-                        <span className="text-xs text-amber-500">{data.pendingCount}⏳</span>
-                      )}
-                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                          'h-full rounded-full transition-all',
-                          data.percentage >= 80
-                            ? 'bg-emerald-500'
-                            : data.percentage >= 50
-                            ? 'bg-amber-500'
-                            : 'bg-red-500'
+                <div key={section} className="flex items-center justify-between text-[13px]">
+                  <span className="text-stone-500 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
+                  <div className="flex items-center gap-2">
+                    {data.pendingCount > 0 && (
+                      <span className="text-[11px] text-amber-500">{data.pendingCount} pending</span>
+                    )}
+                    <div className="w-12 h-1 bg-stone-200 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full rounded-full',
+                          data.percentage >= 80 ? 'bg-emerald-500' : data.percentage >= 50 ? 'bg-amber-500' : 'bg-stone-300'
                         )}
                         style={{ width: `${data.percentage}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-400 w-8">{data.percentage}%</span>
-                    </div>
                   </div>
-                  {/* Tooltip on hover showing details */}
-                  {data.missingTypes.length > 0 && (
-                    <div className="hidden group-hover:block absolute left-0 top-full z-10 mt-1 p-2 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs">
-                      <p className="font-medium mb-1">Missing types:</p>
-                      <p>{data.missingTypes.slice(0, 3).map(t => t.replace(/_/g, ' ').toLowerCase()).join(', ')}</p>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3 gap-2">
-              View Technical Profile
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            <button className="w-full mt-3 pt-2.5 border-t border-stone-100 text-[13px] text-stone-400 hover:text-[#C2703E] transition-colors flex items-center justify-center gap-1">
+              View details <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
 
-      {/* Prerequisites Summary Card */}
-      {prereqSummary && prereqSummary.total > 0 && (
-        <Card
-          className={cn(
-            'cursor-pointer hover:shadow-md transition-all',
-            prereqSummary.blocked > 0
-              ? 'border-red-200 hover:border-red-300 bg-red-50/30'
-              : prereqSummary.received === prereqSummary.total
-              ? 'border-emerald-200 hover:border-emerald-300 bg-emerald-50/30'
-              : 'border-amber-200 hover:border-amber-300 bg-amber-50/30'
-          )}
-          onClick={() => onTabChange('technical')}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Key className="h-4 w-4 text-orange-500" />
-                Prerequisites for Configuration
-              </CardTitle>
-              {prereqSummary.blocked > 0 ? (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {prereqSummary.blocked} blocked
-                </Badge>
-              ) : prereqSummary.received === prereqSummary.total ? (
-                <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  All ready
-                </Badge>
-              ) : (
-                <Badge variant="warning" className="gap-1">
-                  <Clock className="h-3 w-3" />
-                  {prereqSummary.total - prereqSummary.received} pending
-                </Badge>
-              )}
+          {/* Technical Profile */}
+          <div
+            className="rounded-lg border border-stone-200/60 p-4 cursor-pointer hover:border-[#C2703E]/40 transition-colors"
+            onClick={() => onTabChange('technical')}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5">
+                <Cpu className="h-3.5 w-3.5 text-[#C2703E]" />
+                Technical Profile
+              </h4>
+              <span className="text-sm font-bold tabular-nums text-stone-600">{profileCompleteness.technical.overall}%</span>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Progress bar */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
-                  {prereqSummary.received} of {prereqSummary.total} received
-                </span>
-                <span className="text-gray-500">
-                  {prereqSummary.total > 0
-                    ? Math.round((prereqSummary.received / prereqSummary.total) * 100)
-                    : 0}%
-                </span>
+            <div className="space-y-1.5">
+              {technicalSections.map(([section, data]) => (
+                <div key={section} className="flex items-center justify-between text-[13px]">
+                  <span className="text-stone-500 capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</span>
+                  <div className="flex items-center gap-2">
+                    {data.pendingCount > 0 && (
+                      <span className="text-[11px] text-amber-500">{data.pendingCount} pending</span>
+                    )}
+                    <div className="w-12 h-1 bg-stone-200 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full rounded-full',
+                          data.percentage >= 80 ? 'bg-emerald-500' : data.percentage >= 50 ? 'bg-amber-500' : 'bg-stone-300'
+                        )}
+                        style={{ width: `${data.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="w-full mt-3 pt-2.5 border-t border-stone-100 text-[13px] text-stone-400 hover:text-[#C2703E] transition-colors flex items-center justify-center gap-1">
+              View details <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Prerequisites */}
+          {prereqSummary && prereqSummary.total > 0 && (
+            <div
+              className={cn(
+                'rounded-lg border p-4 cursor-pointer transition-colors',
+                prereqSummary.blocked > 0
+                  ? 'border-red-200 bg-red-50/20 hover:border-red-300'
+                  : prereqSummary.received === prereqSummary.total
+                  ? 'border-emerald-200 bg-emerald-50/20 hover:border-emerald-300'
+                  : 'border-amber-200 bg-amber-50/20 hover:border-amber-300'
+              )}
+              onClick={() => onTabChange('technical')}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5 text-orange-500" />
+                  Prerequisites
+                </h4>
+                {prereqSummary.blocked > 0 ? (
+                  <Badge variant="destructive" className="text-[10px] gap-1 px-1.5 py-0">
+                    {prereqSummary.blocked} blocked
+                  </Badge>
+                ) : prereqSummary.received === prereqSummary.total ? (
+                  <Badge className="bg-emerald-500 hover:bg-emerald-600 text-[10px] gap-1 px-1.5 py-0">
+                    All ready
+                  </Badge>
+                ) : (
+                  <Badge variant="warning" className="text-[10px] gap-1 px-1.5 py-0">
+                    {prereqSummary.total - prereqSummary.received} pending
+                  </Badge>
+                )}
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden mb-2">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
@@ -918,44 +836,13 @@ export function ProgressTab({
                   }}
                 />
               </div>
+              <p className="text-[13px] text-stone-500">
+                {prereqSummary.received} of {prereqSummary.total} received
+              </p>
             </div>
-
-            {/* Status breakdown */}
-            <div className="flex flex-wrap gap-2 text-xs">
-              {prereqSummary.received > 0 && (
-                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
-                  ✓ {prereqSummary.received} received
-                </span>
-              )}
-              {prereqSummary.requested > 0 && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                  📨 {prereqSummary.requested} requested
-                </span>
-              )}
-              {prereqSummary.inProgress > 0 && (
-                <span className="px-2 py-1 bg-[#F5E6DA] text-[#A05A32] rounded-full">
-                  ⏳ {prereqSummary.inProgress} in progress
-                </span>
-              )}
-              {prereqSummary.pending > 0 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  ⏸ {prereqSummary.pending} pending
-                </span>
-              )}
-              {prereqSummary.blocked > 0 && (
-                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
-                  🚫 {prereqSummary.blocked} blocked
-                </span>
-              )}
-            </div>
-
-            <Button variant="ghost" size="sm" className="w-full mt-2 gap-2">
-              View Prerequisites in Technical Tab
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </div>
+      </div>
 
       {/* Missing Questions from AI Analysis */}
       {designWeek.uploadJobs && designWeek.uploadJobs.length > 0 && (
@@ -969,112 +856,64 @@ export function ProgressTab({
         />
       )}
 
-      {/* Data Review Needed */}
-      {(pendingItems.length > 0 || ambiguousItems.length > 0) && (
-        <Card className="border-amber-200 bg-amber-50/30">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              Data Review Needed
-            </CardTitle>
-            <CardDescription>
-              Confirm or clarify extracted information to complete the DE profile
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Pending review items */}
-            {pendingItems.length > 0 && (
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 rounded-full">
-                    <Clock className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {pendingItems.length} items pending review
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Review extracted items in Business or Technical profiles
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="warning">{pendingItems.length}</Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onTabChange('business')}
-                    className="text-amber-700 border-amber-200 hover:bg-amber-50"
-                  >
-                    Review
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Ambiguous scope items */}
-            {ambiguousItems.length > 0 && (
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-full">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {ambiguousItems.length} scope items need clarification
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Clarify whether these items are in or out of scope
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive">{ambiguousItems.length}</Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onTabChange('scope')}
-                    className="text-red-700 border-red-200 hover:bg-red-50"
-                  >
-                    Resolve
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Action alerts */}
+      {pendingItems.length > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/30 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-stone-900">{pendingItems.length} items pending review</p>
+              <p className="text-[13px] text-stone-500">Review in Business or Technical profiles</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onTabChange('business')}
+            className="text-amber-700 border-amber-200 hover:bg-amber-50 shrink-0"
+          >
+            Review <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        </div>
+      )}
+      {ambiguousItems.length > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/30 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-stone-900">{ambiguousItems.length} scope items need clarification</p>
+              <p className="text-[13px] text-stone-500">Clarify whether items are in or out of scope</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onTabChange('scope')}
+            className="text-red-700 border-red-200 hover:bg-red-50 shrink-0"
+          >
+            Resolve <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        </div>
       )}
 
-      {/* Ready for Sign-off indicator */}
+      {/* Ready for Sign-off */}
       {pendingItems.length === 0 &&
         ambiguousItems.length === 0 &&
         profileCompleteness.business.overall >= 80 &&
         profileCompleteness.technical.overall >= 80 && (
-          <Card className="border-emerald-200 bg-emerald-50/30">
-            <CardContent className="py-6">
-              <div className="flex items-center justify-center gap-3 text-emerald-700">
-                <CheckCircle2 className="h-6 w-6" />
-                <span className="font-medium">DE Profile Complete!</span>
-              </div>
-              <p className="text-center text-sm text-emerald-600 mt-2">
-                All required data has been captured and reviewed - ready for sign-off
-              </p>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/30 px-4 py-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-emerald-800">DE Profile Complete</p>
+              <p className="text-[13px] text-emerald-600">All required data captured and reviewed — ready for sign-off</p>
+            </div>
+          </div>
         )}
 
-      {/* Document Generation */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Export Documents</CardTitle>
-          <CardDescription>
-            Download professional PDF documents or generate markdown
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* PDF Export - Primary Action */}
+      {/* Documents */}
+      <div className="border-t border-stone-200 pt-6">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-4">Export Documents</h3>
+        <div className="flex flex-wrap items-start gap-4">
           <div>
             <ExportPDFButton
               designWeekId={designWeek.id}
@@ -1083,36 +922,31 @@ export function ProgressTab({
                 profileCompleteness.technical.overall < 50
               }
             />
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-stone-400 mt-1.5">
               {profileCompleteness.business.overall < 50 && profileCompleteness.technical.overall < 50
-                ? 'Requires at least 50% profile completeness to export'
-                : 'Professional PDF with all extracted information'}
+                ? 'Requires 50%+ completeness'
+                : 'Professional PDF export'}
             </p>
           </div>
-
-          {/* Markdown Generation - Secondary */}
-          <div className="pt-3 border-t">
-            <p className="text-xs text-gray-500 mb-2">Or generate markdown documents:</p>
-            <div className="flex flex-wrap gap-3">
-              <GenerateDocButton
-                designWeekId={designWeek.id}
-                documentType="ALL"
-                disabled={
-                  profileCompleteness.business.overall < 50 ||
-                  profileCompleteness.technical.overall < 50
-                }
-                onGenerate={onRefresh}
-              />
-            </div>
+          <div>
+            <GenerateDocButton
+              designWeekId={designWeek.id}
+              documentType="ALL"
+              disabled={
+                profileCompleteness.business.overall < 50 ||
+                profileCompleteness.technical.overall < 50
+              }
+              onGenerate={onRefresh}
+            />
             {(profileCompleteness.business.overall < 50 ||
               profileCompleteness.technical.overall < 50) && (
-              <p className="text-xs text-gray-500 mt-2">
-                Complete at least 50% of both profiles to generate markdown
+              <p className="text-xs text-stone-400 mt-1.5">
+                Requires 50%+ on both profiles
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -44,9 +44,9 @@ describe('UnifiedUpload', () => {
     MockEventSource.instances = []
   })
 
-  it('renders the upload card with title', () => {
+  it('renders the upload drop zone', () => {
     render(<UnifiedUpload {...defaultProps} />)
-    expect(screen.getByText('Upload Session Material')).toBeInTheDocument()
+    expect(screen.getByText('Drop recording, transcript, or document')).toBeInTheDocument()
   })
 
   it('renders the drop zone with supported file types', () => {
@@ -537,9 +537,8 @@ describe('UnifiedUpload', () => {
   })
 
   it('accepts a custom className', () => {
-    render(<UnifiedUpload {...defaultProps} className="my-custom-class" />)
-    const card = screen.getByText('Upload Session Material').closest('.overflow-hidden')
-    expect(card).toHaveClass('my-custom-class')
+    const { container } = render(<UnifiedUpload {...defaultProps} className="my-custom-class" />)
+    expect(container.firstChild).toHaveClass('my-custom-class')
   })
 
   it('shows start over button in error state when no jobId exists', async () => {

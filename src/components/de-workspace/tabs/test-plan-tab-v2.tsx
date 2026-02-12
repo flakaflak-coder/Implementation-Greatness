@@ -242,7 +242,7 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
   if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center py-12', className)}>
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
       </div>
     )
   }
@@ -250,15 +250,15 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
   if (error) {
     return (
       <div className={cn('p-4', className)}>
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="py-6 text-center">
+        <div className="border-l-2 border-red-400 pl-4 py-6 text-center">
+          <div>
             <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
             <p className="text-red-700">{error}</p>
             <Button variant="outline" onClick={handleRefresh} className="mt-4">
               Retry
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     )
   }
@@ -277,16 +277,16 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
   }
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Test Plan</h2>
-          <p className="text-sm text-gray-500">UAT test cases for Digital Employee validation</p>
+          <h2 className="text-base font-semibold tracking-tight text-stone-900">Test Plan</h2>
+          <p className="text-[11px] uppercase tracking-wider text-stone-400">UAT test cases for Digital Employee validation</p>
         </div>
         <div className="flex items-center gap-2">
           {isSaving && (
-            <span className="text-sm text-gray-500 flex items-center gap-1">
+            <span className="text-sm text-stone-500 flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
               Saving...
             </span>
@@ -299,18 +299,18 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
       </div>
 
       {/* Coverage Summary Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clipboard className="h-4 w-4 text-[#C2703E]" />
+      <div className="rounded-lg border border-stone-200">
+        <div className="px-6 pt-6 pb-3">
+          <h3 className="text-base font-semibold tracking-tight flex items-center gap-2">
+            <Clipboard className="h-4 w-4 text-stone-500" />
             Test Coverage Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="px-6 pb-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-sm text-gray-500">Total Tests</p>
+            <div className="text-center p-3 bg-stone-50 rounded-lg">
+              <p className="text-2xl font-bold text-stone-900">{stats.total}</p>
+              <p className="text-sm text-stone-500">Total Tests</p>
             </div>
             <div className="text-center p-3 bg-emerald-50 rounded-lg">
               <p className="text-2xl font-bold text-emerald-600">{stats.passed}</p>
@@ -320,26 +320,26 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
               <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
               <p className="text-sm text-red-700">Failed</p>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-2xl font-bold text-gray-600">{stats.notRun}</p>
-              <p className="text-sm text-gray-500">Not Run</p>
+            <div className="text-center p-3 bg-stone-50 rounded-lg">
+              <p className="text-2xl font-bold text-stone-600">{stats.notRun}</p>
+              <p className="text-sm text-stone-500">Not Run</p>
             </div>
-            <div className="text-center p-3 bg-[#FDF3EC] rounded-lg">
+            <div className="text-center p-3 bg-stone-50 rounded-lg">
               <p className="text-2xl font-bold text-[#C2703E]">{stats.coveragePercent}%</p>
-              <p className="text-sm text-[#A05A32]">Pass Rate</p>
+              <p className="text-sm text-stone-500">Pass Rate</p>
             </div>
           </div>
 
           {/* Coverage status message */}
           {hasGoodCoverage && stats.total > 0 ? (
-            <div className="mt-4 flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <div className="mt-4 flex items-center gap-2 p-3 border-l-2 border-emerald-400 pl-4">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <p className="text-sm text-emerald-700 font-medium">
                 All tests passing! Ready for UAT sign-off.
               </p>
             </div>
           ) : coverageGaps.length > 0 ? (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="mt-4 p-3 border-l-2 border-amber-400 pl-4">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
@@ -353,8 +353,8 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
               </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Test Type Breakdown */}
       <div className="grid grid-cols-5 gap-3">
@@ -362,12 +362,12 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
           const config = TEST_PLAN_SECTION_CONFIG[type]
           const tests = groupedTestCases[type] || []
           return (
-            <Card key={type} className="text-center">
-              <CardContent className="pt-4 pb-3">
-                <p className="text-xl font-bold text-gray-900">{tests.length}</p>
-                <p className="text-xs text-gray-500">{type.replace('_', ' ')}</p>
-              </CardContent>
-            </Card>
+            <div key={type} className="text-center rounded-lg border border-stone-200">
+              <div className="pt-4 pb-3">
+                <p className="text-xl font-bold text-stone-900">{tests.length}</p>
+                <p className="text-xs text-stone-500">{type.replace('_', ' ')}</p>
+              </div>
+            </div>
           )
         })}
       </div>
@@ -397,11 +397,11 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
 
       {/* Empty state */}
       {stats.total === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <FlaskConical className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No test cases yet</h3>
-            <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+        <div className="rounded-lg border border-dashed border-stone-300">
+          <div className="py-12 text-center">
+            <FlaskConical className="h-12 w-12 mx-auto text-stone-300 mb-4" />
+            <h3 className="text-base font-semibold tracking-tight text-stone-900 mb-2">No test cases yet</h3>
+            <p className="text-sm text-stone-500 mb-4 max-w-md mx-auto">
               Test cases are generated from happy path steps, exception cases, guardrails, and scope
               items. Complete the Business Profile to auto-generate tests, or add tests manually.
             </p>
@@ -411,8 +411,8 @@ export function TestPlanTabV2({ designWeekId, className }: TestPlanTabV2Props) {
                 Check for Updates
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -445,35 +445,30 @@ function TestCaseSection({
 
   const colorClasses: Record<
     string,
-    { bg: string; border: string; text: string; headerBg: string }
+    { accent: string; text: string; headerBg: string }
   > = {
     emerald: {
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
+      accent: 'border-emerald-400',
       text: 'text-emerald-700',
       headerBg: 'bg-emerald-500',
     },
     amber: {
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
+      accent: 'border-amber-400',
       text: 'text-amber-700',
       headerBg: 'bg-amber-500',
     },
     red: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
+      accent: 'border-red-400',
       text: 'text-red-700',
       headerBg: 'bg-red-500',
     },
     blue: {
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
+      accent: 'border-blue-400',
       text: 'text-blue-700',
       headerBg: 'bg-blue-500',
     },
     violet: {
-      bg: 'bg-[#FDF3EC]',
-      border: 'border-[#E8D5C4]',
+      accent: 'border-[#C2703E]',
       text: 'text-[#A05A32]',
       headerBg: 'bg-[#C2703E]',
     },
@@ -495,22 +490,17 @@ function TestCaseSection({
   }
 
   return (
-    <div className="rounded-xl border overflow-hidden">
-      {/* Color accent bar */}
-      <div className={cn('h-1', colors.headerBg)} />
-
+    <div className={cn('rounded-lg border-l-2 pl-4', colors.accent)}>
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-stone-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={cn('p-2 rounded-lg', colors.bg)}>
-            <IconComponent className={cn('h-5 w-5', colors.text)} />
-          </div>
+          <IconComponent className={cn('h-5 w-5', colors.text)} />
           <div>
-            <h3 className="font-semibold text-gray-900">{config.title}</h3>
-            <p className="text-sm text-gray-500">{config.description}</p>
+            <h3 className="text-base font-semibold tracking-tight text-stone-900">{config.title}</h3>
+            <p className="text-sm text-stone-500">{config.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -524,9 +514,9 @@ function TestCaseSection({
             )}
           </div>
           {isExpanded ? (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-stone-400" />
           ) : (
-            <ChevronRight className="h-5 w-5 text-gray-400" />
+            <ChevronRight className="h-5 w-5 text-stone-400" />
           )}
         </div>
       </button>
@@ -535,10 +525,10 @@ function TestCaseSection({
       {isExpanded && (
         <div className="px-4 pb-4 space-y-3">
           {testCases.length === 0 && !isAdding ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-stone-500">
               <IconComponent className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No {config.title.toLowerCase()} yet</p>
-              <p className="text-xs text-gray-400 mt-1">Tests will be generated from profile data</p>
+              <p className="text-xs text-stone-400 mt-1">Tests will be generated from profile data</p>
             </div>
           ) : (
             testCases.map((testCase) =>
@@ -606,12 +596,12 @@ function TestCaseCard({ testCase, onEdit, onDelete, onStatusChange }: TestCaseCa
   const StatusIcon = statusIcons[testCase.status]
 
   return (
-    <Card className="group hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
+    <div className="group hover:shadow-md transition-shadow rounded-lg border border-stone-200">
+      <div className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h4 className="font-medium text-gray-900 truncate">{testCase.name}</h4>
+              <h4 className="font-medium text-stone-900 truncate">{testCase.name}</h4>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className={cn('text-xs', priorityConfig.color)}>
@@ -636,7 +626,7 @@ function TestCaseCard({ testCase, onEdit, onDelete, onStatusChange }: TestCaseCa
                 </SelectContent>
               </Select>
               {testCase.steps.length > 0 && (
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-stone-400">
                   {testCase.steps.length} step{testCase.steps.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -644,7 +634,7 @@ function TestCaseCard({ testCase, onEdit, onDelete, onStatusChange }: TestCaseCa
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
-              <Edit2 className="w-4 h-4 text-gray-500" />
+              <Edit2 className="w-4 h-4 text-stone-500" />
             </Button>
             <Button variant="ghost" size="sm" onClick={onDelete} className="h-8 w-8 p-0">
               <Trash2 className="w-4 h-4 text-red-500" />
@@ -652,12 +642,12 @@ function TestCaseCard({ testCase, onEdit, onDelete, onStatusChange }: TestCaseCa
           </div>
         </div>
         {testCase.expectedResult && (
-          <div className="mt-2 text-sm text-gray-600">
-            <span className="font-medium text-gray-500">Expected:</span> {testCase.expectedResult}
+          <div className="mt-2 text-sm text-stone-600">
+            <span className="font-medium text-stone-500">Expected:</span> {testCase.expectedResult}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -730,7 +720,7 @@ function TestCaseForm({ testCase, defaultType, onSave, onCancel }: TestCaseFormP
   }
 
   return (
-    <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+    <div className="space-y-4 p-4 bg-stone-50 rounded-lg border border-stone-200">
       <div className="grid grid-cols-2 gap-4">
         {/* Test Name */}
         <div className="col-span-2">
@@ -816,7 +806,7 @@ function TestCaseForm({ testCase, defaultType, onSave, onCancel }: TestCaseFormP
           <div className="mt-1 space-y-2">
             {(formData.steps || ['']).map((step, index) => (
               <div key={index} className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 w-6">{index + 1}.</span>
+                <span className="text-sm text-stone-500 w-6">{index + 1}.</span>
                 <Input
                   value={step}
                   onChange={(e) => updateStep(index, e.target.value)}
@@ -830,7 +820,7 @@ function TestCaseForm({ testCase, defaultType, onSave, onCancel }: TestCaseFormP
                   className="h-8 w-8 p-0"
                   disabled={(formData.steps || []).length === 1}
                 >
-                  <Trash2 className="w-4 h-4 text-gray-400" />
+                  <Trash2 className="w-4 h-4 text-stone-400" />
                 </Button>
               </div>
             ))}
@@ -913,7 +903,7 @@ const launchStatusConfig: Record<
   LaunchCriterion['status'],
   { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
 > = {
-  pending: { label: 'Pending', icon: CircleDot, color: 'text-gray-400' },
+  pending: { label: 'Pending', icon: CircleDot, color: 'text-stone-400' },
   met: { label: 'Met', icon: CircleCheck, color: 'text-emerald-500' },
   not_met: { label: 'Not Met', icon: CircleX, color: 'text-red-500' },
   waived: { label: 'Waived', icon: CircleMinus, color: 'text-amber-500' },
@@ -937,19 +927,16 @@ function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSec
   const allMet = metCount === totalCount && totalCount > 0
 
   return (
-    <div className="rounded-xl border overflow-hidden">
-      <div className={cn('h-1', allMet ? 'bg-emerald-500' : 'bg-orange-500')} />
+    <div className={cn('rounded-lg border-l-2 pl-4', allMet ? 'border-emerald-400' : 'border-orange-400')}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-stone-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={cn('p-2 rounded-lg', allMet ? 'bg-emerald-50' : 'bg-orange-50')}>
-            <Rocket className={cn('h-5 w-5', allMet ? 'text-emerald-600' : 'text-orange-600')} />
-          </div>
+          <Rocket className={cn('h-5 w-5', allMet ? 'text-emerald-600' : 'text-orange-600')} />
           <div>
-            <h3 className="font-semibold text-gray-900">Launch Readiness</h3>
-            <p className="text-sm text-gray-500">Go/no-go criteria checklist</p>
+            <h3 className="text-base font-semibold tracking-tight text-stone-900">Launch Readiness</h3>
+            <p className="text-sm text-stone-500">Go/no-go criteria checklist</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -960,9 +947,9 @@ function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSec
             <Badge className="bg-emerald-100 text-emerald-700">Ready to launch</Badge>
           )}
           {isExpanded ? (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-stone-400" />
           ) : (
-            <ChevronRight className="h-5 w-5 text-gray-400" />
+            <ChevronRight className="h-5 w-5 text-stone-400" />
           )}
         </div>
       </button>
@@ -980,7 +967,7 @@ function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSec
                   <span className={cn('text-xs font-medium px-2 py-0.5 rounded', phaseConfig.color)}>
                     {phaseConfig.label}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-stone-400">
                     {phaseMetCount}/{phaseCriteria.length} met
                   </span>
                 </div>
@@ -991,7 +978,7 @@ function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSec
                     return (
                       <div
                         key={criterion.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 group"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 group"
                       >
                         <Select
                           value={criterion.status}
@@ -1013,15 +1000,15 @@ function LaunchReadinessSection({ criteria, onStatusChange }: LaunchReadinessSec
                         <div className="flex-1 min-w-0">
                           <p className={cn(
                             'text-sm',
-                            criterion.status === 'met' ? 'text-gray-400 line-through' : 'text-gray-900'
+                            criterion.status === 'met' ? 'text-stone-400 line-through' : 'text-stone-900'
                           )}>
                             {criterion.criterion}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             {criterion.owner && (
-                              <span className="text-xs text-gray-400">Owner: {criterion.owner}</span>
+                              <span className="text-xs text-stone-400">Owner: {criterion.owner}</span>
                             )}
-                            <span className="text-xs text-gray-300">
+                            <span className="text-xs text-stone-300">
                               {launchCategoryLabels[criterion.category]}
                             </span>
                           </div>

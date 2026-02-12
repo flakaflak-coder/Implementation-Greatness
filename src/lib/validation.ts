@@ -6,7 +6,7 @@
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus, PrerequisiteCategory, PrerequisiteOwner, PrerequisiteStatus, Priority, ExtractedItemType, GeneratedDocType, JourneyPhaseType, NotificationType } from '@prisma/client'
+import { ReviewStatus, DesignWeekStatus, ProcessingStatus, RiskLevel, TrackerStatus, PrerequisiteCategory, PrerequisiteOwner, PrerequisiteStatus, Priority, ExtractedItemType, GeneratedDocType, JourneyPhaseType, NotificationType, SignOffStatus, ConditionType, EscalationAction } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMMON SCHEMAS
@@ -359,6 +359,45 @@ export const BatchResolveScopeItemsSchema = z.object({
     error: 'classification must be IN_SCOPE or OUT_OF_SCOPE',
   }),
   notes: z.string().max(5000).trim().optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIGN-OFF SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CreateSignOffSchema = z.object({
+  stakeholder: z.string().min(1).max(255).trim(),
+  role: z.string().min(1).max(255).trim(),
+  comments: z.string().max(2000).trim().nullable().optional(),
+})
+
+export const UpdateSignOffSchema = z.object({
+  status: z.nativeEnum(SignOffStatus).optional(),
+  comments: z.string().max(2000).trim().nullable().optional(),
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ESCALATION RULE SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const CreateEscalationRuleSchema = z.object({
+  trigger: z.string().min(1).max(1000).trim(),
+  conditionType: z.nativeEnum(ConditionType),
+  threshold: z.number().min(0).max(1).nullable().optional(),
+  keywords: z.array(z.string().max(200).trim()).max(50).optional().default([]),
+  action: z.nativeEnum(EscalationAction),
+  handoverContext: z.array(z.string().max(500).trim()).max(20).optional().default([]),
+  priority: z.nativeEnum(Priority).optional().default('MEDIUM'),
+})
+
+export const UpdateEscalationRuleSchema = z.object({
+  trigger: z.string().min(1).max(1000).trim().optional(),
+  conditionType: z.nativeEnum(ConditionType).optional(),
+  threshold: z.number().min(0).max(1).nullable().optional(),
+  keywords: z.array(z.string().max(200).trim()).max(50).optional(),
+  action: z.nativeEnum(EscalationAction).optional(),
+  handoverContext: z.array(z.string().max(500).trim()).max(20).optional(),
+  priority: z.nativeEnum(Priority).optional(),
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════

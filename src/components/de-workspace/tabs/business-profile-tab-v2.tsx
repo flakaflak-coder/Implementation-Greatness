@@ -47,27 +47,27 @@ interface BusinessProfileTabV2Props {
   className?: string
 }
 
-// Section colors mapping
+// Section colors mapping - left accent border style
 const sectionColors: Record<string, string> = {
-  indigo: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
-  blue: 'border-blue-200 bg-blue-50/50',
-  emerald: 'border-emerald-200 bg-emerald-50/50',
-  cyan: 'border-cyan-200 bg-cyan-50/50',
-  violet: 'border-[#E8D5C4] bg-[#FDF3EC]/50',
-  amber: 'border-amber-200 bg-amber-50/50',
-  rose: 'border-rose-200 bg-rose-50/50',
-  pink: 'border-pink-200 bg-pink-50/50',
+  indigo: 'border-l-2 border-[#C2703E] pl-4',
+  blue: 'border-l-2 border-blue-400 pl-4',
+  emerald: 'border-l-2 border-emerald-400 pl-4',
+  cyan: 'border-l-2 border-cyan-400 pl-4',
+  violet: 'border-l-2 border-[#C2703E] pl-4',
+  amber: 'border-l-2 border-amber-400 pl-4',
+  rose: 'border-l-2 border-rose-400 pl-4',
+  pink: 'border-l-2 border-pink-400 pl-4',
 }
 
 const iconColors: Record<string, string> = {
-  indigo: 'text-[#C2703E]',
-  blue: 'text-blue-600',
-  emerald: 'text-emerald-600',
-  cyan: 'text-cyan-600',
-  violet: 'text-[#C2703E]',
-  amber: 'text-amber-600',
-  rose: 'text-rose-600',
-  pink: 'text-pink-600',
+  indigo: 'text-stone-500',
+  blue: 'text-stone-500',
+  emerald: 'text-stone-500',
+  cyan: 'text-stone-500',
+  violet: 'text-stone-500',
+  amber: 'text-stone-500',
+  rose: 'text-stone-500',
+  pink: 'text-stone-500',
 }
 
 // Section icons
@@ -198,7 +198,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
     <div className={cn('space-y-4', className)}>
       {/* Saving indicator */}
       {saving && (
-        <div className="fixed top-4 right-4 bg-gray-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
+        <div className="fixed top-4 right-4 bg-stone-900 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 shadow-lg z-50">
           <Loader2 className="h-4 w-4 animate-spin" />
           Saving...
         </div>
@@ -243,7 +243,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
             multiline
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Stakeholders</label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Stakeholders</label>
             <StakeholdersList
               stakeholders={profile.identity.stakeholders}
               onUpdate={(stakeholders) =>
@@ -296,7 +296,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                 placeholder="11000"
               />
               {profile.businessContext.volumeCalculationNote && (
-                <p className="text-xs text-gray-500 mt-1 ml-1">
+                <p className="text-xs text-stone-500 mt-1 ml-1">
                   {profile.businessContext.volumeCalculationNote}
                 </p>
               )}
@@ -319,7 +319,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                 placeholder="12.50"
               />
               {profile.businessContext.totalMonthlyCost && (
-                <p className="text-xs text-gray-500 mt-1 ml-1" suppressHydrationWarning>
+                <p className="text-xs text-stone-500 mt-1 ml-1" suppressHydrationWarning>
                   Total: {profile.businessContext.currency || '€'}{profile.businessContext.totalMonthlyCost.toLocaleString()}/month
                 </p>
               )}
@@ -383,7 +383,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
         expanded={expandedSections.has('skills')}
         onToggle={() => toggleSection('skills')}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <SkillsList
             skills={profile.skills.skills}
             onUpdate={(skills) =>
@@ -394,8 +394,8 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
             }
           />
 
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Communication Style</h4>
+          <div className="border-t border-stone-100 pt-4">
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Communication Style</h4>
             <div className="space-y-3">
               <TagList
                 label="Tone"
@@ -426,7 +426,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                 placeholder="e.g., Dutch, English..."
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Formality</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1">Formality</label>
                 <select
                   value={profile.skills.communicationStyle.formality}
                   onChange={(e) =>
@@ -441,7 +441,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
                       },
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+                  className="px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
                 >
                   <option value="formal">Formal</option>
                   <option value="casual">Casual</option>
@@ -460,9 +460,9 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
         expanded={expandedSections.has('process')}
         onToggle={() => toggleSection('process')}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Happy Path</h4>
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Happy Path</h4>
             <ProcessStepsList
               steps={profile.process.happyPathSteps}
               onUpdate={(steps) =>
@@ -474,8 +474,8 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
             />
           </div>
 
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Exceptions</h4>
+          <div className="border-t border-stone-100 pt-4">
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Exceptions</h4>
             <ExceptionsList
               exceptions={profile.process.exceptions}
               onUpdate={(exceptions) =>
@@ -487,7 +487,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
             />
           </div>
 
-          <div className="border-t pt-4">
+          <div className="border-t border-stone-100 pt-4">
             <TagList
               label="Escalation Rules"
               tags={profile.process.escalationRules}
@@ -510,7 +510,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
         expanded={expandedSections.has('guardrails')}
         onToggle={() => toggleSection('guardrails')}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <GuardrailsList
             neverRules={profile.guardrails.never}
             alwaysRules={profile.guardrails.always}
@@ -535,7 +535,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
             }
           />
 
-          <div className="border-t pt-4">
+          <div className="border-t border-stone-100 pt-4">
             <TagList
               label="Legal Restrictions"
               tags={profile.guardrails.legalRestrictions}
@@ -558,10 +558,10 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
         expanded={expandedSections.has('persona')}
         onToggle={() => toggleSection('persona')}
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Persona Traits */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Personality Traits</h4>
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Personality Traits</h4>
             <PersonaTraitsList
               traits={profile.persona?.traits || []}
               onUpdate={(traits) =>
@@ -574,8 +574,8 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* Tone Rules */}
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Tone of Voice Rules</h4>
+          <div className="border-t border-stone-100 pt-4">
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Tone of Voice Rules</h4>
             <ToneRulesList
               rules={profile.persona?.toneRules || []}
               onUpdate={(toneRules) =>
@@ -588,8 +588,8 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* Do's & Don'ts */}
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Do&apos;s & Don&apos;ts</h4>
+          <div className="border-t border-stone-100 pt-4">
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Do&apos;s & Don&apos;ts</h4>
             <DosAndDontsList
               items={profile.persona?.dosAndDonts || []}
               onUpdate={(dosAndDonts) =>
@@ -602,7 +602,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* Opening Message */}
-          <div className="border-t pt-4">
+          <div className="border-t border-stone-100 pt-4">
             <EditableField
               label="Opening Message"
               value={profile.persona?.openingMessage || ''}
@@ -618,7 +618,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* AI Disclaimer */}
-          <div className="border-t pt-4">
+          <div className="border-t border-stone-100 pt-4">
             <EditableField
               label="AI Transparency Disclaimer"
               value={profile.persona?.aiDisclaimer || ''}
@@ -634,8 +634,8 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* Escalation Scripts */}
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Escalation Scripts</h4>
+          <div className="border-t border-stone-100 pt-4">
+            <h4 className="text-base font-semibold tracking-tight text-stone-900 mb-3">Escalation Scripts</h4>
             <EscalationScriptsList
               scripts={profile.persona?.escalationScripts || []}
               onUpdate={(escalationScripts) =>
@@ -648,7 +648,7 @@ export function BusinessProfileTabV2({ designWeekId, className }: BusinessProfil
           </div>
 
           {/* Conversation Structure */}
-          <div className="border-t pt-4">
+          <div className="border-t border-stone-100 pt-4">
             <TagList
               label="Conversation Structure (ordered steps)"
               tags={profile.persona?.conversationStructure || []}
@@ -678,51 +678,37 @@ interface ProfileSectionProps {
   children: React.ReactNode
 }
 
-const accentGradients: Record<string, string> = {
-  indigo: 'from-[#D4956A] to-[#C2703E]',
-  blue: 'from-blue-400 to-blue-600',
-  emerald: 'from-emerald-400 to-emerald-600',
-  cyan: 'from-cyan-400 to-cyan-600',
-  violet: 'from-[#D4956A] to-[#C2703E]',
-  amber: 'from-amber-400 to-amber-600',
-  rose: 'from-rose-400 to-rose-600',
-  pink: 'from-pink-400 to-pink-600',
-}
-
 function ProfileSection({ sectionKey, config, expanded, onToggle, children }: ProfileSectionProps) {
   const colorClass = sectionColors[config.color] || sectionColors.indigo
   const iconColor = iconColors[config.color] || iconColors.indigo
-  const gradient = accentGradients[config.color] || accentGradients.indigo
 
   return (
     <div
       id={`section-${sectionKey}`}
       className={cn(
-        'rounded-lg border overflow-hidden transition-all duration-200',
+        'rounded-lg overflow-hidden transition-all duration-200',
         colorClass,
         expanded ? 'shadow-sm' : 'hover:shadow-sm',
       )}
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/30 transition-colors"
+        className="w-full flex items-center gap-3 py-4 pr-4 text-left hover:bg-stone-50/50 transition-colors"
       >
-        {/* Gradient accent bar */}
-        <div className={cn('w-1 self-stretch -ml-4 mr-3 rounded-r-full bg-gradient-to-b', gradient)} />
         <div className={iconColor}>
           <SectionIcon name={config.icon} className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{config.title}</h3>
-          <p className="text-sm text-gray-500">{config.description}</p>
+          <h3 className="text-base font-semibold tracking-tight text-stone-900">{config.title}</h3>
+          <p className="text-[11px] uppercase tracking-wider text-stone-400">{config.description}</p>
         </div>
         <ChevronDown className={cn(
-          'h-5 w-5 text-gray-400 transition-transform duration-200',
+          'h-5 w-5 text-stone-400 transition-transform duration-200',
           !expanded && '-rotate-90'
         )} />
       </button>
       {expanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-white/50 animate-accordion-down">
+        <div className="pb-4 pr-4 pt-2 border-t border-stone-100 animate-accordion-down">
           {children}
         </div>
       )}
@@ -780,20 +766,20 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
           <div
             key={s.id}
             className={cn(
-              'flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              'flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
               index < 6 && `stagger-${index + 1}`,
             )}
           >
-            <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
+            <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
               <User className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">{s.name}</p>
-              {s.role && <p className="text-sm text-gray-500 truncate">{s.role}</p>}
+              <p className="font-medium text-stone-900 truncate">{s.name}</p>
+              {s.role && <p className="text-sm text-stone-500 truncate">{s.role}</p>}
             </div>
             <button
               onClick={() => handleRemove(s.id)}
-              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="h-4 w-4" />
             </button>
@@ -807,18 +793,18 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Name"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <input
             type="text"
             value={newRole}
             onChange={(e) => setNewRole(e.target.value)}
             placeholder="Role"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
@@ -828,7 +814,7 @@ function StakeholdersList({ stakeholders, onUpdate }: StakeholdersListProps) {
               setNewName('')
               setNewRole('')
             }}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -901,20 +887,20 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
           <div
             key={kpi.id}
             className={cn(
-              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              'p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
               index < 6 && `stagger-${index + 1}`
             )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
                   <Target className="h-4 w-4" />
                 </div>
-                <h4 className="font-medium text-gray-900">{kpi.name}</h4>
+                <h4 className="font-medium text-stone-900">{kpi.name}</h4>
               </div>
               <button
                 onClick={() => handleRemove(kpi.id)}
-                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -926,7 +912,7 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
             {(kpi.owner || kpi.alertThreshold) && (
               <div className="mt-1 space-y-0.5">
                 {kpi.owner && (
-                  <p className="text-xs text-gray-500">Owner: {kpi.owner}</p>
+                  <p className="text-xs text-stone-500">Owner: {kpi.owner}</p>
                 )}
                 {kpi.alertThreshold && (
                   <p className="text-xs text-amber-600">Alert: {kpi.alertThreshold}</p>
@@ -943,19 +929,19 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="KPI name"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           <input
             type="text"
             value={newTarget}
             onChange={(e) => setNewTarget(e.target.value)}
             placeholder="Target"
-            className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-24 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           <select
             value={newUnit}
             onChange={(e) => setNewUnit(e.target.value)}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             <option value="%">%</option>
             <option value="min">min</option>
@@ -964,7 +950,7 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
           </select>
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
@@ -974,7 +960,7 @@ function KPIsList({ kpis, onUpdate }: KPIsListProps) {
               setNewName('')
               setNewTarget('')
             }}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1048,29 +1034,29 @@ function ChannelsList({ channels, onUpdate }: ChannelsListProps) {
           <div
             key={channel.id}
             className={cn(
-              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              'p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
               index < 6 && `stagger-${index + 1}`
             )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
+                <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
                   <MessageSquare className="h-4 w-4" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900">{channel.name}</h4>
-                  <span className="text-xs text-gray-500">{channel.type}</span>
+                  <h4 className="font-medium text-stone-900">{channel.name}</h4>
+                  <span className="text-xs text-stone-500">{channel.type}</span>
                 </div>
               </div>
               <button
                 onClick={() => handleRemove(channel.id)}
-                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             {channel.sla && (
-              <p className="mt-2 text-sm text-gray-600">SLA: {channel.sla}</p>
+              <p className="mt-2 text-sm text-stone-600">SLA: {channel.sla}</p>
             )}
           </div>
         ))}
@@ -1082,12 +1068,12 @@ function ChannelsList({ channels, onUpdate }: ChannelsListProps) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Channel name"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
           <select
             value={newType}
             onChange={(e) => setNewType(e.target.value as Channel['type'])}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="email">Email</option>
             <option value="chat">Chat</option>
@@ -1101,17 +1087,17 @@ function ChannelsList({ channels, onUpdate }: ChannelsListProps) {
             value={newSla}
             onChange={(e) => setNewSla(e.target.value)}
             placeholder="SLA"
-            className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-24 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
           <button
             onClick={() => setIsAdding(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1193,49 +1179,49 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
           <div
             key={skill.id}
             className={cn(
-              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              'p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
               index < 6 && `stagger-${index + 1}`
             )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#F5E6DA] text-[#C2703E] rounded-lg">
+                <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-xs px-2 py-0.5 bg-[#F5E6DA] text-[#C2703E] rounded font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded font-medium">
                     {skillTypeLabels[skill.type] || skill.type}
                   </span>
-                  <h4 className="font-medium text-gray-900 mt-1">{skill.name}</h4>
+                  <h4 className="font-medium text-stone-900 mt-1">{skill.name}</h4>
                 </div>
               </div>
               <button
                 onClick={() => handleRemove(skill.id)}
-                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             {skill.description && (
-              <p className="mt-2 text-sm text-gray-600 line-clamp-2">{skill.description}</p>
+              <p className="mt-2 text-sm text-stone-600 line-clamp-2">{skill.description}</p>
             )}
           </div>
         ))}
       </div>
       {isAdding ? (
-        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-[#D4956A]">
+        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-stone-300">
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Skill name"
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+              className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as Skill['type'])}
-              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+              className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
             >
               <option value="answer">Answer Questions</option>
               <option value="route">Route Cases</option>
@@ -1250,18 +1236,18 @@ function SkillsList({ skills, onUpdate }: SkillsListProps) {
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description"
             rows={2}
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C2703E]"
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1347,11 +1333,11 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
                     <X className="h-3 w-3" />
                   </button>
                 </div>
-                <p className="text-xs text-center font-medium text-gray-900 mt-2">
+                <p className="text-xs text-center font-medium text-stone-900 mt-2">
                   {step.title}
                 </p>
                 {step.description && (
-                  <p className="text-xs text-center text-gray-500 mt-1 line-clamp-2">
+                  <p className="text-xs text-center text-stone-500 mt-1 line-clamp-2">
                     {step.description}
                   </p>
                 )}
@@ -1370,19 +1356,19 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Step title (e.g., Receive Request)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <input
             type="text"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Description (e.g., User submits request via email or portal)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <div className="flex items-center gap-2">
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1392,7 +1378,7 @@ function ProcessStepsList({ steps, onUpdate }: ProcessStepsListProps) {
                 setNewTitle('')
                 setNewDescription('')
               }}
-              className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+              className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1462,55 +1448,55 @@ function ExceptionsList({ exceptions, onUpdate }: ExceptionsListProps) {
         <div
           key={exception.id}
           className={cn(
-            'flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200 group animate-fade-in-up',
+            'flex items-start gap-3 p-3 bg-white rounded-lg border-l-2 border-amber-400 pl-4 group animate-fade-in-up',
             index < 6 && `stagger-${index + 1}`
           )}
         >
           <span className="text-amber-600 font-medium">!</span>
           <div className="flex-1">
-            <p className="text-gray-700">
+            <p className="text-stone-700">
               <strong>If:</strong> {exception.trigger}
             </p>
             {exception.action && (
-              <p className="text-gray-600 text-sm">
+              <p className="text-stone-600 text-sm">
                 <strong>Then:</strong> {exception.action}
               </p>
             )}
           </div>
           <button
             onClick={() => handleRemove(exception.id)}
-            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       ))}
       {isAdding ? (
-        <div className="flex flex-col gap-2 mt-2 p-3 bg-amber-50 rounded-lg border border-amber-300">
+        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-stone-300">
           <input
             type="text"
             value={newTrigger}
             onChange={(e) => setNewTrigger(e.target.value)}
             placeholder="If (trigger condition)..."
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <input
             type="text"
             value={newAction}
             onChange={(e) => setNewAction(e.target.value)}
             placeholder="Then (action to take)..."
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 text-gray-600 hover:bg-white rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1584,55 +1570,55 @@ function PersonaTraitsList({ traits, onUpdate }: PersonaTraitsListProps) {
           <div
             key={trait.id}
             className={cn(
-              'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+              'p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
               index < 6 && `stagger-${index + 1}`
             )}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-pink-100 text-pink-600 rounded-lg">
+                <div className="p-2 bg-stone-100 text-stone-500 rounded-lg">
                   <MessageCircle className="h-4 w-4" />
                 </div>
-                <h4 className="font-medium text-gray-900">{trait.name}</h4>
+                <h4 className="font-medium text-stone-900">{trait.name}</h4>
               </div>
               <button
                 onClick={() => handleRemove(trait.id)}
-                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             {trait.description && (
-              <p className="mt-2 text-sm text-gray-600">{trait.description}</p>
+              <p className="mt-2 text-sm text-stone-600">{trait.description}</p>
             )}
             {trait.examplePhrase && (
-              <p className="mt-1 text-xs text-pink-600 italic">&ldquo;{trait.examplePhrase}&rdquo;</p>
+              <p className="mt-1 text-xs text-stone-500 italic">&ldquo;{trait.examplePhrase}&rdquo;</p>
             )}
           </div>
         ))}
       </div>
       {isAdding ? (
-        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-pink-300">
+        <div className="flex flex-col gap-2 mt-2 p-3 bg-white rounded-lg border border-stone-300">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Trait name (e.g., Helpful, Clear, Patient)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <input
             type="text"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Description (e.g., Always offers proactive next steps)"
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <input
             type="text"
             value={newExample}
             onChange={(e) => setNewExample(e.target.value)}
             placeholder='Example phrase (e.g., "Let me see what I can find for you")'
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -1642,13 +1628,13 @@ function PersonaTraitsList({ traits, onUpdate }: PersonaTraitsListProps) {
                 setNewDescription('')
                 setNewExample('')
               }}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1726,17 +1712,17 @@ function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
         <div
           key={rule.id}
           className={cn(
-            'flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+            'flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
             index < 6 && `stagger-${index + 1}`
           )}
         >
-          <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700 rounded whitespace-nowrap">
+          <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded whitespace-nowrap">
             {toneRuleCategoryLabels[rule.category]}
           </span>
-          <p className="flex-1 text-sm text-gray-700">{rule.rule}</p>
+          <p className="flex-1 text-sm text-stone-700">{rule.rule}</p>
           <button
             onClick={() => handleRemove(rule.id)}
-            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1747,7 +1733,7 @@ function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
           <select
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value as ToneRule['category'])}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           >
             {Object.entries(toneRuleCategoryLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -1760,17 +1746,17 @@ function ToneRulesList({ rules, onUpdate }: ToneRulesListProps) {
             value={newRule}
             onChange={(e) => setNewRule(e.target.value)}
             placeholder="e.g., Max 15-20 words per sentence"
-            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <button
             onClick={handleAdd}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
           >
             Add
           </button>
           <button
             onClick={() => setIsAdding(false)}
-            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg"
+            className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1839,7 +1825,7 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-stone-200">
                 <th className="text-left py-2 px-3 font-medium text-red-600 w-1/2">
                   <span className="flex items-center gap-1">
                     <ThumbsDown className="h-3.5 w-3.5" /> Don&apos;t say
@@ -1855,13 +1841,13 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 group">
+                <tr key={item.id} className="border-b border-stone-100 group">
                   <td className="py-2 px-3 text-red-700 bg-red-50/50">{item.wrong}</td>
                   <td className="py-2 px-3 text-emerald-700 bg-emerald-50/50">{item.right}</td>
                   <td className="py-2 px-3">
                     <button
                       onClick={() => handleRemove(item.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -1873,7 +1859,7 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
         </div>
       )}
       {isAdding ? (
-        <div className="grid grid-cols-2 gap-2 mt-2 p-3 bg-white rounded-lg border border-pink-300">
+        <div className="grid grid-cols-2 gap-2 mt-2 p-3 bg-white rounded-lg border border-stone-300">
           <input
             type="text"
             value={newWrong}
@@ -1895,13 +1881,13 @@ function DosAndDontsList({ items, onUpdate }: DosAndDontsListProps) {
                 setNewWrong('')
                 setNewRight('')
               }}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>
@@ -1943,7 +1929,7 @@ const escalationContextColors: Record<EscalationScript['context'], string> = {
   after_hours: 'bg-blue-100 text-blue-700',
   unknown_topic: 'bg-amber-100 text-amber-700',
   emotional: 'bg-rose-100 text-rose-700',
-  other: 'bg-gray-100 text-gray-700',
+  other: 'bg-stone-100 text-stone-700',
 }
 
 function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps) {
@@ -1991,7 +1977,7 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
         <div
           key={script.id}
           className={cn(
-            'p-3 bg-white rounded-lg border border-gray-200 group animate-fade-in-up',
+            'p-3 bg-white rounded-lg border border-stone-200 group animate-fade-in-up',
             index < 6 && `stagger-${index + 1}`
           )}
         >
@@ -2003,23 +1989,23 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
             </div>
             <button
               onClick={() => handleRemove(script.id)}
-              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-2 text-sm text-gray-700 italic bg-gray-50 p-2 rounded">
+          <p className="mt-2 text-sm text-stone-700 italic bg-stone-50 p-2 rounded">
             &ldquo;{script.script}&rdquo;
           </p>
         </div>
       ))}
       {isAdding ? (
-        <div className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-pink-300">
+        <div className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-stone-300">
           <div className="flex items-center gap-2">
             <select
               value={newContext}
               onChange={(e) => setNewContext(e.target.value as EscalationScript['context'])}
-              className="px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="px-2 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
             >
               {Object.entries(escalationContextLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -2032,7 +2018,7 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder="Custom label (optional)"
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="flex-1 px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
           </div>
           <textarea
@@ -2040,7 +2026,7 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
             onChange={(e) => setNewScript(e.target.value)}
             placeholder='Exact script, e.g., "I understand this is important to you. Let me connect you with a colleague who can help further."'
             rows={3}
-            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -2049,13 +2035,13 @@ function EscalationScriptsList({ scripts, onUpdate }: EscalationScriptsListProps
                 setNewScript('')
                 setNewLabel('')
               }}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-3 py-1.5 text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="px-3 py-1.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
             >
               Add
             </button>

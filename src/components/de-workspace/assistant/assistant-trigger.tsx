@@ -41,8 +41,9 @@ export function AssistantTrigger({ onClick, hasHints, className }: AssistantTrig
           <div className="relative">
             <Button
               onClick={onClick}
+              size="sm"
               className={cn(
-                'relative bg-[#C2703E] hover:bg-[#A05A32] text-white shadow-lg shadow-[#C2703E]/15',
+                'relative bg-[#C2703E] hover:bg-[#A05A32] text-white',
                 className
               )}
             >

@@ -144,15 +144,15 @@ export function ScopeGuardian({
     return (
       <div className={cn('space-y-6', className)}>
         <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-2xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-xl bg-[#FDF3EC] flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-[#D4956A]" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No scope items yet</h3>
-          <p className="text-sm text-gray-500 max-w-md mx-auto mb-2">
+          <h3 className="text-lg font-semibold text-stone-900 mb-2">No scope items yet</h3>
+          <p className="text-sm text-stone-500 max-w-md mx-auto mb-2">
             Scope items are automatically extracted from your session recordings and transcripts.
             Upload a Process Design or Technical session to start building the scope.
           </p>
-          <p className="text-xs text-gray-400 max-w-sm mx-auto">
+          <p className="text-xs text-stone-400 max-w-sm mx-auto">
             The AI identifies what the Digital Employee should handle (in scope), what it should not handle (out of scope),
             and items that need clarification (ambiguous).
           </p>
@@ -165,7 +165,7 @@ export function ScopeGuardian({
     <div className={cn('space-y-6', className)}>
       {/* Introduction text when there are ambiguous items */}
       {counts.ambiguous > 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-stone-600">
           The AI extracted {totalItems} scope items from your sessions. <span className="font-medium text-amber-700">{counts.ambiguous} items are ambiguous</span> and
           need your decision before sign-off. Review each item and mark it as In Scope or Out of Scope.
         </p>
@@ -174,7 +174,7 @@ export function ScopeGuardian({
       {/* Header with search, filters, and selection toggle */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <Input
             placeholder="Search scope items..."
             value={searchQuery}
@@ -185,7 +185,7 @@ export function ScopeGuardian({
         <div className="flex items-center gap-2">
           {skills.length > 0 && (
             <>
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-stone-400" />
               <Select
                 value={selectedSkill || 'all'}
                 onValueChange={(value) => setSelectedSkill(value === 'all' ? null : value)}
@@ -223,7 +223,7 @@ export function ScopeGuardian({
       {/* Selection mode controls */}
       {selectionMode && counts.ambiguous > 0 && (
         <div className="flex items-center gap-3 px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg">
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-stone-700">
             {selectedIds.size} of {groupedItems.ambiguous.length} ambiguous items selected
           </span>
           <div className="flex items-center gap-2 ml-auto">
@@ -239,7 +239,7 @@ export function ScopeGuardian({
               size="sm"
               variant="ghost"
               onClick={handleDeselectAll}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-stone-500 hover:text-stone-700"
             >
               Deselect All
             </Button>
@@ -247,34 +247,28 @@ export function ScopeGuardian({
         </div>
       )}
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-          <CheckCircle2 className="w-8 h-8 text-green-600" />
-          <div>
-            <p className="text-2xl font-bold text-green-700">{counts.inScope}</p>
-            <p className="text-sm text-green-600">In Scope</p>
-          </div>
+      {/* Summary stats — compact inline */}
+      <div className="flex items-center gap-6 py-3 border-y border-stone-200/60">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+          <span className="text-lg font-bold tabular-nums text-green-700">{counts.inScope}</span>
+          <span className="text-[13px] text-stone-500">In Scope</span>
         </div>
-        <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg">
-          <XCircle className="w-8 h-8 text-red-600" />
-          <div>
-            <p className="text-2xl font-bold text-red-700">{counts.outOfScope}</p>
-            <p className="text-sm text-red-600">Out of Scope</p>
-          </div>
+        <div className="flex items-center gap-2">
+          <XCircle className="w-4 h-4 text-red-600" />
+          <span className="text-lg font-bold tabular-nums text-red-700">{counts.outOfScope}</span>
+          <span className="text-[13px] text-stone-500">Out of Scope</span>
         </div>
-        <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg">
-          <AlertTriangle className="w-8 h-8 text-amber-600" />
-          <div>
-            <p className="text-2xl font-bold text-amber-700">{counts.ambiguous}</p>
-            <p className="text-sm text-amber-600">Ambiguous</p>
-          </div>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <span className="text-lg font-bold tabular-nums text-amber-700">{counts.ambiguous}</span>
+          <span className="text-[13px] text-stone-500">Ambiguous</span>
         </div>
       </div>
 
       {/* Tabs for different classifications */}
       <Tabs defaultValue="ambiguous" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 bg-stone-100 rounded-lg p-1 border-0 h-auto">
           <TabsTrigger value="ambiguous" className="gap-2">
             <AlertTriangle className="w-4 h-4" />
             Ambiguous ({groupedItems.ambiguous.length})
@@ -291,7 +285,7 @@ export function ScopeGuardian({
 
         <TabsContent value="ambiguous" className="mt-4 space-y-3">
           {groupedItems.ambiguous.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-stone-500">
               <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-3" />
               <p className="font-medium">No ambiguous items!</p>
               <p className="text-sm">All scope items have been resolved.</p>
@@ -314,11 +308,11 @@ export function ScopeGuardian({
         <TabsContent value="in-scope" className="mt-4 space-y-3">
           {groupedItems.inScope.length === 0 ? (
             <div className="text-center py-10">
-              <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-7 h-7 text-green-300" />
               </div>
-              <p className="font-medium text-gray-700">No in-scope items yet</p>
-              <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+              <p className="font-medium text-stone-700">No in-scope items yet</p>
+              <p className="text-sm text-stone-500 mt-1 max-w-xs mx-auto">
                 {searchQuery
                   ? 'No in-scope items match your search. Try different terms.'
                   : 'Items will appear here once scope decisions are made from session extractions or resolved from ambiguous items.'}
@@ -339,11 +333,11 @@ export function ScopeGuardian({
         <TabsContent value="out-of-scope" className="mt-4 space-y-3">
           {groupedItems.outOfScope.length === 0 ? (
             <div className="text-center py-10">
-              <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center mx-auto mb-3">
                 <XCircle className="w-7 h-7 text-red-300" />
               </div>
-              <p className="font-medium text-gray-700">No out-of-scope items yet</p>
-              <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+              <p className="font-medium text-stone-700">No out-of-scope items yet</p>
+              <p className="text-sm text-stone-500 mt-1 max-w-xs mx-auto">
                 {searchQuery
                   ? 'No out-of-scope items match your search. Try different terms.'
                   : 'Items explicitly excluded from the implementation will appear here. This helps prevent scope creep.'}
@@ -365,11 +359,11 @@ export function ScopeGuardian({
       {/* Floating bulk actions bar */}
       {selectionMode && selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 px-5 py-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+          <div className="flex items-center gap-3 px-5 py-3 bg-white/95 backdrop-blur-sm border border-stone-200/60 rounded-lg shadow-lg">
+            <span className="text-sm font-medium text-stone-700 whitespace-nowrap">
               {selectedIds.size} selected
             </span>
-            <div className="w-px h-6 bg-gray-200" />
+            <div className="w-px h-6 bg-stone-200" />
             <Button
               size="sm"
               variant="success"
@@ -386,12 +380,12 @@ export function ScopeGuardian({
               <XCircle className="w-4 h-4 mr-1" />
               Out of Scope
             </Button>
-            <div className="w-px h-6 bg-gray-200" />
+            <div className="w-px h-6 bg-stone-200" />
             <Button
               size="sm"
               variant="ghost"
               onClick={handleToggleSelectionMode}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-stone-500 hover:text-stone-700"
             >
               <X className="w-4 h-4" />
             </Button>
