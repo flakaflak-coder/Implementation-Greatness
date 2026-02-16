@@ -2,25 +2,34 @@
 set -e
 
 # Wait for the database to be reachable before running migrations
-MAX_RETRIES=30
-RETRY_INTERVAL=2
+MAX_RETRIES=45
+RETRY_INTERVAL=3
 RETRIES=0
 
 echo "Waiting for database to be reachable..."
 
-until npx prisma migrate deploy 2>/dev/null; do
+# First, wait for basic TCP connectivity using node (no extra dependencies)
+until node -e "
+const url = new URL(process.env.DATABASE_URL);
+const net = require('net');
+const sock = net.connect({host: url.hostname, port: url.port || 5432, timeout: 3000});
+sock.on('connect', () => { sock.destroy(); process.exit(0); });
+sock.on('error', () => process.exit(1));
+sock.on('timeout', () => { sock.destroy(); process.exit(1); });
+" 2>/dev/null; do
   RETRIES=$((RETRIES + 1))
   if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
-    echo "ERROR: Database not reachable after $MAX_RETRIES attempts ($((MAX_RETRIES * RETRY_INTERVAL))s). Starting server anyway..."
+    echo "ERROR: Database not reachable after $MAX_RETRIES attempts. Starting server anyway..."
     break
   fi
   echo "Database not ready (attempt $RETRIES/$MAX_RETRIES). Retrying in ${RETRY_INTERVAL}s..."
   sleep "$RETRY_INTERVAL"
 done
 
+# Now run migrations (show errors for debugging)
 if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
-  echo "Migrations applied successfully. Pushing schema..."
-  npx prisma db push || echo "WARNING: prisma db push failed, continuing..."
+  echo "Database is reachable. Running migrations..."
+  npx prisma migrate deploy 2>&1 || echo "WARNING: prisma migrate deploy failed"
 fi
 
 echo "Starting Next.js server..."
