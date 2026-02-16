@@ -19,6 +19,11 @@ RUN npm ci
 # Generate Prisma client
 RUN npx prisma generate
 
+# Isolated prisma CLI for running migrations in production
+FROM base AS migrator
+WORKDIR /opt/prisma
+RUN echo '{"dependencies":{"prisma":"7.3.0","@prisma/adapter-pg":"7.3.0"}}' > package.json && npm install --production 2>&1
+
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
@@ -40,12 +45,8 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install prisma CLI in isolated directory (separate from app node_modules)
-RUN mkdir -p /opt/prisma
-COPY --from=deps /app/node_modules/prisma /opt/prisma/node_modules/prisma
-COPY --from=deps /app/node_modules/@prisma /opt/prisma/node_modules/@prisma
-COPY --from=deps /app/node_modules/.prisma /opt/prisma/node_modules/.prisma
-COPY --from=deps /app/node_modules/dotenv /opt/prisma/node_modules/dotenv
+# Copy isolated prisma CLI (with all transitive deps properly resolved)
+COPY --from=migrator /opt/prisma/node_modules /opt/prisma/node_modules
 
 # Set the correct permission for prerender cache
 RUN mkdir -p .next
