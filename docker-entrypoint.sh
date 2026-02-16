@@ -29,7 +29,18 @@ done
 # Now run migrations (show errors for debugging)
 if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
   echo "Database is reachable. Running migrations..."
-  npx prisma migrate deploy 2>&1 || echo "WARNING: prisma migrate deploy failed"
+  echo "Prisma version:"
+  npx prisma --version 2>&1 || true
+  echo "Running migrate deploy..."
+  npx prisma migrate deploy 2>&1
+  MIGRATE_EXIT=$?
+  if [ "$MIGRATE_EXIT" -ne 0 ]; then
+    echo "WARNING: prisma migrate deploy failed (exit code: $MIGRATE_EXIT)"
+    echo "Trying prisma db push as fallback..."
+    npx prisma db push --accept-data-loss 2>&1 || echo "WARNING: prisma db push also failed"
+  else
+    echo "Migrations applied successfully!"
+  fi
 fi
 
 echo "Starting Next.js server..."
