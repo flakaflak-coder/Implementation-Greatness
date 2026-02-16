@@ -83,28 +83,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     },
-    // Protect routes
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user
-      const isOnLogin = nextUrl.pathname === '/login'
-      const isPublicApi = nextUrl.pathname === '/api/health'
-      const isAuthApi = nextUrl.pathname.startsWith('/api/auth')
-
-      // Allow health check and auth API routes without auth
-      if (isPublicApi || isAuthApi) {
-        return true
-      }
-
-      // Redirect to login if not authenticated
-      if (!isLoggedIn && !isOnLogin) {
-        return Response.redirect(new URL('/login', nextUrl))
-      }
-
-      // Redirect to home if already logged in and on login page
-      if (isLoggedIn && isOnLogin) {
-        return Response.redirect(new URL('/', nextUrl))
-      }
-
+    // Delegate route protection to middleware.ts
+    authorized() {
+      // Always return true - middleware.ts handles auth redirects and 401s
+      // This avoids the authorized callback redirecting API routes to /login
+      // (API routes should get 401 JSON, not a redirect)
       return true
     },
   },
