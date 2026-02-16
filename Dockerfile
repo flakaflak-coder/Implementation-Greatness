@@ -40,23 +40,25 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Install prisma CLI globally (separate from app node_modules to avoid conflicts)
+COPY --from=deps /app/node_modules/prisma /tmp/prisma-pkg
+RUN npm install -g /tmp/prisma-pkg && rm -rf /tmp/prisma-pkg
+# Install dotenv globally for prisma.config.ts
+COPY --from=deps /app/node_modules/dotenv /tmp/dotenv-pkg
+RUN npm install -g /tmp/dotenv-pkg && rm -rf /tmp/dotenv-pkg
+
 # Set the correct permission for prerender cache
 RUN mkdir -p .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone build output
+# Copy standalone build output (includes its own node_modules with @prisma/client)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy Prisma schema, migrations, config, and generated client + CLI
-# Copy from builder to ensure version consistency (avoids "Class extends undefined" errors)
+# Copy Prisma schema, migrations, and config for running migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
 
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nextjs:nodejs uploads

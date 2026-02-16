@@ -26,21 +26,10 @@ sock.on('timeout', () => { sock.destroy(); process.exit(1); });
   sleep "$RETRY_INTERVAL"
 done
 
-# Now run migrations (show errors for debugging)
+# Now run migrations (use globally installed prisma to avoid node_modules conflicts)
 if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
   echo "Database is reachable. Running migrations..."
-  echo "Prisma version:"
-  npx prisma --version 2>&1 || true
-  echo "Running migrate deploy..."
-  npx prisma migrate deploy 2>&1
-  MIGRATE_EXIT=$?
-  if [ "$MIGRATE_EXIT" -ne 0 ]; then
-    echo "WARNING: prisma migrate deploy failed (exit code: $MIGRATE_EXIT)"
-    echo "Trying prisma db push as fallback..."
-    npx prisma db push --accept-data-loss 2>&1 || echo "WARNING: prisma db push also failed"
-  else
-    echo "Migrations applied successfully!"
-  fi
+  prisma migrate deploy 2>&1 || echo "WARNING: prisma migrate deploy failed, continuing..."
 fi
 
 echo "Starting Next.js server..."
