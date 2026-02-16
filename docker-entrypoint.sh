@@ -1,14 +1,12 @@
 #!/bin/sh
 set -e
 
-# Wait for the database to be reachable before running migrations
 MAX_RETRIES=45
 RETRY_INTERVAL=3
 RETRIES=0
 
 echo "Waiting for database to be reachable..."
 
-# First, wait for basic TCP connectivity using node (no extra dependencies)
 until node -e "
 const url = new URL(process.env.DATABASE_URL);
 const net = require('net');
@@ -26,10 +24,10 @@ sock.on('timeout', () => { sock.destroy(); process.exit(1); });
   sleep "$RETRY_INTERVAL"
 done
 
-# Now run migrations (use globally installed prisma to avoid node_modules conflicts)
+# Run migrations using isolated prisma installation (avoids standalone node_modules conflicts)
 if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
   echo "Database is reachable. Running migrations..."
-  prisma migrate deploy 2>&1 || echo "WARNING: prisma migrate deploy failed, continuing..."
+  NODE_PATH=/opt/prisma/node_modules node /opt/prisma/node_modules/prisma/build/index.js migrate deploy 2>&1 || echo "WARNING: prisma migrate deploy failed, continuing..."
 fi
 
 echo "Starting Next.js server..."

@@ -40,12 +40,12 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install prisma CLI globally (separate from app node_modules to avoid conflicts)
-COPY --from=deps /app/node_modules/prisma /tmp/prisma-pkg
-RUN npm install -g /tmp/prisma-pkg && rm -rf /tmp/prisma-pkg
-# Install dotenv globally for prisma.config.ts
-COPY --from=deps /app/node_modules/dotenv /tmp/dotenv-pkg
-RUN npm install -g /tmp/dotenv-pkg && rm -rf /tmp/dotenv-pkg
+# Install prisma CLI in isolated directory (separate from app node_modules)
+RUN mkdir -p /opt/prisma
+COPY --from=deps /app/node_modules/prisma /opt/prisma/node_modules/prisma
+COPY --from=deps /app/node_modules/@prisma /opt/prisma/node_modules/@prisma
+COPY --from=deps /app/node_modules/.prisma /opt/prisma/node_modules/.prisma
+COPY --from=deps /app/node_modules/dotenv /opt/prisma/node_modules/dotenv
 
 # Set the correct permission for prerender cache
 RUN mkdir -p .next
