@@ -22,7 +22,7 @@ RUN npx prisma generate
 # Isolated prisma CLI for running migrations in production
 FROM base AS migrator
 WORKDIR /opt/prisma
-RUN echo '{"dependencies":{"prisma":"7.3.0","@prisma/adapter-pg":"7.3.0"}}' > package.json && npm install --production 2>&1
+RUN echo '{"dependencies":{"prisma":"7.3.0"}}' > package.json && npm install 2>&1
 
 # Rebuild the source code only when needed
 FROM base AS builder
